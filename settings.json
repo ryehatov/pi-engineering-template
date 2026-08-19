@@ -1,0 +1,55 @@
+{
+  "defaultProvider": "openai-codex",
+  "defaultModel": "gpt-5.6-terra",
+  "defaultThinkingLevel": "medium",
+
+  "defaultProjectTrust": "never",
+
+  "subagents": {
+    "modelScope": {
+      "enforce": true,
+      "strict": true,
+      "allow": [
+        "opencode-go/deepseek-v4-flash",
+        "opencode-go/gpt-5.6-luna",
+        "openai-codex/gpt-5.6-sol"
+      ]
+    },
+
+    "agentOverrides": {
+      "scout": {
+        "model": "opencode-go/deepseek-v4-flash",
+        "thinking": "low"
+      },
+
+      "researcher": {
+        "model": "opencode-go/gpt-5.6-luna",
+        "thinking": "high"
+      },
+
+      "worker": {
+        "model": "opencode-go/deepseek-v4-flash",
+        "thinking": "max",
+        "tools": "inherit"
+      },
+
+      "reviewer": {
+        "model": "opencode-go/gpt-5.6-luna",
+        "thinking": "xhigh"
+      },
+
+      "oracle": {
+        "model": "openai-codex/gpt-5.6-sol",
+        "thinking": "high"
+      },
+
+      "delegate": {
+        "disabled": true
+      },
+
+      "gpt-pro": {
+        "disabled": true
+      }
+    }
+  }
+}

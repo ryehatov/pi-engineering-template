@@ -1,0 +1,19 @@
+{
+  "toolDescriptionMode": "compact",
+
+  "maxSubagentDepth": 1,
+
+  "missions": {
+    "enabled": false
+  },
+
+  "scheduledRuns": {
+    "enabled": false
+  },
+
+  "authorityPolicy": {
+    "discardWorktree": "auto",
+    "destructiveCleanup": "auto",
+    "scheduleCreate": "forbid"
+  }
+}
