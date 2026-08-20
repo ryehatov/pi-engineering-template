@@ -1,7 +1,7 @@
 # Pi Engineering Environment Setup and Operations Guide
 
 **File:** `pi-design.md`
-**Revision date:** 2026-08-19
+**Revision date:** 2026-08-20
 **Companion specification:** `pi-spec.md`
 
 ## 1. Host setup
@@ -32,17 +32,27 @@ Create:
 
 ```text
 pi-engineering-template/
+├── .gitignore
+├── README.md
+├── LICENSE
 ├── Dockerfile
 ├── settings.json
 ├── subagent-config.json
 ├── web-search.json
 ├── pi-btw.json
 ├── AGENTS.md
+├── docs/
+│   ├── pi-spec.md
+│   └── pi-design.md
 ├── scripts/
 │   └── verify-template.mjs
 └── skills/
+    ├── development-loop/
+    │   ├── SKILL.md
+    │   └── agents/openai.yaml
     └── engineering-cache/
         ├── SKILL.md
+        ├── agents/openai.yaml
         └── scripts/cache.mjs
 ```
 
