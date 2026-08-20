@@ -1,6 +1,6 @@
 ---
 name: engineering-cache
-description: Use when prior non-obvious investigation, failed approaches, external constraints, or project-specific findings may affect the current engineering task, or when verified project-specific knowledge has been selected for cache storage.
+description: Use when development-loop selects a narrow lookup of repository cache notes, or when verified project-specific knowledge has been selected for cache storage. Handles non-obvious investigation results, failed approaches, constraints, invariants, counterexamples, and verification assumptions.
 ---
 
 # Engineering Cache

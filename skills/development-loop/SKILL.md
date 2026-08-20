@@ -13,7 +13,9 @@ Use gates, not a fixed phase sequence. Apply the minimum process that makes the 
 
 Inspect the relevant current governing sources, implementation, and verification surface.
 
-Resolve material uncertainty first when inspection, reproduction, a minimal experiment, or a proof attempt is cheaper than implementing under an assumption. If prior non-obvious project findings may avoid expensive rediscovery, use `engineering-cache` narrowly.
+If `docs/engineering/cache/` exists, perform one narrow lookup using terms from the current task before non-trivial investigation. Do not load the cache wholesale. For relevant candidates, use `engineering-cache` to check freshness and revalidate material claims against current repository evidence.
+
+Resolve material uncertainty first when inspection, reproduction, a minimal experiment, or a proof attempt is cheaper than implementing under an assumption.
 
 Plan only when ambiguity, coordination, multi-step work, architectural impact, or risk makes a plan useful. Use existing planning and subagent facilities when they add separation or evidence; do not create another orchestration scheme.
 
@@ -31,10 +33,10 @@ Use independent review when the change is non-trivial, high-risk, or meaningful 
 
 ## After verification
 
-Persist knowledge only when expected rediscovery cost exceeds maintenance and staleness cost:
+Classify whether the task produced durable knowledge. Usually the correct result is to discard it. Persist knowledge only when expected rediscovery cost exceeds maintenance and staleness cost:
 
 - Discard facts that current code, one command, standard documentation, or Git history can recover cheaply.
-- Record an ADR only for a hard-to-reverse, surprising decision produced by a genuine trade-off.
+- Record an ADR only for an architecturally significant choice with a credible alternative, non-obvious rationale, and meaningful coupling or reversal cost. Typical candidates affect public or cross-component interfaces, persistent-data representation, trust boundaries, major platform or dependency choices, or ownership boundaries. Follow the repository's declared or established ADR convention. If none exists, do not invent a repository-wide ADR location or format; report the candidate decision to the user.
 - Use `engineering-cache` for expensive project-specific findings, failed approaches, constraints, invariants, counterexamples, or verification assumptions.
 - Promote a procedure to a reusable Skill only after repeated verified use shows that it generalizes.
 

@@ -1,7 +1,7 @@
 # Pi Engineering Environment Setup and Operations Guide
 
 **File:** `pi-design.md`
-**Revision date:** 2026-08-20
+**Revision date:** 2026-08-21
 **Companion specification:** `pi-spec.md`
 
 ## 1. Host setup
@@ -18,11 +18,14 @@ Authenticate Docker Sandboxes:
 sbx login
 ```
 
-Initialize unrestricted sandbox networking:
+Initialize the balanced sandbox network policy:
 
 ```bash
-sbx policy init allow-all
+sbx policy init balanced
 ```
+
+If a required provider, package host, registry, or development service is
+blocked, inspect `sbx policy log` and add the narrowest required allow rule.
 
 ---
 
@@ -62,78 +65,21 @@ Use a revisioned image name:
 local/pi-engineering:<revision>
 ```
 
-Each revision uses exact package versions and an exact base-image digest.
-
 ---
 
 ## 3. Create `settings.json`
 
-Use:
-
-```json
-{
-  "defaultProvider": "openai-codex",
-  "defaultModel": "gpt-5.6-terra",
-  "defaultThinkingLevel": "medium",
-
-  "defaultProjectTrust": "never",
-
-  "subagents": {
-    "modelScope": {
-      "enforce": true,
-      "strict": true,
-      "allow": [
-        "opencode-go/deepseek-v4-flash",
-        "opencode-go/gpt-5.6-luna",
-        "openai-codex/gpt-5.6-sol"
-      ]
-    },
-
-    "agentOverrides": {
-      "scout": {
-        "model": "opencode-go/deepseek-v4-flash",
-        "thinking": "low"
-      },
-
-      "researcher": {
-        "model": "opencode-go/gpt-5.6-luna",
-        "thinking": "high"
-      },
-
-      "worker": {
-        "model": "opencode-go/deepseek-v4-flash",
-        "thinking": "max",
-        "tools": "inherit"
-      },
-
-      "reviewer": {
-        "model": "opencode-go/gpt-5.6-luna",
-        "thinking": "xhigh"
-      },
-
-      "oracle": {
-        "model": "openai-codex/gpt-5.6-sol",
-        "thinking": "high"
-      },
-
-      "delegate": {
-        "disabled": true
-      },
-
-      "gpt-pro": {
-        "disabled": true
-      }
-    }
-  }
-}
-```
+Use the revision-controlled `settings.json`. It is authoritative for provider,
+model, trust, model-scope, and role-routing values. Do not duplicate those
+values in this guide.
 
 ---
 
 ## 4. Create `subagent-config.json`
 
 Use the revision-controlled `subagent-config.json`. It is the authoritative
-subagent runtime configuration for the template.
+subagent runtime configuration for the template. Subagent artifacts are
+session-scoped so execution metadata does not modify the project working tree.
 
 Destination:
 
@@ -158,13 +104,8 @@ Destination:
 
 ## 6. Create `pi-btw.json`
 
-Use:
-
-```json
-{
-  "model": "opencode-go/gpt-5.6-luna"
-}
-```
+Use the revision-controlled `pi-btw.json`. It is authoritative for the side
+thread model and reasoning behavior.
 
 Destination:
 
@@ -190,16 +131,15 @@ Destination:
 
 ## 8. Create the Dockerfile
 
-Use the revision-controlled `Dockerfile` as the exact image manifest. It owns
-the base-image digest, package versions, configuration destinations, and the
-global Skill installation. Do not maintain a second Dockerfile copy in this
-guide.
+Use the revision-controlled `Dockerfile` as the image definition. It owns the
+installed global tools, configuration destinations, and global Skill
+installation. Do not maintain a second Dockerfile copy in this guide.
 
 ---
 
 ## 9. Build and load the template
 
-Build the pinned revision:
+Build the selected revision:
 
 ```bash
 docker build \
@@ -248,22 +188,17 @@ Start Pi:
 pi
 ```
 
+Clone mode protects the host checkout from modification, not inspection. The
+read-only source mount includes untracked and ignored files. Keep secrets
+outside the repository tree or use Docker Sandbox credential isolation.
+
 ---
 
 ## 11. Authenticate model providers
 
-Authenticate the required providers through Pi inside the named sandbox.
-
-Required routes:
-
-```text
-openai-codex/gpt-5.6-terra
-openai-codex/gpt-5.6-sol
-opencode-go/gpt-5.6-luna
-opencode-go/deepseek-v4-flash
-```
-
-Use Pi's provider authentication flow, including `/login` where supported.
+Authenticate the providers referenced by the current `settings.json` and
+`pi-btw.json` through Pi inside the named sandbox. Use Pi's provider
+authentication flow, including `/login` where supported.
 
 The named sandbox retains provider state while it exists.
 
@@ -283,17 +218,20 @@ Start Pi from the private clone:
 pi
 ```
 
-The normal model topology is:
+The normal role topology is:
 
 ```text
-Terra medium parent
+Parent
 │
-├── Flash low scout
-├── Luna high researcher
-├── Flash max worker
-├── Luna xhigh reviewer
-└── Sol high oracle
+├── Scout
+├── Researcher
+├── Worker
+├── Reviewer
+└── Oracle
 ```
+
+`settings.json` is authoritative for the model and reasoning level assigned to
+each role.
 
 The Parent chooses the smallest useful execution graph for each task:
 
@@ -399,7 +337,7 @@ or open the side-thread menu with:
 /btw
 ```
 
-Side questions use Luna and inherit the current Pi thinking level.
+`pi-btw.json` is authoritative for the side-thread model and reasoning behavior.
 
 ### 13.7 Context inspection
 
@@ -515,7 +453,7 @@ Global model routing, extension topology, Docker behavior, and generic engineeri
 
 ---
 
-## 19. Update the baseline
+## 19. Update the template
 
 Resolve the current base template digest:
 
@@ -548,7 +486,7 @@ done
 '
 ```
 
-Update the exact pins in the Dockerfile and assign a new revision tag.
+Update the selected Dockerfile dependencies and assign a new revision tag.
 
 Build and load the new revision:
 
@@ -577,17 +515,21 @@ Before committing a template revision, run:
 node scripts/verify-template.mjs
 ```
 
-The verifier checks branch-independent invariants such as strict model scope,
-subagent safety settings, exact Docker pins, and Skill installation. Branch
-variants remain free to select different allowed models and toolchains.
+The verifier checks branch-independent invariants such as required role
+configuration, strict model scope, subagent safety settings, extension and Skill
+installation, and bundled script syntax. Branch variants remain free to select
+different allowed models and toolchains.
 
-For repository-changing work, the global `development-loop` Skill supplies the
+For repository-changing work, global `AGENTS.md` requires `development-loop`
+before the first repository write and again at completion. The Skill supplies
 risk-scaled engineering gates while preserving the user's original request as
 authoritative intent. It uses existing planning, subagent, review, and
 repository-verification mechanisms rather than introducing another workflow
 engine.
 
-Use `engineering-cache` only when prior non-obvious findings may avoid expensive
-rediscovery or when `development-loop` has selected verified project-specific
-knowledge for storage. Cache notes remain advisory history; current governing
+When `docs/engineering/cache/` exists, `development-loop` performs one narrow
+task-relevant cache lookup before non-trivial investigation. `engineering-cache`
+owns freshness checks and selected note storage. After verification,
+`development-loop` always classifies durable knowledge as discard, ADR, cache,
+or reusable Skill. Cache notes remain advisory history; current governing
 sources, code, tests, and verification evidence remain authoritative.

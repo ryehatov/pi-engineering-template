@@ -2,7 +2,7 @@
 
 **File:** `pi-spec.md`  
 **Status:** Baseline  
-**Revision date:** 2026-08-19  
+**Revision date:** 2026-08-21
 **Scope:** General-purpose software engineering
 
 ## 1. Purpose
@@ -17,7 +17,7 @@ The environment optimizes:
 - model-use efficiency;
 - maintainability;
 - extensibility;
-- controlled rolling-latest adoption;
+- controlled dependency updates;
 - clear responsibility ownership.
 
 Deterministic mechanisms own deterministic concerns. Models own semantic decisions.
@@ -59,13 +59,13 @@ Docker Sandbox microVM
 │
 └── Pi
     │
-    ├── Terra parent
+    ├── Parent
     │   └── task-local execution graph
-    │       ├── Flash scout
-    │       ├── Luna researcher
-    │       ├── Flash worker
-    │       ├── Luna reviewer
-    │       └── Sol oracle
+    │       ├── Scout
+    │       ├── Researcher
+    │       ├── Worker
+    │       ├── Reviewer
+    │       └── Oracle
     │
     ├── engineering tools
     │   ├── pi-web-access
@@ -180,7 +180,7 @@ Use clone mode:
 --clone
 ```
 
-The sandbox works in an independent Git clone. The host checkout remains the canonical repository.
+The sandbox works in an independent Git clone. The host checkout remains the canonical repository. Clone mode protects the host checkout from modification, not inspection: the read-only source mount includes untracked and ignored files. Keep secrets outside the repository tree or use Docker Sandbox credential isolation.
 
 A clone-mode sandbox can contain multiple branches and worktrees for isolated parallel work.
 
@@ -202,13 +202,10 @@ Project/runtime dependencies remain repository-owned. Analysis tools installed a
 
 ### 4.3 Network
 
-Use:
-
-```text
-allow-all
-```
-
-Unrestricted external retrieval is a baseline capability for package managers, source hosts, registries, model providers, development services, and Web Access.
+Use the Docker Sandbox `balanced` preset as the baseline. It denies destinations
+by default while allowing common development services. Add the narrowest
+explicit allow rule when the active project, provider, package host, or registry
+requires a destination that the preset does not include.
 
 ### 4.4 Lifetime
 
@@ -220,16 +217,18 @@ The sandbox retains packages, configuration, repository state, and private Docke
 
 ## 5. Model architecture
 
-| Role | Model | Reasoning | Responsibility |
-| --- | --- | ---: | --- |
-| Parent | `openai-codex/gpt-5.6-terra` | `medium` | Intent, architecture, decomposition, integration, direct work, final response |
-| Scout | `opencode-go/deepseek-v4-flash` | `low` | Fast repository reconnaissance |
-| Researcher | `opencode-go/gpt-5.6-luna` | `high` | External research and source synthesis |
-| Worker | `opencode-go/deepseek-v4-flash` | `max` | Bounded implementation |
-| Reviewer | `opencode-go/gpt-5.6-luna` | `xhigh` | Independent semantic review |
-| Oracle | `openai-codex/gpt-5.6-sol` | `high` | Difficult, high-impact decision analysis |
+| Role | Responsibility |
+| --- | --- |
+| Parent | Intent, architecture, decomposition, integration, direct work, final response |
+| Scout | Fast repository reconnaissance |
+| Researcher | External research and source synthesis |
+| Worker | Bounded implementation |
+| Reviewer | Independent semantic review |
+| Oracle | Difficult, high-impact decision analysis |
 
-Model routing follows semantic responsibility:
+`settings.json` is authoritative for the model and reasoning level assigned to
+the Parent and each specialist role. Model routing follows semantic
+responsibility:
 
 ```text
 responsibility
@@ -263,22 +262,20 @@ The Worker uses:
 tools = inherit
 ```
 
-Permit only:
-
-```text
-opencode-go/deepseek-v4-flash
-opencode-go/gpt-5.6-luna
-openai-codex/gpt-5.6-sol
-```
-
-Use strict model-scope enforcement. Terra remains the Parent tier.
+Use strict model-scope enforcement. `settings.json` owns the allow list and
+role-to-model assignments. Every enabled specialist role and the configured
+`pi-btw` model must remain inside that allow list.
 
 Set:
 
 ```text
 maxSubagentDepth = 1
 toolDescriptionMode = compact
+artifactDir = session
 ```
+
+Store subagent artifacts with the Pi session instead of the project working
+tree.
 
 Use session-oriented specialist execution:
 
@@ -384,15 +381,9 @@ Responsibility:
 user side questions
 ```
 
-Use Luna for side threads:
-
-```json
-{
-  "model": "opencode-go/gpt-5.6-luna"
-}
-```
-
-Side threads inherit the current Pi thinking level and remain separate from the main conversation until selected content is brought into the main editor.
+`pi-btw.json` is authoritative for side-thread model and reasoning settings.
+Side threads remain separate from the main conversation until selected content
+is brought into the main editor.
 
 ### 8.3 `pi-context-view`
 
@@ -418,69 +409,19 @@ Use upstream defaults. Statusline provides the continuous summary; Context View 
 
 ## 9. Global Pi configuration
 
-Use:
+`settings.json` is the authoritative global Pi configuration. It must preserve:
 
-```json
-{
-  "defaultProvider": "openai-codex",
-  "defaultModel": "gpt-5.6-terra",
-  "defaultThinkingLevel": "medium",
+- `defaultProjectTrust: "never"`;
+- strict enforced subagent model scope;
+- enabled `scout`, `researcher`, `worker`, `reviewer`, and `oracle` roles;
+- `tools = inherit` for the Worker;
+- disabled `delegate` and `gpt-pro` roles.
 
-  "defaultProjectTrust": "never",
-
-  "subagents": {
-    "modelScope": {
-      "enforce": true,
-      "strict": true,
-      "allow": [
-        "opencode-go/deepseek-v4-flash",
-        "opencode-go/gpt-5.6-luna",
-        "openai-codex/gpt-5.6-sol"
-      ]
-    },
-
-    "agentOverrides": {
-      "scout": {
-        "model": "opencode-go/deepseek-v4-flash",
-        "thinking": "low"
-      },
-
-      "researcher": {
-        "model": "opencode-go/gpt-5.6-luna",
-        "thinking": "high"
-      },
-
-      "worker": {
-        "model": "opencode-go/deepseek-v4-flash",
-        "thinking": "max",
-        "tools": "inherit"
-      },
-
-      "reviewer": {
-        "model": "opencode-go/gpt-5.6-luna",
-        "thinking": "xhigh"
-      },
-
-      "oracle": {
-        "model": "openai-codex/gpt-5.6-sol",
-        "thinking": "high"
-      },
-
-      "delegate": {
-        "disabled": true
-      },
-
-      "gpt-pro": {
-        "disabled": true
-      }
-    }
-  }
-}
-```
-
-`defaultProjectTrust: "never"` keeps Pi project-local settings, executable Pi resources, packages, and extensions outside the baseline unless explicitly trusted. Repository context files such as `AGENTS.md` remain available. Global extensions may consume their own repository-local configuration according to their extension contract.
-
-Package state is owned by `pi install`.
+`defaultProjectTrust: "never"` keeps Pi project-local settings, executable Pi
+resources, packages, and extensions outside the baseline unless explicitly
+trusted. Repository context files such as `AGENTS.md` remain available. Global
+extensions may consume their own repository-local configuration according to
+their extension contract. Package state is owned by `pi install`.
 
 ---
 
@@ -490,6 +431,7 @@ Package state is owned by `pi install`.
 specification owns the invariants, not a prose copy of the JSON values:
 
 - task graphs remain shallow;
+- subagent artifacts remain session-scoped;
 - missions and scheduled runs remain disabled by default;
 - schedule creation remains forbidden;
 - isolated worktree cleanup follows the configured authority policy.
@@ -499,10 +441,11 @@ specification owns the invariants, not a prose copy of the JSON values:
 ## 11. Global `AGENTS.md`
 
 The revision-controlled `AGENTS.md` is authoritative. Keep always-loaded
-instructions concise. It points repository-changing work to the global
-`development-loop` Skill and keeps the original user request authoritative.
-Conditional lifecycle and cache procedures belong in on-demand Skills instead
-of being duplicated here.
+instructions concise. For repository-changing work, it requires the global
+`development-loop` Skill before the first repository write and requires its
+completion and durable-knowledge gates before the final response. Conditional
+lifecycle and cache procedures belong in on-demand Skills instead of being
+duplicated here.
 
 ---
 
@@ -562,17 +505,12 @@ A normal repository uses `AGENTS.md` only for facts that materially improve work
 
 ---
 
-## 13. Baseline revision model
+## 13. Template revisions
 
-Each template revision pins:
-
-- the `shell-docker` base image by digest;
-- the Pi release by exact version;
-- every permanent Pi extension by exact version.
-
-The Dockerfile is the revision manifest.
-
-Rolling-latest adoption occurs by resolving current releases, updating the pins, and building a new template revision. Existing named sandboxes remain on the revision from which they were created.
+The Dockerfile and revision-controlled configuration define each template
+revision. Update the base image and installed global tools deliberately, run the
+template verifier, and build a new revision. Existing named sandboxes remain on
+the revision from which they were created.
 
 The persistent global customization surface is:
 
@@ -595,8 +533,9 @@ scripts/verify-template.mjs
 
 Pi uses native Skill progressive disclosure for reusable procedures and
 repository-owned Markdown for expensive project-specific historical findings.
-The global `development-loop` Skill owns risk-scaled lifecycle gates and durable
-knowledge routing. The global `engineering-cache` Skill owns only cache
+The global `development-loop` Skill owns risk-scaled lifecycle gates, including
+a narrow cache lookup when `docs/engineering/cache/` exists and durable-knowledge
+routing after verification. The global `engineering-cache` Skill owns only cache
 retrieval, freshness checks, and cache-note storage.
 
 Repository cache notes, when useful, live under:
@@ -629,7 +568,12 @@ planning, proof, and independent review with risk. It uses the existing Parent,
 subagents, Plannotator, and repository verification mechanisms rather than
 owning a second execution graph or task-state machine.
 
-After verified work, it routes durable knowledge to discard, ADR,
-`engineering-cache`, or a reusable Skill. Keep translation, dynamic system-prompt
-generation, lifecycle persistence, and hard enforcement out of the baseline
-until behavioral evidence demonstrates a specific failure that requires them.
+After verified work, it always classifies durable knowledge as discard, ADR,
+`engineering-cache`, or a reusable Skill. ADRs are limited to architecturally
+significant choices with credible alternatives, non-obvious rationale, and
+meaningful coupling or reversal cost, and they follow the repository's existing
+ADR convention. Do not invent a repository-wide ADR location or format.
+
+Keep translation, dynamic system-prompt generation, lifecycle persistence, and
+additional orchestration out of the baseline unless measured failures justify a
+new owner or mechanism.

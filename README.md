@@ -1,7 +1,7 @@
 # Pi Engineering Template
 
-`pi-engineering-template` is a version-pinned engineering environment for the
-Pi coding agent on Docker Sandboxes.
+`pi-engineering-template` is a general-purpose software engineering environment
+for the Pi coding agent on Docker Sandboxes.
 
 It combines sandbox isolation, role-based subagent routing, global engineering
 instructions, lifecycle Skills, and executable checks for template invariants.
@@ -109,13 +109,18 @@ lifecycle policy selects them for durable caching.
 Docker Sandbox isolation does not make downloaded code, packages, extensions,
 or model-provider integrations trusted.
 
-The documented baseline initializes sandbox networking with `allow-all`.
-Code running inside the sandbox can therefore use unrestricted network access
-unless you apply a stricter Docker Sandbox policy.
+The documented baseline initializes Docker Sandboxes with the `balanced` network
+preset. It permits common development services and denies other destinations by
+default. Add explicit allow rules only when the active project or provider needs
+them.
 
-Review third-party packages and Pi extensions before you add them to the pinned
-environment. Do not commit model-provider credentials, authentication state,
-API keys, or other secrets to this repository.
+Clone mode protects the host repository from modification, not inspection. The
+read-only source mount includes untracked and ignored files. Keep secrets outside
+the repository tree or use Docker Sandbox credential isolation.
+
+Review third-party packages and Pi extensions before you add them to the
+template. Do not commit model-provider credentials, authentication state, API
+keys, or other secrets to this repository.
 
 ## Upstream projects
 
