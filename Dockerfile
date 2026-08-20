@@ -35,8 +35,8 @@ COPY --chown=agent:agent pi-btw.json \
 COPY --chown=agent:agent AGENTS.md \
     /home/agent/.pi/agent/AGENTS.md
 
-COPY --chown=agent:agent skills/engineering-cache \
-    /home/agent/.pi/agent/skills/engineering-cache
+COPY --chown=agent:agent skills \
+    /home/agent/.pi/agent/skills
 
 ARG PI_SUBAGENTS_VERSION=0.51.0
 ARG PI_WEB_ACCESS_VERSION=0.24.0

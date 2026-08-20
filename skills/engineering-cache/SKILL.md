@@ -1,6 +1,6 @@
 ---
 name: engineering-cache
-description: Use when prior non-obvious investigation, failed approaches, external constraints, or project-specific findings may affect the current engineering task, or after verified work when deciding whether a finding is worth preserving for reuse.
+description: Use when prior non-obvious investigation, failed approaches, external constraints, or project-specific findings may affect the current engineering task, or when verified project-specific knowledge has been selected for cache storage.
 ---
 
 # Engineering Cache
@@ -19,20 +19,11 @@ node ~/.pi/agent/skills/engineering-cache/scripts/cache.mjs check <note.md>
 
 Interpret `fresh-candidate` only as "no declared invalidating repository change was detected." It is not proof that the note is correct. Revalidate material claims against current repository evidence.
 
-## Distill only after verification
+## Store selected findings
 
-After the task is verified, preserve a finding only when rediscovering it is likely to cost more than maintaining it and the risk of stale guidance.
-
-Route the result as follows:
-
-- **Discard**: easy to rediscover from one file, one command, Git history, or standard documentation.
-- **ADR**: hard to reverse, surprising without context, and the result of a genuine trade-off.
-- **Cache note**: project-specific finding, failed approach, invariant, external constraint, counterexample, or verification assumption that was expensive to establish.
-- **Skill**: a procedure that has succeeded repeatedly and is useful beyond one project.
+Create a cache note only after verified work has established an expensive project-specific finding that is worth preserving. Lifecycle policy, ADR selection, and reusable-Skill promotion belong to `development-loop`, not this skill.
 
 Do not record task summaries, file listings, current API inventories, line numbers, or prose copies of configuration.
-
-## Cache note contract
 
 Create notes lazily with:
 

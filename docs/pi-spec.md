@@ -499,8 +499,10 @@ specification owns the invariants, not a prose copy of the JSON values:
 ## 11. Global `AGENTS.md`
 
 The revision-controlled `AGENTS.md` is authoritative. Keep always-loaded
-instructions concise. Use context pointers to on-demand Skills for conditional
-procedures instead of embedding those procedures here.
+instructions concise. It points repository-changing work to the global
+`development-loop` Skill and keeps the original user request authoritative.
+Conditional lifecycle and cache procedures belong in on-demand Skills instead
+of being duplicated here.
 
 ---
 
@@ -581,6 +583,7 @@ subagent-config.json
 web-search.json
 pi-btw.json
 AGENTS.md
+skills/development-loop/
 skills/engineering-cache/
 scripts/verify-template.mjs
 ```
@@ -592,8 +595,9 @@ scripts/verify-template.mjs
 
 Pi uses native Skill progressive disclosure for reusable procedures and
 repository-owned Markdown for expensive project-specific historical findings.
-The global `engineering-cache` Skill owns the retrieval, freshness, and
-distillation policy.
+The global `development-loop` Skill owns risk-scaled lifecycle gates and durable
+knowledge routing. The global `engineering-cache` Skill owns only cache
+retrieval, freshness checks, and cache-note storage.
 
 Repository cache notes, when useful, live under:
 
@@ -610,3 +614,22 @@ requires current evidence.
 Do not introduce a memory database, vector index, background consolidation, or
 additional orchestration layer until measured retrieval failures justify the
 extra owner and maintenance cost.
+
+---
+
+## 15. Development lifecycle policy
+
+`development-loop` is a gate-oriented engineering policy, not a workflow
+controller. The user's original request remains authoritative and is not
+replaced by a generated task prompt.
+
+The Skill requires current repository evidence before completion, resolves
+material uncertainty before speculative implementation when cheaper, and scales
+planning, proof, and independent review with risk. It uses the existing Parent,
+subagents, Plannotator, and repository verification mechanisms rather than
+owning a second execution graph or task-state machine.
+
+After verified work, it routes durable knowledge to discard, ADR,
+`engineering-cache`, or a reusable Skill. Keep translation, dynamic system-prompt
+generation, lifecycle persistence, and hard enforcement out of the baseline
+until behavioral evidence demonstrates a specific failure that requires them.

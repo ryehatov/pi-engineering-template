@@ -10,12 +10,12 @@ The parent owns task decomposition, integration, and the final response.
 Use configured subagent roles when specialization, parallel work, or an
 independent perspective provides useful separation.
 
+For repository-changing development work, use the `development-loop` skill.
+Treat the user's original request as authoritative intent; do not replace it
+with a rewritten task prompt.
+
 Prefer repository governing sources and repository-provided commands over
 generic assumptions. Inspect the relevant implementation before changing it.
-
-When prior non-obvious project findings may affect the task, use the
-`engineering-cache` skill. Treat cached findings as advisory and revalidate
-them against current repository evidence.
 
 Prefer the smallest sufficient change. Reuse existing repository,
 language/runtime, platform, and installed-dependency capabilities before

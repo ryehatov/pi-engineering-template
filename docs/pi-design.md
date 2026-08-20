@@ -167,7 +167,8 @@ Destination:
 ## 7. Create global `AGENTS.md`
 
 Use the revision-controlled `AGENTS.md`. Keep it short because it is always in
-agent context. Detailed or conditional procedures belong in on-demand Skills.
+agent context. It points repository-changing work to `development-loop` while
+detailed lifecycle and cache procedures remain in on-demand Skills.
 
 Destination:
 
@@ -181,8 +182,8 @@ Destination:
 
 Use the revision-controlled `Dockerfile` as the exact image manifest. It owns
 the base-image digest, package versions, configuration destinations, and the
-global `engineering-cache` Skill installation. Do not maintain a second
-Dockerfile copy in this guide.
+global Skill installation. Do not maintain a second Dockerfile copy in this
+guide.
 
 ---
 
@@ -570,13 +571,13 @@ The verifier checks branch-independent invariants such as strict model scope,
 subagent safety settings, exact Docker pins, and Skill installation. Branch
 variants remain free to select different allowed models and toolchains.
 
-During repository work, use the global `engineering-cache` Skill only when a
-prior non-obvious finding may avoid expensive rediscovery. Cache notes are
-repository-owned advisory history. Current governing sources, code, tests, and
-verification evidence remain authoritative.
+For repository-changing work, the global `development-loop` Skill supplies the
+risk-scaled engineering gates while preserving the user's original request as
+authoritative intent. It uses existing planning, subagent, review, and
+repository-verification mechanisms rather than introducing another workflow
+engine.
 
-Do not create cache notes for information that one file, one command, standard
-documentation, or Git history can recover cheaply. After verified work, route a
-durable result to an ADR only for a hard-to-reverse, surprising trade-off; to a
-cache note for expensive project-specific knowledge; or to a Skill only after a
-procedure has proved reusable.
+Use `engineering-cache` only when prior non-obvious findings may avoid expensive
+rediscovery or when `development-loop` has selected verified project-specific
+knowledge for storage. Cache notes remain advisory history; current governing
+sources, code, tests, and verification evidence remain authoritative.

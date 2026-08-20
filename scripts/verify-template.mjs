@@ -31,7 +31,10 @@ for (const file of [
   "subagent-config.json",
   "web-search.json",
   "pi-btw.json",
+  "skills/development-loop/SKILL.md",
+  "skills/development-loop/agents/openai.yaml",
   "skills/engineering-cache/SKILL.md",
+  "skills/engineering-cache/agents/openai.yaml",
   "skills/engineering-cache/scripts/cache.mjs",
 ]) {
   requireCondition(fs.existsSync(path.join(root, file)), `${file}: missing`);
@@ -68,6 +71,8 @@ if (subagents) {
 const agents = read("AGENTS.md");
 requireCondition((agents.match(/^# Global Engineering Instructions$/gm) || []).length === 1, "AGENTS.md: expected exactly one global heading");
 requireCondition((agents.match(/The parent owns task decomposition, integration, and the final response\./g) || []).length === 1, "AGENTS.md: parent ownership statement must not be duplicated");
+requireCondition((agents.match(/use the `development-loop` skill/g) || []).length === 1, "AGENTS.md: expected exactly one development-loop pointer");
+requireCondition(!agents.includes("engineering-cache"), "AGENTS.md: engineering-cache must remain behind development-loop");
 
 const dockerfile = read("Dockerfile");
 requireCondition(/^ARG BASE_IMAGE=.*@sha256:[0-9a-f]{64}$/m.test(dockerfile), "Dockerfile: BASE_IMAGE must be pinned by sha256 digest");
@@ -78,10 +83,21 @@ for (const match of dockerfile.matchAll(/^ARG ([A-Z0-9_]+_VERSION)=(.+)$/gm)) {
 if (dockerfile.includes("MICROMAMBA_VERSION=")) {
   requireCondition(/^ARG MICROMAMBA_SHA256=[0-9a-f]{64}$/m.test(dockerfile), "Dockerfile: micromamba must be pinned by sha256");
 }
-requireCondition(dockerfile.includes("skills/engineering-cache"), "Dockerfile: engineering-cache skill is not installed");
+requireCondition(dockerfile.includes("COPY --chown=agent:agent skills"), "Dockerfile: global skills directory is not installed");
+requireCondition(dockerfile.includes("/home/agent/.pi/agent/skills"), "Dockerfile: global skills destination is missing");
 
-const skill = read("skills/engineering-cache/SKILL.md");
-requireCondition(/^---\nname: engineering-cache\ndescription: .+\n---\n/s.test(skill), "engineering-cache/SKILL.md: invalid frontmatter");
+function validateSkill(relative, name) {
+  const skill = read(relative);
+  requireCondition(new RegExp(`^---\\nname: ${name}\\ndescription: .+\\n---\\n`, "s").test(skill), `${relative}: invalid frontmatter`);
+  return skill;
+}
+
+const developmentLoop = validateSkill("skills/development-loop/SKILL.md", "development-loop");
+const engineeringCache = validateSkill("skills/engineering-cache/SKILL.md", "engineering-cache");
+requireCondition(developmentLoop.includes("Do not replace it with a rewritten task prompt"), "development-loop: original user intent policy is missing");
+requireCondition(developmentLoop.includes("current repository-owned verification"), "development-loop: completion verification gate is missing");
+requireCondition(developmentLoop.includes("`engineering-cache`"), "development-loop: cache routing is missing");
+requireCondition(engineeringCache.includes("belong to `development-loop`"), "engineering-cache: lifecycle ownership boundary is missing");
 
 if (errors.length) {
   for (const error of errors) console.error(`FAIL ${error}`);
