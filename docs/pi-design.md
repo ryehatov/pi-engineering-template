@@ -37,7 +37,13 @@ pi-engineering-template/
 ├── subagent-config.json
 ├── web-search.json
 ├── pi-btw.json
-└── AGENTS.md
+├── AGENTS.md
+├── scripts/
+│   └── verify-template.mjs
+└── skills/
+    └── engineering-cache/
+        ├── SKILL.md
+        └── scripts/cache.mjs
 ```
 
 Use a revisioned image name:
@@ -116,29 +122,8 @@ Use:
 
 ## 4. Create `subagent-config.json`
 
-Use:
-
-```json
-{
-  "toolDescriptionMode": "compact",
-
-  "maxSubagentDepth": 1,
-
-  "missions": {
-    "enabled": false
-  },
-
-  "scheduledRuns": {
-    "enabled": false
-  },
-
-  "authorityPolicy": {
-    "discardWorktree": "auto",
-    "destructiveCleanup": "auto",
-    "scheduleCreate": "forbid"
-  }
-}
-```
+Use the revision-controlled `subagent-config.json`. It is the authoritative
+subagent runtime configuration for the template.
 
 Destination:
 
@@ -150,13 +135,8 @@ Destination:
 
 ## 5. Create `web-search.json`
 
-Use:
-
-```json
-{
-  "workflow": "none"
-}
-```
+Use the revision-controlled `web-search.json`. Do not duplicate its values in
+this guide.
 
 Destination:
 
@@ -186,31 +166,8 @@ Destination:
 
 ## 7. Create global `AGENTS.md`
 
-Use:
-
-```markdown
-# Global Engineering Instructions
-
-Communicate with the user in Japanese unless requested otherwise.
-
-Use English for agent-to-agent delegation, coordination, and handoff by
-default. Preserve authoritative Japanese text verbatim when translation could
-change its meaning.
-
-The parent owns task decomposition, integration, and the final response.
-Use configured subagent roles when specialization, parallel work, or an
-independent perspective provides useful separation.
-
-Prefer repository governing sources and repository-provided commands over
-generic assumptions. Inspect the relevant implementation before changing it.
-
-Prefer the smallest sufficient change. Reuse existing repository,
-language/runtime, platform, and installed-dependency capabilities before
-adding new abstractions or dependencies.
-
-Keep changes coherent and scoped. Report build, test, lint, type-check,
-benchmark, and other command results from commands actually run.
-```
+Use the revision-controlled `AGENTS.md`. Keep it short because it is always in
+agent context. Detailed or conditional procedures belong in on-demand Skills.
 
 Destination:
 
@@ -222,67 +179,10 @@ Destination:
 
 ## 8. Create the Dockerfile
 
-Resolve an exact base-image digest and exact npm versions for the revision, then substitute them for the placeholders below.
-
-```dockerfile
-ARG BASE_IMAGE=docker/sandbox-templates:shell-docker@sha256:<digest>
-FROM ${BASE_IMAGE}
-
-USER root
-
-RUN apt-get update \
- && apt-get install -y --no-install-recommends \
-      build-essential \
- && rm -rf /var/lib/apt/lists/*
-
-ARG PI_VERSION=<version>
-
-RUN npm install -g --ignore-scripts \
-    "@earendil-works/pi-coding-agent@${PI_VERSION}"
-
-USER agent
-
-RUN mkdir -p \
-    /home/agent/.pi/agent/extensions/subagent \
-    /home/agent/.pi
-
-COPY --chown=agent:agent settings.json \
-    /home/agent/.pi/agent/settings.json
-
-COPY --chown=agent:agent subagent-config.json \
-    /home/agent/.pi/agent/extensions/subagent/config.json
-
-COPY --chown=agent:agent web-search.json \
-    /home/agent/.pi/web-search.json
-
-COPY --chown=agent:agent pi-btw.json \
-    /home/agent/.pi/agent/pi-btw.json
-
-COPY --chown=agent:agent AGENTS.md \
-    /home/agent/.pi/agent/AGENTS.md
-
-ARG PI_SUBAGENTS_VERSION=<version>
-ARG PI_WEB_ACCESS_VERSION=<version>
-ARG PI_LENS_VERSION=<version>
-ARG PI_FFF_VERSION=<version>
-ARG PI_CONTEXT_VIEW_VERSION=<version>
-ARG DAP_VERSION=<version>
-ARG PI_STATUSLINE_VERSION=<version>
-ARG PLANNOTATOR_VERSION=<version>
-ARG PI_BTW_VERSION=<version>
-
-RUN pi install "npm:pi-subagents@${PI_SUBAGENTS_VERSION}" \
- && pi install "npm:pi-web-access@${PI_WEB_ACCESS_VERSION}" \
- && pi install "npm:pi-lens@${PI_LENS_VERSION}" \
- && pi install "npm:@ff-labs/pi-fff@${PI_FFF_VERSION}" \
- && pi install "npm:pi-context-view@${PI_CONTEXT_VIEW_VERSION}" \
- && pi install "npm:@piex-dev/dap@${DAP_VERSION}" \
- && pi install "npm:@narumitw/pi-statusline@${PI_STATUSLINE_VERSION}" \
- && pi install "npm:@plannotator/pi-extension@${PLANNOTATOR_VERSION}" \
- && pi install "npm:@narumitw/pi-btw@${PI_BTW_VERSION}"
-```
-
-The Dockerfile is the exact revision manifest.
+Use the revision-controlled `Dockerfile` as the exact image manifest. It owns
+the base-image digest, package versions, configuration destinations, and the
+global `engineering-cache` Skill installation. Do not maintain a second
+Dockerfile copy in this guide.
 
 ---
 
@@ -654,3 +554,29 @@ sbx template load pi-engineering.tar
 ```
 
 Create new project sandboxes from the new revision. Existing named sandboxes remain on their current revision.
+
+
+---
+
+## 20. Verify the template and preserve engineering knowledge
+
+Before committing a template revision, run:
+
+```bash
+node scripts/verify-template.mjs
+```
+
+The verifier checks branch-independent invariants such as strict model scope,
+subagent safety settings, exact Docker pins, and Skill installation. Branch
+variants remain free to select different allowed models and toolchains.
+
+During repository work, use the global `engineering-cache` Skill only when a
+prior non-obvious finding may avoid expensive rediscovery. Cache notes are
+repository-owned advisory history. Current governing sources, code, tests, and
+verification evidence remain authoritative.
+
+Do not create cache notes for information that one file, one command, standard
+documentation, or Git history can recover cheaply. After verified work, route a
+durable result to an ADR only for a hard-to-reverse, surprising trade-off; to a
+cache note for expensive project-specific knowledge; or to a Skill only after a
+procedure has proved reusable.

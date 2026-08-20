@@ -157,6 +157,17 @@ Use implementation-review loops when observable evidence indicates another itera
 
 Role separation defines responsibility while retaining the required implementation tool surface. The Worker inherits the ambient Pi tools.
 
+### 3.6 Keep current truth executable and historical knowledge advisory
+
+Current code, configuration, governing specifications, and repository-owned
+verification are authoritative for present behavior. Documentation must not
+copy information that the environment can recover cheaply. Preserve only
+non-obvious rationale, failed approaches, constraints, invariants, and other
+findings whose rediscovery cost justifies their maintenance and stale-data risk.
+
+Load historical knowledge on demand. Revalidate it against current repository
+evidence before use.
+
 ---
 
 ## 4. Docker Sandbox
@@ -475,59 +486,21 @@ Package state is owned by `pi install`.
 
 ## 10. Subagent runtime configuration
 
-Use:
+`subagent-config.json` is the authoritative runtime configuration. This
+specification owns the invariants, not a prose copy of the JSON values:
 
-```json
-{
-  "toolDescriptionMode": "compact",
-
-  "maxSubagentDepth": 1,
-
-  "missions": {
-    "enabled": false
-  },
-
-  "scheduledRuns": {
-    "enabled": false
-  },
-
-  "authorityPolicy": {
-    "discardWorktree": "auto",
-    "destructiveCleanup": "auto",
-    "scheduleCreate": "forbid"
-  }
-}
-```
+- task graphs remain shallow;
+- missions and scheduled runs remain disabled by default;
+- schedule creation remains forbidden;
+- isolated worktree cleanup follows the configured authority policy.
 
 ---
 
 ## 11. Global `AGENTS.md`
 
-Use:
-
-```markdown
-# Global Engineering Instructions
-
-Communicate with the user in Japanese unless requested otherwise.
-
-Use English for agent-to-agent delegation, coordination, and handoff by
-default. Preserve authoritative Japanese text verbatim when translation could
-change its meaning.
-
-The parent owns task decomposition, integration, and the final response.
-Use configured subagent roles when specialization, parallel work, or an
-independent perspective provides useful separation.
-
-Prefer repository governing sources and repository-provided commands over
-generic assumptions. Inspect the relevant implementation before changing it.
-
-Prefer the smallest sufficient change. Reuse existing repository,
-language/runtime, platform, and installed-dependency capabilities before
-adding new abstractions or dependencies.
-
-Keep changes coherent and scoped. Report build, test, lint, type-check,
-benchmark, and other command results from commands actually run.
-```
+The revision-controlled `AGENTS.md` is authoritative. Keep always-loaded
+instructions concise. Use context pointers to on-demand Skills for conditional
+procedures instead of embedding those procedures here.
 
 ---
 
@@ -608,4 +581,32 @@ subagent-config.json
 web-search.json
 pi-btw.json
 AGENTS.md
+skills/engineering-cache/
+scripts/verify-template.mjs
 ```
+
+
+---
+
+## 14. Engineering knowledge cache
+
+Pi uses native Skill progressive disclosure for reusable procedures and
+repository-owned Markdown for expensive project-specific historical findings.
+The global `engineering-cache` Skill owns the retrieval, freshness, and
+distillation policy.
+
+Repository cache notes, when useful, live under:
+
+```text
+docs/engineering/cache/
+```
+
+They are advisory history, not implementation authority. Each note declares a
+Git `verified_at` revision, stable `watch` paths that approximate its
+invalidation surface, and current evidence. A note with no detected changes to
+its declared watch paths is only a `fresh-candidate`; semantic correctness still
+requires current evidence.
+
+Do not introduce a memory database, vector index, background consolidation, or
+additional orchestration layer until measured retrieval failures justify the
+extra owner and maintenance cost.
