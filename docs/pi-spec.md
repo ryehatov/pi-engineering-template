@@ -2,7 +2,7 @@
 
 **File:** `pi-spec.md`  
 **Status:** Baseline  
-**Revision date:** 2026-08-21
+**Revision date:** 2026-08-22
 **Scope:** General-purpose software engineering
 
 ## 1. Purpose
@@ -32,7 +32,8 @@ Pi
 ├── @ff-labs/pi-fff
 ├── pi-context-view
 ├── @piex-dev/dap
-├── @narumitw/pi-statusline
+├── pi-powerline-footer
+├── pi-rewind-hook
 ├── @plannotator/pi-extension
 └── @narumitw/pi-btw
 ```
@@ -73,13 +74,16 @@ Docker Sandbox microVM
     │   ├── pi-fff
     │   └── DAP
     │
-    ├── interaction surfaces
+    ├── interaction and operational visibility
     │   ├── Plannotator
-    │   └── pi-btw
+    │   ├── pi-btw
+    │   └── pi-powerline-footer
     │
-    └── observability
-        ├── pi-context-view
-        └── pi-statusline
+    ├── session recovery
+    │   └── pi-rewind-hook
+    │
+    └── context diagnostics
+        └── pi-context-view
 ```
 
 ### 2.1 Responsibility ownership
@@ -104,8 +108,9 @@ Docker Sandbox microVM
 | Runtime debugging | DAP |
 | Human plan, diff, and document review | Plannotator |
 | User side questions | `pi-btw` |
+| Terminal interaction and continuous operating state | `pi-powerline-footer` |
+| Session-bound file-state recovery | `pi-rewind-hook` |
 | Context diagnostics | `pi-context-view` |
-| Continuous operating state | `pi-statusline` |
 | Authoritative project validation | Repository tooling |
 
 Responsibility ownership defines accountability. It does not restrict tool capability unless explicitly configured.
@@ -357,7 +362,7 @@ Use upstream defaults. Debugger adapters remain project/runtime dependencies.
 
 ---
 
-## 8. Interaction and observability extensions
+## 8. Interaction, recovery, and observability extensions
 
 ### 8.1 `@plannotator/pi-extension`
 
@@ -385,7 +390,37 @@ user side questions
 Side threads remain separate from the main conversation until selected content
 is brought into the main editor.
 
-### 8.3 `pi-context-view`
+### 8.3 `pi-powerline-footer`
+
+Responsibility:
+
+```text
+terminal interaction utilities and continuous operational visibility
+```
+
+Use upstream defaults. Powerline owns its built-in terminal interaction features
+and continuous operating-state presentation. These capabilities do not change
+ownership of task orchestration, repository validation, or runtime debugging.
+Powerline may render status published by other extensions without owning their
+state.
+
+### 8.4 `pi-rewind-hook`
+
+Responsibility:
+
+```text
+session-bound exact file-state checkpoints and user-directed restoration
+```
+
+Use upstream defaults. Rewind binds file snapshots to Pi session history and
+restores them through Pi session navigation. Its snapshot Git objects and
+`refs/pi-rewind/store` ref are recovery state, not canonical repository history.
+Durable work remains repository commits and branches.
+
+Rewind covers tracked files and untracked non-ignored files. Ignored files and
+empty directories remain outside its snapshot domain.
+
+### 8.5 `pi-context-view`
 
 Responsibility:
 
@@ -394,16 +429,6 @@ deep context diagnostics
 ```
 
 Use upstream defaults and inspect effective context, injections, and tool-schema cost on demand.
-
-### 8.4 `@narumitw/pi-statusline`
-
-Responsibility:
-
-```text
-continuous operational visibility
-```
-
-Use upstream defaults. Statusline provides the continuous summary; Context View provides detailed inspection.
 
 ---
 

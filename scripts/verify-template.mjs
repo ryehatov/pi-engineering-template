@@ -120,7 +120,8 @@ for (const [packageName, versionArg] of [
   ["@ff-labs/pi-fff", "PI_FFF_VERSION"],
   ["pi-context-view", "PI_CONTEXT_VIEW_VERSION"],
   ["@piex-dev/dap", "DAP_VERSION"],
-  ["@narumitw/pi-statusline", "PI_STATUSLINE_VERSION"],
+  ["pi-powerline-footer", "PI_POWERLINE_FOOTER_VERSION"],
+  ["pi-rewind-hook", "PI_REWIND_HOOK_VERSION"],
   ["@plannotator/pi-extension", "PLANNOTATOR_VERSION"],
   ["@narumitw/pi-btw", "PI_BTW_VERSION"],
 ]) {
@@ -128,6 +129,11 @@ for (const [packageName, versionArg] of [
   requireCondition(dockerfile.includes(`ARG ${versionArg}=`), `Dockerfile: ${packageName} version argument is missing`);
   requireCondition(dockerfile.includes(`pi install "npm:${packageName}@${versionRef}"`), `Dockerfile: required extension ${packageName} is not installed`);
 }
+
+requireCondition(
+  !dockerfile.includes("@narumitw/pi-statusline") && !dockerfile.includes("PI_STATUSLINE_VERSION"),
+  "Dockerfile: legacy pi-statusline configuration must not remain",
+);
 
 function validateSkill(relative, name) {
   const skill = read(relative);

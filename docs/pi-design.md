@@ -1,7 +1,7 @@
 # Pi Engineering Environment Setup and Operations Guide
 
 **File:** `pi-design.md`
-**Revision date:** 2026-08-21
+**Revision date:** 2026-08-22
 **Companion specification:** `pi-spec.md`
 
 ## 1. Host setup
@@ -339,9 +339,19 @@ or open the side-thread menu with:
 
 `pi-btw.json` is authoritative for the side-thread model and reasoning behavior.
 
-### 13.7 Context inspection
+### 13.7 Terminal interaction and context inspection
 
-Use `pi-statusline` for continuous operating-state visibility and `pi-context-view` for detailed context inspection.
+Use `pi-powerline-footer` for continuous operating-state visibility and its
+built-in terminal interaction features. Use `pi-context-view` for detailed
+context inspection.
+
+### 13.8 Session rewind
+
+Use Pi session navigation when you need to return to an earlier conversation
+point. When `pi-rewind-hook` has an exact checkpoint for that point, choose
+whether to restore the associated file state.
+
+Rewind is recovery state, not durable Git history. Commit useful work normally.
 
 ---
 
@@ -408,7 +418,8 @@ git switch -c agent/<task> \
   sandbox-pi-<project>/agent/<task>
 ```
 
-The host repository owns the integrated result.
+The host repository owns the integrated result. Rewind snapshot refs remain
+sandbox-local recovery state and are not part of the branch transfer workflow.
 
 ---
 
@@ -477,7 +488,8 @@ for package in \
   @ff-labs/pi-fff \
   pi-context-view \
   @piex-dev/dap \
-  @narumitw/pi-statusline \
+  pi-powerline-footer \
+  pi-rewind-hook \
   @plannotator/pi-extension \
   @narumitw/pi-btw
 do
