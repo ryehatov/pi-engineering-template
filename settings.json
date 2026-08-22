@@ -51,5 +51,59 @@
         "disabled": true
       }
     }
+  },
+
+  "showLastPrompt": true,
+
+  "powerline": {
+    "preset": "default",
+    "placement": "below",
+    "welcome": false,
+    "separator": "powerline-thin",
+
+    "layout": {
+      "left": [
+        "model",
+        "thinking",
+        "path",
+        "git",
+        "queue",
+        "subagents"
+      ],
+      "right": [
+        "context_pct",
+        "cache_read"
+      ],
+      "secondary": [
+        "extension_statuses"
+      ]
+    },
+
+    "model": {
+      "display": "qualified",
+      "showThinkingLevel": false
+    },
+
+    "path": {
+      "mode": "abbreviated",
+      "maxLength": 30
+    },
+
+    "git": {
+      "showBranch": true,
+      "showStaged": true,
+      "showUnstaged": true,
+      "showUntracked": true,
+      "polling": "branch",
+      "hostIcon": true
+    },
+
+    "context": {
+      "format": "percent"
+    },
+
+    "cache_read": {
+      "format": "both"
+    }
   }
 }

@@ -59,3 +59,7 @@ RUN pi install "npm:pi-subagents@${PI_SUBAGENTS_VERSION}" \
  && pi install "npm:pi-rewind-hook@${PI_REWIND_HOOK_VERSION}" \
  && pi install "npm:@plannotator/pi-extension@${PLANNOTATOR_VERSION}" \
  && pi install "npm:@narumitw/pi-btw@${PI_BTW_VERSION}"
+
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
+ENV POWERLINE_NERD_FONTS=1
