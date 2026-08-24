@@ -372,7 +372,11 @@ Responsibility:
 human review and annotation
 ```
 
-Use upstream defaults.
+Use upstream defaults except for Docker Sandbox integration. Force remote mode
+so the review server binds on the sandbox interface. Set
+`PLANNOTATOR_BROWSER=xdg-open` so Docker Sandboxes routes review URLs to the
+host browser. Do not set `PLANNOTATOR_PORT` in the image; assign and publish a
+distinct port when each sandbox is created.
 
 Normal Pi execution starts in standard mode. Use Plannotator plan mode when explicit plan review adds value. Use its review and annotation surfaces directly for current changes, Markdown documents, and the latest assistant response.
 

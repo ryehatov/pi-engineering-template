@@ -165,16 +165,23 @@ sbx template load pi-engineering.tar
 
 ## 10. Create a project sandbox
 
-Run from the repository's main checkout:
+Run from the repository's main checkout. Choose a distinct
+`<plannotator-port>` for each concurrently running sandbox:
 
 ```bash
 sbx run \
   --clone \
   --name pi-<project> \
   --template local/pi-engineering:<revision> \
+  --publish <plannotator-port>:<plannotator-port> \
+  --env PLANNOTATOR_PORT=<plannotator-port> \
   shell \
   .
 ```
+
+The template runs Plannotator in remote mode and uses `xdg-open` for Docker
+Sandboxes' host-browser bridge. Publishing the same port on the host makes the
+advertised `localhost` review URL reach the Plannotator server.
 
 Inside the sandbox, create a working branch:
 

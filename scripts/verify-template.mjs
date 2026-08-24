@@ -112,6 +112,9 @@ if (dockerfile.includes("MICROMAMBA_VERSION=")) {
 requireCondition(dockerfile.includes("COPY --chown=agent:agent skills"), "Dockerfile: global skills directory is not installed");
 requireCondition(dockerfile.includes("/home/agent/.pi/agent/skills"), "Dockerfile: global skills destination is missing");
 requireCondition(dockerfile.includes('"@earendil-works/pi-coding-agent@${PI_VERSION}"'), "Dockerfile: Pi package installation is missing");
+requireCondition(dockerfile.includes("ENV PLANNOTATOR_REMOTE=1"), "Dockerfile: Plannotator must use remote mode inside Docker Sandbox");
+requireCondition(dockerfile.includes("ENV PLANNOTATOR_BROWSER=xdg-open"), "Dockerfile: Plannotator must use the Docker Sandbox host-browser bridge");
+requireCondition(!/^ENV\s+PLANNOTATOR_PORT(?:=|\s)/m.test(dockerfile), "Dockerfile: Plannotator port must remain sandbox-instance configuration");
 
 for (const [packageName, versionArg] of [
   ["pi-subagents", "PI_SUBAGENTS_VERSION"],

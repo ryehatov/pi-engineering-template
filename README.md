@@ -65,16 +65,22 @@ by Git.
 
 ## Create a project sandbox
 
-Run the following command from the main checkout of the target Git repository:
+Choose a distinct `<plannotator-port>` for each concurrently running sandbox,
+then run the following command from the main checkout of the target Git
+repository:
 
 ```bash
 sbx run \
   --clone \
   --name pi-<project> \
   --template "local/pi-engineering:${REVISION}" \
+  --publish <plannotator-port>:<plannotator-port> \
+  --env PLANNOTATOR_PORT=<plannotator-port> \
   shell \
   .
 ```
+
+Plannotator review URLs open in the host browser through Docker Sandboxes.
 
 Start Pi inside the sandbox:
 
