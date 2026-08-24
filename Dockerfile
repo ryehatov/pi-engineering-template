@@ -9,7 +9,7 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 
 # pi
-ARG PI_VERSION=0.84.2
+ARG PI_VERSION=0.84.3
 
 RUN npm install -g --ignore-scripts \
     "@earendil-works/pi-coding-agent@${PI_VERSION}"
@@ -38,16 +38,16 @@ COPY --chown=agent:agent AGENTS.md \
 COPY --chown=agent:agent skills \
     /home/agent/.pi/agent/skills
 
-ARG PI_SUBAGENTS_VERSION=0.52.1
-ARG PI_WEB_ACCESS_VERSION=0.24.0
-ARG PI_LENS_VERSION=4.1.0
+ARG PI_SUBAGENTS_VERSION=0.56.0
+ARG PI_WEB_ACCESS_VERSION=0.24.2
+ARG PI_LENS_VERSION=4.1.1
 ARG PI_FFF_VERSION=0.10.5
 ARG PI_CONTEXT_VIEW_VERSION=0.4.3
 ARG DAP_VERSION=0.1.1
 ARG PI_POWERLINE_FOOTER_VERSION=0.15.1
 ARG PI_REWIND_HOOK_VERSION=1.8.5
-ARG PLANNOTATOR_VERSION=0.27.4
-ARG PI_BTW_VERSION=0.55.0
+ARG PLANNOTATOR_VERSION=0.27.7
+ARG PI_BTW_VERSION=0.55.1
 
 RUN pi install "npm:pi-subagents@${PI_SUBAGENTS_VERSION}" \
  && pi install "npm:pi-web-access@${PI_WEB_ACCESS_VERSION}" \
