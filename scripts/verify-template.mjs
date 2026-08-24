@@ -42,6 +42,7 @@ const requiredFiles = [
   "skills/engineering-cache/SKILL.md",
   "skills/engineering-cache/agents/openai.yaml",
   "skills/engineering-cache/scripts/cache.mjs",
+  "scripts/test-engineering-cache.mjs",
 ];
 
 for (const file of requiredFiles) {
@@ -157,20 +158,31 @@ function validateNodeSyntax(relative) {
   requireCondition(result.status === 0, `${relative}: JavaScript syntax check failed${result.stderr ? `: ${result.stderr.trim()}` : ""}`);
 }
 
+function validateBehavior(relative) {
+  const file = path.join(root, relative);
+  const result = spawnSync(process.execPath, [file], { cwd: root, encoding: "utf8" });
+  requireCondition(result.status === 0, `${relative}: behavior check failed${result.stderr || result.stdout ? `: ${(result.stderr || result.stdout).trim()}` : ""}`);
+}
+
 const developmentLoop = validateSkill("skills/development-loop/SKILL.md", "development-loop");
 const engineeringCache = validateSkill("skills/engineering-cache/SKILL.md", "engineering-cache");
 validateAgentMetadata("skills/development-loop/agents/openai.yaml");
 validateAgentMetadata("skills/engineering-cache/agents/openai.yaml");
 validateNodeSyntax("skills/engineering-cache/scripts/cache.mjs");
+validateNodeSyntax("scripts/test-engineering-cache.mjs");
+validateBehavior("scripts/test-engineering-cache.mjs");
 
 requireCondition(developmentLoop.includes("Do not replace it with a rewritten task prompt"), "development-loop: original user intent policy is missing");
 requireCondition(developmentLoop.includes("current repository-owned verification"), "development-loop: completion verification gate is missing");
 requireCondition(developmentLoop.includes("`docs/engineering/cache/` exists"), "development-loop: deterministic cache lookup gate is missing");
+requireCondition(developmentLoop.includes("Close each material completion claim with current evidence"), "development-loop: claim-to-evidence gate is missing");
 requireCondition(developmentLoop.includes("Classify whether the task produced durable knowledge"), "development-loop: durable-knowledge classification gate is missing");
 requireCondition(developmentLoop.includes("credible alternative"), "development-loop: ADR selection criteria are incomplete");
 requireCondition(developmentLoop.includes("do not invent a repository-wide ADR location or format"), "development-loop: ADR destination boundary is missing");
 requireCondition(developmentLoop.includes("`engineering-cache`"), "development-loop: cache routing is missing");
 requireCondition(engineeringCache.includes("belong to `development-loop`"), "engineering-cache: lifecycle ownership boundary is missing");
+requireCondition(engineeringCache.includes("watch_fingerprint"), "engineering-cache: fingerprint validity semantics are missing");
+requireCondition(engineeringCache.includes("status: superseded"), "engineering-cache: supersession semantics are missing");
 
 if (errors.length) {
   for (const error of errors) console.error(`FAIL ${error}`);
