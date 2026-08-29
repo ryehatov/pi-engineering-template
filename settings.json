@@ -10,6 +10,7 @@
       "enforce": true,
       "strict": true,
       "allow": [
+        "opencode-go/hy3",
         "opencode-go/deepseek-v4-flash",
         "opencode-go/gpt-5.6-luna",
         "openai-codex/gpt-5.6-sol"
@@ -18,24 +19,24 @@
 
     "agentOverrides": {
       "scout": {
-        "model": "opencode-go/deepseek-v4-flash",
+        "model": "opencode-go/hy3",
         "thinking": "low"
       },
 
       "researcher": {
-        "model": "opencode-go/gpt-5.6-luna",
+        "model": "opencode-go/hy3",
         "thinking": "high"
       },
 
       "worker": {
-        "model": "opencode-go/deepseek-v4-flash",
-        "thinking": "max",
+        "model": "opencode-go/hy3",
+        "thinking": "high",
         "tools": "inherit"
       },
 
       "reviewer": {
-        "model": "opencode-go/gpt-5.6-luna",
-        "thinking": "xhigh"
+        "model": "opencode-go/deepseek-v4-flash",
+        "thinking": "max"
       },
 
       "oracle": {
