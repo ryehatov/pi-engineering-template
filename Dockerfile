@@ -9,7 +9,7 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 
 # pi
-ARG PI_VERSION=0.84.3
+ARG PI_VERSION=0.84.4
 
 RUN npm install -g --ignore-scripts \
     "@earendil-works/pi-coding-agent@${PI_VERSION}"
