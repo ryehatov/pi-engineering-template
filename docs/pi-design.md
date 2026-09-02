@@ -1,7 +1,7 @@
 # Pi Engineering Environment Setup and Operations Guide
 
 **File:** `pi-design.md`
-**Revision date:** 2026-08-22
+**Revision date:** 2026-09-02
 **Companion specification:** `pi-spec.md`
 
 ## 1. Host setup
@@ -43,6 +43,7 @@ pi-engineering-template/
 ├── subagent-config.json
 ├── web-search.json
 ├── pi-btw.json
+├── pi-fff.json
 ├── AGENTS.md
 ├── docs/
 │   ├── pi-spec.md
@@ -111,6 +112,18 @@ Destination:
 
 ```text
 ~/.pi/agent/pi-btw.json
+```
+
+### 6.1 Create `pi-fff.json`
+
+Use the revision-controlled `pi-fff.json`. It keeps FFF in `override` mode so
+Parent and strict subagents use the stable `grep` and `find` tool names while
+FFF provides their implementation.
+
+Destination:
+
+```text
+~/.pi/agent/pi-fff.json
 ```
 
 ---
@@ -267,15 +280,16 @@ Use direct Parent execution when it is the simplest useful path.
 Use the simplest discovery surface that answers the current question:
 
 ```text
-Pi native find/grep
-    direct exact search
-
-FFF
-    indexed, fuzzy, and frecency search
+grep/find
+    stable Pi tool names backed by FFF override mode
 
 Lens
-    language-aware semantic navigation and edit-time diagnostics
+    semantic discovery, bounded source reads, and diagnostics
 ```
+
+Scout, Reviewer, and Oracle receive the always-active read-oriented Lens tools
+needed for repository inspection. They do not rely on ambient extension-tool
+inheritance for those capabilities.
 
 ### 13.2 Implementation and validation
 
@@ -286,6 +300,11 @@ tools = inherit
 ```
 
 Delegated implementation can use the ambient Pi tools, extensions, shell, repository tooling, and sandbox-private Docker Engine.
+
+Scout, Reviewer, and Oracle use explicit tool allow lists. Their Lens baseline is
+`lens_diagnostics`, `lsp_diagnostics`, `module_report`, `read_symbol`,
+`read_enclosing`, and `symbol_search`. Reviewer and Oracle do not receive
+source-mutation or runtime-debug tools.
 
 Use repository-provided build, test, lint, type-check, benchmark, and generation commands as the authoritative project validation surface.
 
@@ -522,7 +541,6 @@ sbx template load pi-engineering.tar
 ```
 
 Create new project sandboxes from the new revision. Existing named sandboxes remain on their current revision.
-
 
 ---
 
