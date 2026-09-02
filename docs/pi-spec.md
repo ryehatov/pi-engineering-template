@@ -2,7 +2,7 @@
 
 **File:** `pi-spec.md`  
 **Status:** Baseline  
-**Revision date:** 2026-08-22
+**Revision date:** 2026-09-02
 **Scope:** General-purpose software engineering
 
 ## 1. Purpose
@@ -201,6 +201,7 @@ The custom template contains:
 - subagent runtime settings;
 - Web Access settings;
 - `pi-btw` settings;
+- `pi-fff` settings;
 - global `AGENTS.md`.
 
 Project/runtime dependencies remain repository-owned. Analysis tools installed and managed privately by an extension remain extension-owned.
@@ -259,13 +260,15 @@ reviewer
 oracle
 ```
 
-Override only the baseline model, reasoning, and Worker tool assignments.
+Override the baseline model and reasoning assignments. Preserve each role's capability boundary explicitly.
 
 The Worker uses:
 
 ```text
 tools = inherit
 ```
+
+Scout, Reviewer, and Oracle use explicit tool allow lists. Each receives the stable `grep` and `find` names and the always-active, read-oriented Lens tools required for repository inspection. Reviewer and Oracle do not receive source-mutation or runtime-debug tools. Researcher keeps the upstream Web Access tool contract.
 
 Use strict model-scope enforcement. `settings.json` owns the allow list and
 role-to-model assignments. Every enabled specialist role and the configured
@@ -330,7 +333,7 @@ edit-time diagnostics, deterministic formatting/autofix,
 and language-aware code intelligence
 ```
 
-Use upstream defaults.
+Use upstream defaults. Expose the always-active, read-oriented Lens inspection tools explicitly to Scout, Reviewer, and Oracle. Keep mutation-capable and dynamically activated Lens tools outside Reviewer and Oracle. Worker inherits the ambient Pi tool surface.
 
 Lens feedback is incremental. Repository-provided commands remain authoritative for build, test, lint, type-check, benchmark, and acceptance behavior.
 
@@ -346,9 +349,9 @@ Responsibility:
 fast repository discovery
 ```
 
-Use the upstream default tool-and-UI mode.
+Use `override` mode through the revision-controlled `pi-fff.json`. FFF supplies the implementation behind the stable Pi `grep` and `find` tool names, so strict subagent allow lists do not depend on FFF-specific aliases.
 
-FFF complements Pi native exact search and Lens semantic navigation.
+FFF provides fast textual and path discovery. Lens provides semantic navigation and diagnostics.
 
 ### 7.4 `@piex-dev/dap`
 
@@ -444,6 +447,8 @@ Use upstream defaults and inspect effective context, injections, and tool-schema
 - strict enforced subagent model scope;
 - enabled `scout`, `researcher`, `worker`, `reviewer`, and `oracle` roles;
 - `tools = inherit` for the Worker;
+- explicit Lens read-tool allow lists for Scout, Reviewer, and Oracle;
+- no mutation/debug tools in Reviewer or Oracle;
 - disabled `delegate` and `gpt-pro` roles.
 
 `defaultProjectTrust: "never"` keeps Pi project-local settings, executable Pi
@@ -549,12 +554,12 @@ settings.json
 subagent-config.json
 web-search.json
 pi-btw.json
+pi-fff.json
 AGENTS.md
 skills/development-loop/
 skills/engineering-cache/
 scripts/verify-template.mjs
 ```
-
 
 ---
 
