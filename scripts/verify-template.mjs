@@ -38,6 +38,8 @@ const requiredFiles = [
   "web-search.json",
   "pi-btw.json",
   "pi-fff.json",
+  "docs/pi-spec.md",
+  "docs/pi-design.md",
   "skills/development-loop/SKILL.md",
   "skills/development-loop/agents/openai.yaml",
   "skills/engineering-cache/SKILL.md",
@@ -115,6 +117,14 @@ if (subagents) {
   requireCondition(subagents.authorityPolicy?.destructiveCleanup === "auto", "subagent-config.json: destructive cleanup must remain automatic");
   requireCondition(subagents.authorityPolicy?.scheduleCreate === "forbid", "subagent-config.json: schedule creation must remain forbidden");
 }
+
+const spec = read("docs/pi-spec.md");
+const design = read("docs/pi-design.md");
+requireCondition(spec.includes("Use `override` mode through the revision-controlled `pi-fff.json`."), "docs/pi-spec.md: FFF override policy is missing");
+requireCondition(spec.includes("Scout, Reviewer, and Oracle use explicit tool allow lists."), "docs/pi-spec.md: specialist tool policy is missing");
+requireCondition(spec.includes("explicit Lens read-tool allow lists for Scout, Reviewer, and Oracle"), "docs/pi-spec.md: global Lens capability invariant is missing");
+requireCondition(design.includes("stable `grep` and `find` tool names while"), "docs/pi-design.md: FFF override operation guidance is missing");
+requireCondition(design.includes("Scout, Reviewer, and Oracle use explicit tool allow lists."), "docs/pi-design.md: specialist tool guidance is missing");
 
 const agents = read("AGENTS.md");
 requireCondition((agents.match(/^# Global Engineering Instructions$/gm) || []).length === 1, "AGENTS.md: expected exactly one global heading");
