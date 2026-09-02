@@ -32,6 +32,9 @@ COPY --chown=agent:agent web-search.json \
 COPY --chown=agent:agent pi-btw.json \
     /home/agent/.pi/agent/pi-btw.json
 
+COPY --chown=agent:agent pi-fff.json \
+    /home/agent/.pi/agent/pi-fff.json
+
 COPY --chown=agent:agent AGENTS.md \
     /home/agent/.pi/agent/AGENTS.md
 

@@ -37,6 +37,7 @@ const requiredFiles = [
   "subagent-config.json",
   "web-search.json",
   "pi-btw.json",
+  "pi-fff.json",
   "skills/development-loop/SKILL.md",
   "skills/development-loop/agents/openai.yaml",
   "skills/engineering-cache/SKILL.md",
@@ -53,6 +54,7 @@ const settings = parseJson("settings.json");
 const subagents = parseJson("subagent-config.json");
 parseJson("web-search.json");
 const btw = parseJson("pi-btw.json");
+const fff = parseJson("pi-fff.json");
 
 if (settings) {
   requireCondition(settings.defaultProjectTrust === "never", "settings.json: defaultProjectTrust must remain 'never'");
@@ -77,10 +79,30 @@ if (settings) {
     requireCondition(allow.includes(override.model), `settings.json: ${role} model is outside the enforced allow list`);
   }
 
+  const lensReadTools = ["lens_diagnostics", "lsp_diagnostics", "module_report", "read_symbol", "read_enclosing", "symbol_search"];
+  for (const role of ["scout", "reviewer", "oracle"]) {
+    const tools = overrides[role]?.tools;
+    requireCondition(Array.isArray(tools), `settings.json: ${role} tools must use an explicit allow list`);
+    for (const tool of lensReadTools) {
+      requireCondition(tools?.includes(tool), `settings.json: ${role} must expose Lens tool '${tool}'`);
+    }
+    requireCondition(tools?.includes("grep") && tools?.includes("find"), `settings.json: ${role} must expose stable grep/find tool names`);
+  }
+
+  for (const role of ["reviewer", "oracle"]) {
+    for (const tool of ["edit", "write", "ast_grep_replace", "lens_diagnostic_mark", "debug"]) {
+      requireCondition(!overrides[role]?.tools?.includes(tool), `settings.json: ${role} must not expose mutation/debug tool '${tool}'`);
+    }
+  }
+
   requireCondition(overrides.worker?.tools === "inherit", "settings.json: worker tools must remain 'inherit'");
   requireCondition(overrides.delegate?.disabled === true, "settings.json: delegate must remain disabled");
   requireCondition(overrides["gpt-pro"]?.disabled === true, "settings.json: gpt-pro must remain disabled");
   if (btw?.model) requireCondition(allow.includes(btw.model), "pi-btw.json: model must be in the enforced subagent allow list");
+}
+
+if (fff) {
+  requireCondition(fff.mode === "override", "pi-fff.json: mode must remain 'override'");
 }
 
 if (subagents) {
@@ -112,6 +134,8 @@ if (dockerfile.includes("MICROMAMBA_VERSION=")) {
 }
 requireCondition(dockerfile.includes("COPY --chown=agent:agent skills"), "Dockerfile: global skills directory is not installed");
 requireCondition(dockerfile.includes("/home/agent/.pi/agent/skills"), "Dockerfile: global skills destination is missing");
+requireCondition(dockerfile.includes("COPY --chown=agent:agent pi-fff.json"), "Dockerfile: pi-fff global configuration is not installed");
+requireCondition(dockerfile.includes("/home/agent/.pi/agent/pi-fff.json"), "Dockerfile: pi-fff configuration destination is missing");
 requireCondition(dockerfile.includes('"@earendil-works/pi-coding-agent@${PI_VERSION}"'), "Dockerfile: Pi package installation is missing");
 requireCondition(dockerfile.includes("ENV PLANNOTATOR_REMOTE=1"), "Dockerfile: Plannotator must use remote mode inside Docker Sandbox");
 requireCondition(dockerfile.includes("ENV PLANNOTATOR_BROWSER=xdg-open"), "Dockerfile: Plannotator must use the Docker Sandbox host-browser bridge");
