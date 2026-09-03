@@ -46,10 +46,8 @@ COPY --chown=agent:agent pi-fff.json \
 COPY --chown=agent:agent AGENTS.md \
     /home/agent/.pi/agent/AGENTS.md
 
-COPY --chown=agent:agent skills \
-    /home/agent/.pi/agent/skills
-
 ARG PI_SUBAGENTS_VERSION=0.63.0
+ARG PI_PSTACK_VERSION=0.4.0
 ARG PI_WEB_ACCESS_VERSION=0.27.0
 ARG PI_LENS_VERSION=4.1.3
 ARG PI_FFF_VERSION=0.10.6
