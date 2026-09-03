@@ -26,13 +26,18 @@ RUN mkdir -p \
 COPY --chown=agent:agent settings.json \
     /home/agent/.pi/agent/settings.json
 
+COPY --chown=agent:agent models.json \
+    /home/agent/.pi/agent/models.json
+
 COPY --chown=agent:agent subagent-config.json \
     /home/agent/.pi/agent/extensions/subagent/config.json
 
 COPY --chown=agent:agent pstack-models.json \
     /home/agent/.pi/agent/pstack/models.json
 
-RUN chmod 600 /home/agent/.pi/agent/pstack/models.json
+RUN chmod 600 \
+    /home/agent/.pi/agent/models.json \
+    /home/agent/.pi/agent/pstack/models.json
 
 COPY --chown=agent:agent web-search.json \
     /home/agent/.pi/web-search.json
@@ -46,7 +51,7 @@ COPY --chown=agent:agent pi-fff.json \
 COPY --chown=agent:agent AGENTS.md \
     /home/agent/.pi/agent/AGENTS.md
 
-ARG PI_SUBAGENTS_VERSION=0.63.0
+ARG PI_SUBAGENTS_VERSION=0.64.0
 ARG PI_PSTACK_VERSION=0.4.0
 ARG PI_WEB_ACCESS_VERSION=0.27.0
 ARG PI_LENS_VERSION=4.1.3
@@ -74,6 +79,7 @@ ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8
 ENV POWERLINE_NERD_FONTS=1
 ENV PI_SUBAGENT_TASK_DELIVERY=file
+ENV CMD_ZDR=1
 
 ENV PLANNOTATOR_REMOTE=1
 ENV PLANNOTATOR_BROWSER=xdg-open

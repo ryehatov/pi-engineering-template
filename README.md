@@ -1,27 +1,58 @@
 # pi-engineering-template
 
-A Docker Sandbox template for rigorous Pi-based software engineering.
+A Docker Sandbox template for rigorous software engineering with Pi.
 
-This branch uses `@zenspc/pi-pstack` and Poteto Mode as the engineering policy. `pi-subagents` is the execution substrate. Repository and installed engineering tools such as pi-fff and pi-lens remain available to delegated work when the agent capability allows them.
+The `pstack` branch is intentionally opinionated. It treats Pi, `pi-subagents`, and `@zenspc/pi-pstack` as the core system and uses a small role-specialized model portfolio rather than a general model gateway.
 
-## Design
+## Core architecture
 
-The template separates four responsibilities.
+- **Pi** is the parent runtime and integration point.
+- **pi-subagents** provides isolated children, bounded parallelism, worktrees, artifacts, and model enforcement.
+- **pi-pstack** provides Poteto Mode, engineering principles, playbooks, multi-model review, arena, swarm, architecture, and reflection workflows.
+- **OpenAI Codex** provides GPT-5.6 Luna and Sol.
+- **Command Code GOAT Provider API** provides the specialist Flash models through Pi's native OpenAI-compatible provider path with ZDR forced on every request.
 
-1. `@zenspc/pi-pstack` selects the engineering playbook, principles, review method, and verification discipline.
-2. `pi-subagents` provides delegation, parallel fan-out, nested orchestration, worktree isolation, and execution budgets.
-3. pi-fff, pi-lens, DAP, web access, Plannotator, and related extensions provide concrete engineering capabilities.
-4. Docker Sandbox provides the outer isolation boundary.
+Supporting extensions such as pi-fff, pi-lens, web access, DAP, Plannotator, and the footer remain tools. They do not define a second engineering lifecycle.
 
-The template intentionally does not define a second repository-local development lifecycle. The previous `development-loop` and `engineering-cache` skills were removed because they overlapped with pstack's playbooks, `recall`, `why`, `show-me-your-work`, and verification principles.
+## Model portfolio
 
-## Defaults
+The default policy is deliberately small.
 
-The parent Pi session uses GPT-5.6 Luna with maximum thinking. Poteto model roles are preseeded in `pstack-models.json`. High-judgment roles use GPT-5.6 Sol. Cheap exploration and swarm work use DeepSeek V4 Flash. Review diversity uses Qwen 3.8 Flash and GPT-5.6 Sol.
+| Function | Model | Typical thinking |
+| --- | --- | --- |
+| Coordinate and integrate | `openai-codex/gpt-5.6-luna` | `max` |
+| Escalate and synthesize | `openai-codex/gpt-5.6-sol` | `high` / `max` |
+| Find evidence | `commandcode-goat/z-ai/glm-5.3-flash` | `high` |
+| Finish bounded work | `commandcode-goat/deepseek/deepseek-v4-flash` | `high` / `max` |
+| Judge and review | `commandcode-goat/Qwen/Qwen3.8-Flash` | `medium` / `xhigh` |
 
-`worker` inherits the parent model unless pstack supplies a role-specific model. `poteto-agent` inherits ambient tools so it can use installed engineering extensions instead of being restricted to raw read/grep/find/bash/edit/write.
+This split reflects both upstream pstack's role-oriented design and observed model behavior: GLM is used for discovery, DeepSeek for task completion, and Qwen for disciplined judgment. Luna remains the normal parent. Sol is the escalation model rather than the default hammer.
 
-Nested subagent depth is `2`. This permits a top-level Poteto agent to execute pstack workflow fan-out while still bounding recursion. Per-run spawn and concurrency limits remain explicit.
+See `docs/model-policy.md` for the exact pstack role matrix and rationale.
+
+## Command Code GOAT
+
+This branch does **not** install `pi-commandcode-provider`. `models.json` registers a native Pi provider named `commandcode-goat` against the official Provider API:
+
+```text
+https://api.commandcode.ai/provider/v1
+```
+
+The config hard-codes:
+
+```text
+x-cmd-zdr: 1
+```
+
+The Docker image also sets `CMD_ZDR=1`. ZDR is an invariant, not an optional mode. If Command Code cannot find ZDR-capable capacity, the request is expected to fail closed.
+
+Provide the API key at runtime. Do not bake it into the image:
+
+```sh
+export COMMAND_CODE_API_KEY='...'
+```
+
+OpenAI Codex authentication remains independent and is handled by Pi's normal `openai-codex` auth path.
 
 ## Build
 
@@ -35,20 +66,20 @@ docker build -t pi-engineering-template:pstack .
 node scripts/verify-template.mjs
 ```
 
-The verifier checks the pstack dependency, pinned versions, Poteto role configuration, subagent capability boundaries, model scope, recursion/concurrency bounds, and removal of the obsolete local lifecycle.
+The verifier checks provider invariants, ZDR enforcement, pinned dependencies, the curated model set, supported thinking levels, pstack role coverage, subagent routing, concurrency bounds, and removal of legacy providers.
 
-## Runtime
+## Operate
 
-Use Pi normally. Poteto Mode is available through pstack.
+Use Pi normally. For nontrivial work, enable Poteto Mode:
 
 ```text
 /poteto-mode
 ```
 
-The package also exposes pstack workflow skills such as `how`, `why`, `architect`, `arena`, `swarm`, `interrogate`, `reflect`, `tdd`, `deslop`, and `no-comments`.
+The committed `pstack-models.json` is already curated. Do not run `/setup-pstack` unless you intentionally want to replace the profile and then update the repository configuration to match.
 
-Run `/setup-pstack` only when you want to replace the preseeded model-role mapping.
+See `docs/operations.md` for runtime authentication, smoke checks, upgrades, and failure handling.
 
-## Safety
+## Design stance
 
-`defaultProjectTrust` remains `never`. Model scope is enforced strictly. Destructive worktree cleanup remains automatic only within pi-subagents' managed authority policy. Scheduled runs and missions remain disabled by default.
+This branch optimizes for correctness, explicit policy, bounded cost, and reproducibility. It does not preserve old provider names, role assignments, or local workflow abstractions merely for compatibility. When a better foundational design makes an old layer unnecessary, the old layer should disappear.

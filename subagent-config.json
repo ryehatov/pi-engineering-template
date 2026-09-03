@@ -3,11 +3,14 @@
   "artifactDir": "session",
   "defaultSubagentContext": "fresh",
   "maxSubagentDepth": 2,
-  "maxSubagentSpawnsPerRun": 64,
-  "globalConcurrencyLimit": 12,
+  "maxSubagentSpawnsPerRun": 32,
+  "globalConcurrencyLimit": 8,
   "parallel": {
-    "maxTasks": 12,
-    "concurrency": 6
+    "maxTasks": 8,
+    "concurrency": 4
+  },
+  "modelExclusions": {
+    "defaultTtlMs": 300000
   },
   "missions": {
     "enabled": false

@@ -1,153 +1,114 @@
 #!/usr/bin/env node
-
 import fs from "node:fs";
 import path from "node:path";
 
 const root = path.resolve(process.argv[2] || process.cwd());
 const errors = [];
+const read = (f) => fs.readFileSync(path.join(root, f), "utf8");
+const json = (f) => { try { return JSON.parse(read(f)); } catch (e) { errors.push(`${f}: ${e.message}`); return {}; } };
+const ok = (v, m) => { if (!v) errors.push(m); };
+const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+const seteq = (a, b) => Array.isArray(a) && a.length === b.length && b.every((x) => a.includes(x)) && new Set(a).size === a.length;
 
-function read(relative) {
-  try {
-    return fs.readFileSync(path.join(root, relative), "utf8");
-  } catch (error) {
-    errors.push(`${relative}: ${error.message}`);
-    return "";
-  }
+const LUNA = "openai-codex/gpt-5.6-luna";
+const SOL = "openai-codex/gpt-5.6-sol";
+const DS = "commandcode-goat/deepseek/deepseek-v4-flash";
+const GLM = "commandcode-goat/z-ai/glm-5.3-flash";
+const QWEN = "commandcode-goat/Qwen/Qwen3.8-Flash";
+const approved = [LUNA, SOL, DS, GLM, QWEN];
+const efforts = {
+  "deepseek/deepseek-v4-flash": ["high", "max"],
+  "z-ai/glm-5.3-flash": ["low", "high", "max"],
+  "Qwen/Qwen3.8-Flash": ["low", "medium", "xhigh"]
+};
+const roles = {
+  "feature, refactoring": `${LUNA}:high`,
+  "bug-fix": `${SOL}:high`,
+  "perf-issue": `${SOL}:high`,
+  "hillclimb": `${DS}:high`,
+  "judgment and prose": `${QWEN}:xhigh`,
+  "hardest tasks": `${SOL}:max`,
+  "how explorer": `${GLM}:high`,
+  "how explainer": `${LUNA}:high`,
+  "how critics": [`${QWEN}:xhigh`, `${SOL}:high`, `${GLM}:high`],
+  "why investigators": `${GLM}:high`,
+  "why synthesizer": `${SOL}:max`,
+  "reflect tooling": `${DS}:max`,
+  "reflect judgment, divergent, synthesizer": `${SOL}:max`,
+  "arena runners": [`${LUNA}:high`, `${DS}:max`, `${GLM}:max`],
+  "arena cross-judge pool": [`${QWEN}:xhigh`, `${SOL}:high`],
+  "swarm workers": `${DS}:high`,
+  "architect runners": [`${SOL}:max`, `${LUNA}:max`, `${QWEN}:xhigh`],
+  "interrogate reviewers": [`${QWEN}:xhigh`, `${SOL}:high`, `${GLM}:high`]
+};
+
+const required = ["Dockerfile", "AGENTS.md", "README.md", "settings.json", "models.json", "subagent-config.json", "pstack-models.json", "web-search.json", "pi-btw.json", "pi-fff.json", "docs/pi-spec.md", "docs/pi-design.md", "docs/model-policy.md", "docs/operations.md"];
+for (const f of required) ok(fs.existsSync(path.join(root, f)), `${f}: missing`);
+for (const f of ["skills/development-loop/SKILL.md", "skills/engineering-cache/SKILL.md", "scripts/test-engineering-cache.mjs"]) ok(!fs.existsSync(path.join(root, f)), `${f}: obsolete`);
+
+const settings = json("settings.json");
+const models = json("models.json");
+const sub = json("subagent-config.json");
+const pstack = json("pstack-models.json");
+const btw = json("pi-btw.json");
+const fff = json("pi-fff.json");
+
+ok(settings.defaultProvider === "openai-codex" && settings.defaultModel === "gpt-5.6-luna" && settings.defaultThinkingLevel === "max", "settings.json: parent must be Luna/max via openai-codex");
+ok(settings.defaultProjectTrust === "never", "settings.json: defaultProjectTrust must be never");
+const sa = settings.subagents || {};
+ok(sa.defaultModel === DS && sa.defaultThinking === "high" && sa.maxThinking === "max", "settings.json: generic child must be DeepSeek/high with max ceiling");
+ok(sa.modelScope?.enforce === true && sa.modelScope?.strict === true, "settings.json: modelScope must be strict");
+ok(seteq(sa.modelScope?.allow, ["inherit", ...approved]), "settings.json: modelScope differs from approved portfolio");
+
+const ao = sa.agentOverrides || {};
+for (const [name, model, thinking] of [["scout", GLM, "low"], ["researcher", GLM, "high"], ["worker", DS, "high"], ["reviewer", QWEN, "medium"], ["oracle", SOL, "max"], ["comment-sicko", QWEN, "medium"]]) {
+  ok(ao[name]?.model === model && ao[name]?.thinking === thinking, `settings.json: ${name} routing mismatch`);
+}
+ok(ao.worker?.tools === "inherit", "settings.json: worker tools must inherit");
+ok(ao["poteto-agent"]?.model === "inherit" && ao["poteto-agent"]?.tools === "inherit" && ao["poteto-agent"]?.thinking === "high" && ao["poteto-agent"]?.allowNestedSubagents === true, "settings.json: poteto-agent contract mismatch");
+ok(ao.delegate?.disabled === true && ao["gpt-pro"]?.disabled === true, "settings.json: delegate/gpt-pro must be disabled");
+for (const name of ["reviewer", "oracle"]) for (const tool of ["edit", "write", "ast_grep_replace", "lens_diagnostic_mark", "debug"]) ok(!ao[name]?.tools?.includes(tool), `settings.json: ${name} must remain source read-only (${tool})`);
+
+const provider = models.providers?.["commandcode-goat"];
+ok(provider && Object.keys(models.providers || {}).length === 1, "models.json: commandcode-goat must be the only custom provider");
+ok(provider?.baseUrl === "https://api.commandcode.ai/provider/v1" && provider?.api === "openai-completions", "models.json: Provider API route mismatch");
+ok(provider?.apiKey === "$COMMAND_CODE_API_KEY" && provider?.authHeader === true, "models.json: runtime API-key auth mismatch");
+ok(provider?.headers?.["x-cmd-zdr"] === "1", "models.json: ZDR header must be hard-coded");
+ok(provider?.compat?.supportsStore === false && provider?.compat?.supportsDeveloperRole === false && provider?.compat?.supportsReasoningEffort === true && provider?.compat?.maxTokensField === "max_tokens", "models.json: OpenAI compatibility contract mismatch");
+const entries = provider?.models || [];
+ok(seteq(entries.map((m) => m.id), Object.keys(efforts)), "models.json: specialist set mismatch");
+for (const m of entries) {
+  ok(m.reasoning === true && eq(m.input, ["text"]) && m.contextWindow >= 1000000 && m.maxTokens > 0, `models.json: ${m.id} capability metadata invalid`);
+  const active = Object.entries(m.thinkingLevelMap || {}).filter(([, v]) => typeof v === "string").map(([k, v]) => `${k}:${v}`);
+  ok(seteq(active, efforts[m.id].map((x) => `${x}:${x}`)), `models.json: ${m.id} effort map mismatch`);
 }
 
-function parseJson(relative) {
-  try {
-    return JSON.parse(fs.readFileSync(path.join(root, relative), "utf8"));
-  } catch (error) {
-    errors.push(`${relative}: ${error.message}`);
-    return null;
-  }
+ok(sub.toolDescriptionMode === "compact" && sub.artifactDir === "session" && sub.defaultSubagentContext === "fresh", "subagent-config.json: compact/session/fresh contract mismatch");
+ok(sub.maxSubagentDepth === 2 && sub.maxSubagentSpawnsPerRun > 0 && sub.maxSubagentSpawnsPerRun <= 32, "subagent-config.json: depth/spawn bound invalid");
+ok(sub.globalConcurrencyLimit > 0 && sub.globalConcurrencyLimit <= 8 && sub.parallel?.concurrency > 0 && sub.parallel.concurrency <= 4 && sub.parallel.concurrency <= sub.globalConcurrencyLimit, "subagent-config.json: concurrency bound invalid");
+ok(sub.parallel?.maxTasks > 0 && sub.parallel.maxTasks <= 8, "subagent-config.json: parallel maxTasks invalid");
+ok(sub.modelExclusions?.defaultTtlMs > 0 && sub.modelExclusions.defaultTtlMs <= 300000, "subagent-config.json: exclusion TTL must be <= 5m");
+ok(sub.missions?.enabled === false && sub.scheduledRuns?.enabled === false && sub.authorityPolicy?.scheduleCreate === "forbid", "subagent-config.json: autonomous scheduling must remain disabled");
+
+ok(pstack.version === 1 && pstack.skillsEnabled === true, "pstack-models.json: version/skills mismatch");
+ok(eq(pstack.roles, roles), "pstack-models.json: curated role matrix mismatch");
+for (const selector of Object.values(roles).flatMap((v) => Array.isArray(v) ? v : [v])) {
+  const m = selector.match(/^(.*):(low|medium|high|xhigh|max)$/);
+  ok(!!m && approved.includes(m?.[1]), `pstack-models.json: invalid selector ${selector}`);
+  if (m?.[1].startsWith("commandcode-goat/")) ok(efforts[m[1].slice("commandcode-goat/".length)]?.includes(m[2]), `pstack-models.json: unsupported effort ${selector}`);
 }
 
-function requireCondition(condition, message) {
-  if (!condition) errors.push(message);
-}
+ok(btw.model === LUNA, "pi-btw.json: must use Codex Luna");
+ok(fff.mode === "override", "pi-fff.json: mode must remain override");
 
-const requiredFiles = [
-  "Dockerfile",
-  "AGENTS.md",
-  "README.md",
-  "settings.json",
-  "subagent-config.json",
-  "pstack-models.json",
-  "web-search.json",
-  "pi-btw.json",
-  "pi-fff.json",
-  "docs/pi-spec.md",
-  "docs/pi-design.md"
-];
-for (const file of requiredFiles) {
-  requireCondition(fs.existsSync(path.join(root, file)), `${file}: missing`);
-}
-
-for (const obsolete of [
-  "skills/development-loop/SKILL.md",
-  "skills/engineering-cache/SKILL.md",
-  "scripts/test-engineering-cache.mjs"
-]) {
-  requireCondition(!fs.existsSync(path.join(root, obsolete)), `${obsolete}: obsolete lifecycle artifact must be removed`);
-}
-
-const settings = parseJson("settings.json");
-const subagents = parseJson("subagent-config.json");
-const pstack = parseJson("pstack-models.json");
-const fff = parseJson("pi-fff.json");
-parseJson("web-search.json");
-parseJson("pi-btw.json");
-
-if (settings) {
-  requireCondition(settings.defaultProjectTrust === "never", "settings.json: defaultProjectTrust must remain 'never'");
-  const scope = settings.subagents?.modelScope;
-  requireCondition(scope?.enforce === true && scope?.strict === true, "settings.json: modelScope must be strictly enforced");
-  const allow = Array.isArray(scope?.allow) ? scope.allow : [];
-  requireCondition(allow.includes("inherit"), "settings.json: modelScope must allow parent-model inheritance");
-  requireCondition(new Set(allow).size === allow.length, "settings.json: modelScope allow list contains duplicates");
-
-  const overrides = settings.subagents?.agentOverrides || {};
-  requireCondition(overrides.worker?.model === undefined, "settings.json: worker must not pin a model; pstack inherit-parent must remain effective");
-  requireCondition(overrides.worker?.tools === "inherit", "settings.json: worker tools must inherit ambient engineering capabilities");
-  requireCondition(overrides["poteto-agent"]?.tools === "inherit", "settings.json: poteto-agent must inherit ambient engineering capabilities");
-  requireCondition(overrides["poteto-agent"]?.allowNestedSubagents === true, "settings.json: poteto-agent must allow pstack nested workflow fan-out");
-
-  const lensReadTools = ["lens_diagnostics", "lsp_diagnostics", "module_report", "read_symbol", "read_enclosing", "symbol_search"];
-  for (const role of ["scout", "reviewer", "oracle"]) {
-    const tools = overrides[role]?.tools;
-    requireCondition(Array.isArray(tools), `settings.json: ${role} tools must use an explicit allow list`);
-    for (const tool of lensReadTools) {
-      requireCondition(tools?.includes(tool), `settings.json: ${role} must expose Lens tool '${tool}'`);
-    }
-    requireCondition(tools?.includes("grep") && tools?.includes("find"), `settings.json: ${role} must expose stable grep/find names`);
-  }
-  for (const role of ["reviewer", "oracle"]) {
-    for (const tool of ["edit", "write", "ast_grep_replace", "lens_diagnostic_mark", "debug"]) {
-      requireCondition(!overrides[role]?.tools?.includes(tool), `settings.json: ${role} must remain read-only; found '${tool}'`);
-    }
-  }
-  for (const [role, override] of Object.entries(overrides)) {
-    if (override?.disabled === true || !override?.model) continue;
-    requireCondition(allow.includes(override.model), `settings.json: ${role} model is outside modelScope`);
-  }
-}
-
-if (subagents) {
-  requireCondition(subagents.toolDescriptionMode === "compact", "subagent-config.json: compact tool descriptions required");
-  requireCondition(subagents.artifactDir === "session", "subagent-config.json: artifactDir must be session");
-  requireCondition(subagents.defaultSubagentContext === "fresh", "subagent-config.json: default delegated context must be fresh");
-  requireCondition(subagents.maxSubagentDepth === 2, "subagent-config.json: maxSubagentDepth must be 2 for Poteto nested fan-out");
-  requireCondition(Number.isInteger(subagents.maxSubagentSpawnsPerRun) && subagents.maxSubagentSpawnsPerRun > 0, "subagent-config.json: explicit positive per-run spawn budget required");
-  requireCondition(Number.isInteger(subagents.globalConcurrencyLimit) && subagents.globalConcurrencyLimit > 0, "subagent-config.json: explicit positive global concurrency limit required");
-  requireCondition(subagents.parallel?.concurrency <= subagents.globalConcurrencyLimit, "subagent-config.json: parallel concurrency must not exceed global concurrency");
-  requireCondition(subagents.missions?.enabled === false, "subagent-config.json: missions must remain disabled");
-  requireCondition(subagents.scheduledRuns?.enabled === false, "subagent-config.json: scheduled runs must remain disabled");
-  requireCondition(subagents.authorityPolicy?.scheduleCreate === "forbid", "subagent-config.json: schedule creation must remain forbidden");
-}
-
-if (pstack) {
-  requireCondition(pstack.version === 1, "pstack-models.json: unsupported version");
-  requireCondition(pstack.skillsEnabled === true, "pstack-models.json: pstack skills must be enabled");
-  const roles = pstack.roles || {};
-  for (const role of ["feature, refactoring", "bug-fix", "hardest tasks", "how explorer", "how explainer", "swarm workers", "architect runners", "interrogate reviewers"]) {
-    requireCondition(roles[role] !== undefined, `pstack-models.json: missing role '${role}'`);
-  }
-  const selectors = Object.values(roles).flatMap((value) => Array.isArray(value) ? value : [value]);
-  const allow = settings?.subagents?.modelScope?.allow || [];
-  for (const selector of selectors) {
-    if (selector === "inherit-parent" || selector === "auto") continue;
-    requireCondition(allow.includes(selector), `pstack-models.json: model '${selector}' is outside enforced modelScope`);
-  }
-}
-
-if (fff) {
-  requireCondition(fff.mode === "override", "pi-fff.json: mode must remain override");
-}
-
-const dockerfile = read("Dockerfile");
-requireCondition(/^ARG BASE_IMAGE=.*@sha256:[0-9a-f]{64}$/m.test(dockerfile), "Dockerfile: base image must use a SHA-256 digest");
-for (const match of dockerfile.matchAll(/^ARG ([A-Z0-9_]+_VERSION)=(.+)$/gm)) {
-  const [, name, value] = match;
-  requireCondition(value.trim() !== "" && value.trim() !== "latest", `Dockerfile: ${name} must use an explicit version`);
-}
-requireCondition(dockerfile.includes("ARG PI_PSTACK_VERSION=0.4.0"), "Dockerfile: pi-pstack 0.4.0 pin missing");
-requireCondition(dockerfile.includes('pi install "npm:@zenspc/pi-pstack@${PI_PSTACK_VERSION}"'), "Dockerfile: pi-pstack installation missing");
-requireCondition(dockerfile.includes("ARG BUN_VERSION="), "Dockerfile: Bun pin missing");
-requireCondition(dockerfile.includes('npm install -g "bun@${BUN_VERSION}"'), "Dockerfile: Bun installation missing");
-requireCondition(dockerfile.includes("COPY --chown=agent:agent pstack-models.json"), "Dockerfile: pstack model config copy missing");
-requireCondition(dockerfile.includes("ENV PI_SUBAGENT_TASK_DELIVERY=file"), "Dockerfile: file-backed subagent task delivery required");
-requireCondition(dockerfile.includes("ENV PLANNOTATOR_REMOTE=1"), "Dockerfile: Plannotator remote mode required");
-requireCondition(dockerfile.includes("ENV PLANNOTATOR_BROWSER=xdg-open"), "Dockerfile: Plannotator browser bridge required");
+const docker = read("Dockerfile");
+ok(/^ARG BASE_IMAGE=.*@sha256:[0-9a-f]{64}$/m.test(docker), "Dockerfile: base image digest pin missing");
+for (const [needle, msg] of [["ARG PI_VERSION=0.84.4", "Pi pin"], ["ARG PI_SUBAGENTS_VERSION=0.64.0", "pi-subagents pin"], ["ARG PI_PSTACK_VERSION=0.4.0", "pi-pstack pin"], ["ARG BUN_VERSION=1.4.0", "Bun pin"], ["COPY --chown=agent:agent models.json", "models.json copy"], ["COPY --chown=agent:agent pstack-models.json", "pstack profile copy"], ["ENV CMD_ZDR=1", "CMD_ZDR"], ["ENV PI_SUBAGENT_TASK_DELIVERY=file", "file task delivery"]]) ok(docker.includes(needle), `Dockerfile: ${msg} missing`);
+for (const legacy of ["opencode-go", "pi-commandcode-provider", "/alpha/generate"]) ok(!docker.includes(legacy), `Dockerfile: legacy route remains (${legacy})`);
+for (const f of ["settings.json", "models.json", "pstack-models.json", "pi-btw.json", "subagent-config.json"]) for (const legacy of ["opencode-go", "pi-commandcode-provider"]) ok(!read(f).includes(legacy), `${f}: legacy route remains (${legacy})`);
 
 const agents = read("AGENTS.md");
-requireCondition(agents.includes("pstack's Poteto Mode"), "AGENTS.md: Poteto policy missing");
-requireCondition(!agents.includes("development-loop"), "AGENTS.md: obsolete development-loop policy remains");
-requireCondition(!agents.includes("engineering-cache"), "AGENTS.md: obsolete engineering-cache policy remains");
+for (const phrase of ["Find -> GLM", "Finish -> DeepSeek", "Judge -> Qwen", "Coordinate -> GPT-5.6 Luna", "Escalate -> GPT-5.6 Sol", "x-cmd-zdr", "pstack"]) ok(agents.includes(phrase), `AGENTS.md: missing ${phrase}`);
 
-if (errors.length) {
-  for (const error of errors) console.error(`FAIL ${error}`);
-  process.exit(1);
-}
+if (errors.length) { for (const e of errors) console.error(`FAIL ${e}`); process.exit(1); }
 console.log("template verification: ok");

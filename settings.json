@@ -4,51 +4,98 @@
   "defaultThinkingLevel": "max",
   "defaultProjectTrust": "never",
   "subagents": {
+    "defaultModel": "commandcode-goat/deepseek/deepseek-v4-flash",
+    "defaultThinking": "high",
+    "maxThinking": "max",
     "modelScope": {
       "enforce": true,
       "strict": true,
       "allow": [
         "inherit",
-        "opencode-go/deepseek-v4-flash",
-        "opencode-go/qwen3.8-flash",
-        "opencode-go/gpt-5.6-luna",
-        "openai-codex/gpt-5.6-sol"
+        "openai-codex/gpt-5.6-luna",
+        "openai-codex/gpt-5.6-sol",
+        "commandcode-goat/deepseek/deepseek-v4-flash",
+        "commandcode-goat/z-ai/glm-5.3-flash",
+        "commandcode-goat/Qwen/Qwen3.8-Flash"
       ]
     },
     "agentOverrides": {
       "scout": {
-        "model": "opencode-go/deepseek-v4-flash",
+        "model": "commandcode-goat/z-ai/glm-5.3-flash",
         "thinking": "low",
-        "tools": ["read", "grep", "find", "ls", "bash", "write", "lens_diagnostics", "lsp_diagnostics", "module_report", "read_symbol", "read_enclosing", "symbol_search"]
+        "tools": [
+          "read",
+          "grep",
+          "find",
+          "ls",
+          "bash",
+          "write",
+          "lens_diagnostics",
+          "lsp_diagnostics",
+          "module_report",
+          "read_symbol",
+          "read_enclosing",
+          "symbol_search"
+        ]
       },
       "researcher": {
-        "model": "opencode-go/deepseek-v4-flash",
+        "model": "commandcode-goat/z-ai/glm-5.3-flash",
         "thinking": "high"
       },
       "worker": {
+        "model": "commandcode-goat/deepseek/deepseek-v4-flash",
         "thinking": "high",
         "tools": "inherit"
       },
       "reviewer": {
-        "model": "opencode-go/qwen3.8-flash",
+        "model": "commandcode-goat/Qwen/Qwen3.8-Flash",
         "thinking": "medium",
-        "tools": ["read", "grep", "find", "ls", "lens_diagnostics", "lsp_diagnostics", "module_report", "read_symbol", "read_enclosing", "symbol_search"]
+        "tools": [
+          "read",
+          "grep",
+          "find",
+          "ls",
+          "lens_diagnostics",
+          "lsp_diagnostics",
+          "module_report",
+          "read_symbol",
+          "read_enclosing",
+          "symbol_search"
+        ]
       },
       "oracle": {
         "model": "openai-codex/gpt-5.6-sol",
-        "thinking": "xhigh",
-        "tools": ["read", "grep", "find", "ls", "bash", "lens_diagnostics", "lsp_diagnostics", "module_report", "read_symbol", "read_enclosing", "symbol_search"]
+        "thinking": "max",
+        "tools": [
+          "read",
+          "grep",
+          "find",
+          "ls",
+          "bash",
+          "lens_diagnostics",
+          "lsp_diagnostics",
+          "module_report",
+          "read_symbol",
+          "read_enclosing",
+          "symbol_search"
+        ]
       },
       "poteto-agent": {
+        "model": "inherit",
         "tools": "inherit",
         "thinking": "high",
         "allowNestedSubagents": true
       },
       "comment-sicko": {
+        "model": "commandcode-goat/Qwen/Qwen3.8-Flash",
         "thinking": "medium"
       },
-      "delegate": { "disabled": true },
-      "gpt-pro": { "disabled": true }
+      "delegate": {
+        "disabled": true
+      },
+      "gpt-pro": {
+        "disabled": true
+      }
     }
   },
   "showLastPrompt": true,
@@ -58,12 +105,30 @@
     "welcome": false,
     "separator": "powerline-thin",
     "layout": {
-      "left": ["model", "thinking", "path", "git", "queue", "subagents"],
-      "right": ["context_pct", "cache_read"],
-      "secondary": ["extension_statuses"]
+      "left": [
+        "model",
+        "thinking",
+        "path",
+        "git",
+        "queue",
+        "subagents"
+      ],
+      "right": [
+        "context_pct",
+        "cache_read"
+      ],
+      "secondary": [
+        "extension_statuses"
+      ]
     },
-    "model": { "display": "qualified", "showThinkingLevel": false },
-    "path": { "mode": "abbreviated", "maxLength": 30 },
+    "model": {
+      "display": "qualified",
+      "showThinkingLevel": false
+    },
+    "path": {
+      "mode": "abbreviated",
+      "maxLength": 30
+    },
     "git": {
       "showBranch": true,
       "showStaged": true,
@@ -72,7 +137,11 @@
       "polling": "branch",
       "hostIcon": true
     },
-    "context": { "format": "percent" },
-    "cache_read": { "format": "both" }
+    "context": {
+      "format": "percent"
+    },
+    "cache_read": {
+      "format": "both"
+    }
   }
 }

@@ -1,65 +1,126 @@
 # Pi Engineering Design
 
-## Architecture
+## System shape
 
-The template uses a layered design.
+The template is a three-layer engineering core with a narrow model runtime.
 
-`@zenspc/pi-pstack` owns engineering policy. Poteto Mode selects playbooks and principles, and pstack workflow skills provide architecture exploration, adversarial review, swarms, arena comparisons, debugging discipline, and shipping gates.
+```text
+Human
+  |
+  v
+Pi parent (Luna by default)
+  |
+  +-- pstack: method, playbooks, principles, review topology
+  |
+  +-- pi-subagents: child lifecycle, isolation, worktrees, budgets
+          |
+          +-- GLM 5.3 Flash: discover
+          +-- DeepSeek V4 Flash: execute
+          +-- Qwen 3.8 Flash: judge
+          +-- Luna: integrate
+          +-- Sol: escalate
+```
 
-`pi-subagents` owns delegated execution. It provides agent discovery, model routing, bounded nested delegation, concurrency control, worktree isolation, and run artifacts.
+Pi is the only parent runtime. Pstack decides *how engineering should proceed*. Pi-subagents decides *how delegated work is executed*. Models are workers with explicit roles, not additional workflow layers.
 
-pi-fff, pi-lens, DAP, web access, Plannotator, and other installed extensions provide concrete capabilities. They are not workflow owners.
+Supporting extensions supply capabilities such as structural search, diagnostics, web access, debugging, context inspection, and UI. They are intentionally below the workflow boundary.
 
-Docker Sandbox owns process and filesystem isolation outside Pi.
+## Why the old provider model was replaced
 
-This separation is deliberate. A local lifecycle skill that redefines planning, completion, or durable knowledge would compete with pstack and increase prompt and maintenance cost.
+The previous branch routed specialist models through OpenCode Go and relied on a broad provider catalog. That shape did not encode the current privacy or task-specialization policy strongly enough.
 
-## Poteto agent capability
+The new design removes OpenCode Go entirely. Command Code uses the official GOAT Provider API through Pi's native OpenAI-compatible provider support. The provider is static and repository-owned:
 
-The upstream `poteto-agent` package definition declares a fixed tool list. pi-subagents applies `agentOverrides` to package agents, so this template overrides `poteto-agent.tools` to `inherit` and enables nested delegation.
+```text
+commandcode-goat
+  base: https://api.commandcode.ai/provider/v1
+  api: openai-completions
+  auth: COMMAND_CODE_API_KEY at runtime
+  privacy: x-cmd-zdr: 1 on every request
+  models: exactly three reviewed specialists
+```
 
-This avoids forking pstack while preserving access to installed engineering tools. It also keeps upstream pstack updates independently consumable.
+No Command Code extension is needed in the runtime. This avoids dynamic provider registration, transport auto-detection, generic model discovery, and a second source of model metadata. It also makes ZDR a committed request invariant instead of an optional environment toggle.
 
-## Parent model inheritance
+`CMD_ZDR=1` remains set in the image as defense in depth. The literal provider header is the authoritative enforcement for Pi requests.
 
-Pstack's default semantic is `inherit-parent`. A fixed model override on the generic `worker` would silently defeat that behavior. The template therefore leaves `worker.model` unset and includes `inherit` in the strict pi-subagents model scope.
+## Why the portfolio is small
 
-Explicit pstack roles are committed in `pstack-models.json`. High-judgment roles use GPT-5.6 Sol. Exploration and swarm roles use a cheaper model. Multi-model review roles use heterogeneous models where possible.
+The portfolio is organized around failure modes.
 
-## Nested fan-out
+- GLM finds relevant evidence but can over-search.
+- DeepSeek finishes scoped work but should not own final taste or policy judgment.
+- Qwen judges well and can say the evidence is insufficient, but it is not the default autonomous implementer.
+- Luna integrates broad work and keeps the parent coherent.
+- Sol handles the expensive tail of difficult reasoning.
 
-A top-level Poteto agent may need to invoke a routed pstack workflow, which then starts worker agents. `maxSubagentDepth: 1` blocks this valid shape. The template raises the bound to `2` and keeps explicit spawn and concurrency limits.
+These roles are complementary. Adding another generalist that overlaps all five increases routing ambiguity, fan-out cost, and maintenance without closing a real capability gap.
 
-The intended shape is:
+## Pstack as policy
+
+Poteto Mode is the engineering policy for nontrivial work. The repository does not add another mandatory develop-plan-review loop.
+
+The committed pstack profile is stronger than the generic `/setup-pstack` default in two ways:
+
+1. Every pstack role is explicit. Reproducibility does not depend on the current parent model except where a package agent intentionally uses `model: inherit`.
+2. Thinking is encoded in each pstack model selector. The role therefore selects the model *and* the reasoning budget.
+
+The parent still owns the final decision. Multi-model panels are evidence, not votes that automatically bind the parent.
+
+## Delegation topology
+
+The normal topology is two levels deep:
 
 ```text
 parent Pi
-  -> poteto-agent or pstack workflow
-      -> bounded workers/reviewers
+  -> poteto-agent or direct pstack workflow
+      -> worker/reviewer panel
 ```
 
-Additional recursive orchestration is outside the default design.
+`maxSubagentDepth` is therefore `2`. More depth is not part of the default design.
 
-## Tool policy
+The generic child default is DeepSeek V4 Flash at `high`, because an unspecified delegation is usually asking for bounded work to be completed. Named builtin roles override this:
 
-pi-fff runs in override mode. This gives stable `grep` and `find` tool names while allowing stronger search and navigation behavior.
+- scout -> GLM 5.3 Flash `low`
+- researcher -> GLM 5.3 Flash `high`
+- reviewer -> Qwen 3.8 Flash `medium`
+- oracle -> GPT-5.6 Sol `max`
+- poteto-agent -> inherit the parent model at `high`
+- comment-sicko -> Qwen 3.8 Flash `medium`
 
-Scout, Reviewer, and Oracle use explicit tool allow lists. They receive Lens read tools. Reviewer and Oracle do not receive source mutation or debug mutation tools.
+Pstack per-run model selectors take precedence over these generic defaults.
 
-Worker and Poteto agents inherit tools because implementation and verification can benefit from repository-specific and installed extensions. Capability inheritance remains bounded by the parent process and pi-subagents runtime policy.
+## Tool boundaries
 
-## Pstack scripts
+Worker and Poteto agents inherit ambient tools because implementation tasks may need repository-specific extensions.
 
-Pstack ships `orch` and `watch-pr` scripts that run under Bun. The image installs a pinned Bun package instead of relying on a host-provided binary.
+Scout receives read/search tools plus its output write path and Lens inspection tools. Reviewer and Oracle remain source-read-only. Researcher keeps its package-defined web research tool set so it can write its isolated research artifact without inheriting arbitrary mutation tools.
 
-## Removed components
+Pstack workflows that request read-only children further narrow tools at launch. The most specific launch contract wins.
 
-The previous `development-loop` skill is removed. Poteto Mode already provides task classification, playbook selection, sequencing, verification, review, and shipping discipline.
+## Parallelism and provider pressure
 
-The previous `engineering-cache` skill is removed. Pstack already provides `recall`, `why`, and `show-me-your-work` for reconstructing context, investigating shared history, and recording decision trails. Durable repository knowledge should be encoded in repository artifacts and checks instead of a parallel cache protocol.
+Parallelism is a means to increase evidence diversity or throughput, not a goal by itself.
 
-## Verification strategy
+The template bounds a workflow to 32 child spawns, 8 globally active children, and 4 concurrent tasks in an ordinary parallel batch. This is enough for pstack's 2-4-way explorers and three-model panels without creating a large homogeneous request burst against one provider.
 
-`scripts/verify-template.mjs` checks structure and configuration without relying on model behavior. It verifies dependency pins, pstack model configuration, model-scope compatibility, tool boundaries, recursion and concurrency bounds, required environment variables, and removal of obsolete lifecycle files.
+The model-exclusion TTL is reduced to five minutes. A transient provider or rate-limit failure should not poison a small curated model portfolio for a full day.
 
-A successful static verifier does not prove that every external model or package service is available at runtime. Docker build and a live Pi smoke test remain the strongest integration checks when the execution environment permits them.
+Use worktree isolation for parallel writers. If tasks would modify overlapping state, separate ownership before trying to serialize access.
+
+## Context discipline
+
+Delegated context defaults to `fresh`. The parent should pass the smallest durable packet that makes the child autonomous: task, relevant paths, constraints, acceptance criteria, and artifacts.
+
+This preserves the parent's context for integration and avoids copying a large transcript into every fan-out child. Pstack's `how`, `why`, arena, and reflect workflows already define when broader context must be materialized.
+
+## Verification layers
+
+Verification is layered by failure class.
+
+1. `scripts/verify-template.mjs` proves repository configuration invariants without credentials or network access.
+2. Docker build proves the package pins install together.
+3. A live Pi smoke proves authentication, model registry resolution, thinking translation, and ZDR-capable Command Code routing.
+4. Project-specific tests prove the artifact being engineered.
+
+No static check can prove live provider availability. No live model call can replace deterministic configuration validation. Both layers have distinct jobs.
