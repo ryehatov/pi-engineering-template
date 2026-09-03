@@ -1,17 +1,20 @@
 {
   "toolDescriptionMode": "compact",
   "artifactDir": "session",
-
-  "maxSubagentDepth": 1,
-
+  "defaultSubagentContext": "fresh",
+  "maxSubagentDepth": 2,
+  "maxSubagentSpawnsPerRun": 64,
+  "globalConcurrencyLimit": 12,
+  "parallel": {
+    "maxTasks": 12,
+    "concurrency": 6
+  },
   "missions": {
     "enabled": false
   },
-
   "scheduledRuns": {
     "enabled": false
   },
-
   "authorityPolicy": {
     "discardWorktree": "auto",
     "destructiveCleanup": "auto",

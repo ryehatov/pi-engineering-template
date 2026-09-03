@@ -2,133 +2,68 @@
   "defaultProvider": "openai-codex",
   "defaultModel": "gpt-5.6-luna",
   "defaultThinkingLevel": "max",
-
   "defaultProjectTrust": "never",
-
   "subagents": {
     "modelScope": {
       "enforce": true,
       "strict": true,
       "allow": [
+        "inherit",
         "opencode-go/deepseek-v4-flash",
         "opencode-go/qwen3.8-flash",
         "opencode-go/gpt-5.6-luna",
         "openai-codex/gpt-5.6-sol"
       ]
     },
-
     "agentOverrides": {
       "scout": {
         "model": "opencode-go/deepseek-v4-flash",
         "thinking": "low",
-        "tools": [
-          "read",
-          "grep",
-          "find",
-          "ls",
-          "bash",
-          "write",
-          "lens_diagnostics",
-          "lsp_diagnostics",
-          "module_report",
-          "read_symbol",
-          "read_enclosing",
-          "symbol_search"
-        ]
+        "tools": ["read", "grep", "find", "ls", "bash", "write", "lens_diagnostics", "lsp_diagnostics", "module_report", "read_symbol", "read_enclosing", "symbol_search"]
       },
-
       "researcher": {
         "model": "opencode-go/deepseek-v4-flash",
         "thinking": "high"
       },
-
       "worker": {
-        "model": "opencode-go/deepseek-v4-flash",
         "thinking": "high",
         "tools": "inherit"
       },
-
       "reviewer": {
         "model": "opencode-go/qwen3.8-flash",
         "thinking": "medium",
-        "tools": [
-          "read",
-          "grep",
-          "find",
-          "ls",
-          "lens_diagnostics",
-          "lsp_diagnostics",
-          "module_report",
-          "read_symbol",
-          "read_enclosing",
-          "symbol_search"
-        ]
+        "tools": ["read", "grep", "find", "ls", "lens_diagnostics", "lsp_diagnostics", "module_report", "read_symbol", "read_enclosing", "symbol_search"]
       },
-
       "oracle": {
         "model": "openai-codex/gpt-5.6-sol",
         "thinking": "xhigh",
-        "tools": [
-          "read",
-          "grep",
-          "find",
-          "ls",
-          "bash",
-          "lens_diagnostics",
-          "lsp_diagnostics",
-          "module_report",
-          "read_symbol",
-          "read_enclosing",
-          "symbol_search"
-        ]
+        "tools": ["read", "grep", "find", "ls", "bash", "lens_diagnostics", "lsp_diagnostics", "module_report", "read_symbol", "read_enclosing", "symbol_search"]
       },
-
-      "delegate": {
-        "disabled": true
+      "poteto-agent": {
+        "tools": "inherit",
+        "thinking": "high",
+        "allowNestedSubagents": true
       },
-
-      "gpt-pro": {
-        "disabled": true
-      }
+      "comment-sicko": {
+        "thinking": "medium"
+      },
+      "delegate": { "disabled": true },
+      "gpt-pro": { "disabled": true }
     }
   },
-
   "showLastPrompt": true,
-
   "powerline": {
     "preset": "default",
     "placement": "below",
     "welcome": false,
     "separator": "powerline-thin",
-
     "layout": {
-      "left": [
-        "model",
-        "thinking",
-        "path",
-        "git",
-        "queue",
-        "subagents"
-      ],
-      "right": [
-        "context_pct",
-        "cache_read"
-      ],
-      "secondary": [
-        "extension_statuses"
-      ]
+      "left": ["model", "thinking", "path", "git", "queue", "subagents"],
+      "right": ["context_pct", "cache_read"],
+      "secondary": ["extension_statuses"]
     },
-
-    "model": {
-      "display": "qualified",
-      "showThinkingLevel": false
-    },
-
-    "path": {
-      "mode": "abbreviated",
-      "maxLength": 30
-    },
-
+    "model": { "display": "qualified", "showThinkingLevel": false },
+    "path": { "mode": "abbreviated", "maxLength": 30 },
     "git": {
       "showBranch": true,
       "showStaged": true,
@@ -137,13 +72,7 @@
       "polling": "branch",
       "hostIcon": true
     },
-
-    "context": {
-      "format": "percent"
-    },
-
-    "cache_read": {
-      "format": "both"
-    }
+    "context": { "format": "percent" },
+    "cache_read": { "format": "both" }
   }
 }

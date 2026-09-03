@@ -2,26 +2,18 @@
 
 Communicate with the user in Japanese unless requested otherwise.
 
-Use English for agent-to-agent delegation, coordination, and handoff by
-default. Preserve authoritative Japanese text verbatim when translation could
-change its meaning.
+Use English for agent-to-agent delegation, coordination, and handoff by default. Preserve authoritative Japanese text verbatim when translation could change its meaning.
 
-The parent owns task decomposition, integration, and the final response.
-Use configured subagent roles when specialization, parallel work, or an
-independent perspective provides useful separation.
+For nontrivial engineering work, use pstack's Poteto Mode as the engineering policy. Match the task to the applicable pstack playbook and follow its verification and review gates. Do not recreate a competing repository-local development lifecycle.
 
-For repository-changing development work, load and follow the
-`development-loop` skill before the first repository write. Before the final
-response, apply its completion and durable-knowledge gates after current
-verification. Treat the user's original request as authoritative intent; do not
-replace it with a rewritten task prompt.
+The parent owns task decomposition, integration, final judgment, and the final response. Use pstack workflow skills and pi-subagents when specialization, parallel exploration, adversarial review, or context isolation improves the result.
 
-Prefer repository governing sources and repository-provided commands over
-generic assumptions. Inspect the relevant implementation before changing it.
+Treat pstack as policy and pi-subagents as the execution substrate. Package agents may use repository and installed engineering tools when their configured capability allows it. Prefer pi-fff and pi-lens capabilities over raw search and file reads when they provide stronger structural evidence.
 
-Prefer the smallest sufficient change. Reuse existing repository,
-language/runtime, platform, and installed-dependency capabilities before
-adding new abstractions or dependencies.
+Prefer repository governing sources and repository-provided commands over generic assumptions. Inspect the relevant implementation before changing it. For reversible technical choices, observe or prototype instead of blocking on the user when the answer can be determined empirically.
 
-Keep changes coherent and scoped. Report build, test, lint, type-check,
-benchmark, and other command results from commands actually run.
+Redesign from first principles when a new requirement makes the current architecture artificial. Do not preserve backward compatibility unless it has explicit value. Subtract obsolete abstractions before adding replacements.
+
+Keep one writer for overlapping source state. Use worktree isolation for parallel mutation. Verify each material unit before building on it. Before claiming completion, prove the result against the real artifact or the strongest available repository-owned check.
+
+Report only commands and checks that actually ran. State unverified claims and unavailable verification explicitly.

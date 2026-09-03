@@ -1,141 +1,54 @@
-# Pi Engineering Template
+# pi-engineering-template
 
-`pi-engineering-template` is a general-purpose software engineering environment
-for the Pi coding agent on Docker Sandboxes.
+A Docker Sandbox template for rigorous Pi-based software engineering.
 
-It combines sandbox isolation, role-based subagent routing, global engineering
-instructions, lifecycle Skills, and executable checks for template invariants.
-The revision-controlled files in each branch are the source of truth.
-
-## Published branches
-
-This repository publishes two environment variants:
-
-| Branch | Role routing |
-| --- | --- |
-| `main` | Flash/Luna-oriented specialist routing |
-| `hy3` | Hy3-oriented scout, researcher, and worker routing with a Flash reviewer |
-
-Use `settings.json` and `pi-btw.json` in the selected branch as the authoritative
-model configuration. Do not infer current model or reasoning settings from this
-README.
-
-## Requirements
-
-- Docker Desktop with Docker Sandboxes and `sbx`;
-- Git;
-- credentials for the model providers selected by the chosen branch.
-
-See `docs/pi-design.md` for host setup and provider authentication.
-
-## Verify the template
-
-Run the repository verifier before you build an image:
-
-```bash
-node scripts/verify-template.mjs
-```
-
-The verifier checks structural and security-relevant configuration invariants.
-A successful result does not verify external packages, model providers, or
-Docker Sandbox behavior.
-
-## Build and load
-
-Select the required branch and verify it:
-
-```bash
-git switch main # or: git switch hy3
-node scripts/verify-template.mjs
-```
-
-Build and load a revisioned image:
-
-```bash
-REVISION="$(git rev-parse --short HEAD)"
-docker build -t "local/pi-engineering:${REVISION}" .
-docker image save \
-  "local/pi-engineering:${REVISION}" \
-  -o pi-engineering.tar
-sbx template load pi-engineering.tar
-```
-
-The generated `pi-engineering.tar` file is not repository source and is ignored
-by Git.
-
-## Create a project sandbox
-
-Choose a distinct `<plannotator-port>` for each concurrently running sandbox,
-then run the following command from the main checkout of the target Git
-repository:
-
-```bash
-sbx run \
-  --clone \
-  --name pi-<project> \
-  --template "local/pi-engineering:${REVISION}" \
-  --publish <plannotator-port>:<plannotator-port> \
-  --env PLANNOTATOR_PORT=<plannotator-port> \
-  shell \
-  .
-```
-
-Plannotator review URLs open in the host browser through Docker Sandboxes.
-
-Start Pi inside the sandbox:
-
-```bash
-pi
-```
-
-For the complete operating lifecycle, see `docs/pi-design.md`.
+This branch uses `@zenspc/pi-pstack` and Poteto Mode as the engineering policy. `pi-subagents` is the execution substrate. Repository and installed engineering tools such as pi-fff and pi-lens remain available to delegated work when the agent capability allows them.
 
 ## Design
 
-The environment separates responsibilities among:
+The template separates four responsibilities.
 
-- Docker Sandbox for execution isolation;
-- Git clone mode for repository isolation;
-- the Pi parent for user intent, decomposition, integration, and final decisions;
-- Pi subagents for specialized work and independent review;
-- repository tooling for authoritative build and validation;
-- global Skills for lifecycle policy and reusable engineering procedures.
+1. `@zenspc/pi-pstack` selects the engineering playbook, principles, review method, and verification discipline.
+2. `pi-subagents` provides delegation, parallel fan-out, nested orchestration, worktree isolation, and execution budgets.
+3. pi-fff, pi-lens, DAP, web access, Plannotator, and related extensions provide concrete engineering capabilities.
+4. Docker Sandbox provides the outer isolation boundary.
 
-The main documents are:
+The template intentionally does not define a second repository-local development lifecycle. The previous `development-loop` and `engineering-cache` skills were removed because they overlapped with pstack's playbooks, `recall`, `why`, `show-me-your-work`, and verification principles.
 
-- `docs/pi-spec.md`: architecture, invariants, and governing specification;
-- `docs/pi-design.md`: setup and operating guide.
+## Defaults
 
-Repository-changing work uses the global `development-loop` Skill.
-Project-specific historical findings use the `engineering-cache` Skill when the
-lifecycle policy selects them for durable caching.
+The parent Pi session uses GPT-5.6 Luna with maximum thinking. Poteto model roles are preseeded in `pstack-models.json`. High-judgment roles use GPT-5.6 Sol. Cheap exploration and swarm work use DeepSeek V4 Flash. Review diversity uses Qwen 3.8 Flash and GPT-5.6 Sol.
 
-## Security assumptions
+`worker` inherits the parent model unless pstack supplies a role-specific model. `poteto-agent` inherits ambient tools so it can use installed engineering extensions instead of being restricted to raw read/grep/find/bash/edit/write.
 
-Docker Sandbox isolation does not make downloaded code, packages, extensions,
-or model-provider integrations trusted.
+Nested subagent depth is `2`. This permits a top-level Poteto agent to execute pstack workflow fan-out while still bounding recursion. Per-run spawn and concurrency limits remain explicit.
 
-The documented baseline initializes Docker Sandboxes with the `balanced` network
-preset. It permits common development services and denies other destinations by
-default. Add explicit allow rules only when the active project or provider needs
-them.
+## Build
 
-Clone mode protects the host repository from modification, not inspection. The
-read-only source mount includes untracked and ignored files. Keep secrets outside
-the repository tree or use Docker Sandbox credential isolation.
+```sh
+docker build -t pi-engineering-template:pstack .
+```
 
-Review third-party packages and Pi extensions before you add them to the
-template. Do not commit model-provider credentials, authentication state, API
-keys, or other secrets to this repository.
+## Validate
 
-## Upstream projects
+```sh
+node scripts/verify-template.mjs
+```
 
-- Pi: <https://github.com/earendil-works/pi>
-- Docker Sandboxes: <https://docs.docker.com/ai/sandboxes/>
+The verifier checks the pstack dependency, pinned versions, Poteto role configuration, subagent capability boundaries, model scope, recursion/concurrency bounds, and removal of the obsolete local lifecycle.
 
-Third-party packages installed by this template retain their own licenses and
-security properties.
+## Runtime
 
-## License
+Use Pi normally. Poteto Mode is available through pstack.
 
-This repository is licensed under the MIT License. See `LICENSE`.
+```text
+/poteto-mode
+```
+
+The package also exposes pstack workflow skills such as `how`, `why`, `architect`, `arena`, `swarm`, `interrogate`, `reflect`, `tdd`, `deslop`, and `no-comments`.
+
+Run `/setup-pstack` only when you want to replace the preseeded model-role mapping.
+
+## Safety
+
+`defaultProjectTrust` remains `never`. Model scope is enforced strictly. Destructive worktree cleanup remains automatic only within pi-subagents' managed authority policy. Scheduled runs and missions remain disabled by default.

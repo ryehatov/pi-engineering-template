@@ -2,8 +2,6 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import process from "node:process";
-import { spawnSync } from "node:child_process";
 
 const root = path.resolve(process.argv[2] || process.cwd());
 const errors = [];
@@ -33,53 +31,48 @@ function requireCondition(condition, message) {
 const requiredFiles = [
   "Dockerfile",
   "AGENTS.md",
+  "README.md",
   "settings.json",
   "subagent-config.json",
+  "pstack-models.json",
   "web-search.json",
   "pi-btw.json",
   "pi-fff.json",
   "docs/pi-spec.md",
-  "docs/pi-design.md",
-  "skills/development-loop/SKILL.md",
-  "skills/development-loop/agents/openai.yaml",
-  "skills/engineering-cache/SKILL.md",
-  "skills/engineering-cache/agents/openai.yaml",
-  "skills/engineering-cache/scripts/cache.mjs",
-  "scripts/test-engineering-cache.mjs",
+  "docs/pi-design.md"
 ];
-
 for (const file of requiredFiles) {
   requireCondition(fs.existsSync(path.join(root, file)), `${file}: missing`);
 }
 
+for (const obsolete of [
+  "skills/development-loop/SKILL.md",
+  "skills/engineering-cache/SKILL.md",
+  "scripts/test-engineering-cache.mjs"
+]) {
+  requireCondition(!fs.existsSync(path.join(root, obsolete)), `${obsolete}: obsolete lifecycle artifact must be removed`);
+}
+
 const settings = parseJson("settings.json");
 const subagents = parseJson("subagent-config.json");
-parseJson("web-search.json");
-const btw = parseJson("pi-btw.json");
+const pstack = parseJson("pstack-models.json");
 const fff = parseJson("pi-fff.json");
+parseJson("web-search.json");
+parseJson("pi-btw.json");
 
 if (settings) {
   requireCondition(settings.defaultProjectTrust === "never", "settings.json: defaultProjectTrust must remain 'never'");
-
   const scope = settings.subagents?.modelScope;
-  requireCondition(scope?.enforce === true && scope?.strict === true, "settings.json: subagent modelScope must be enforced strictly");
+  requireCondition(scope?.enforce === true && scope?.strict === true, "settings.json: modelScope must be strictly enforced");
   const allow = Array.isArray(scope?.allow) ? scope.allow : [];
-  requireCondition(allow.length > 0, "settings.json: subagent modelScope allow list must not be empty");
-  requireCondition(new Set(allow).size === allow.length, "settings.json: subagent modelScope allow list contains duplicates");
+  requireCondition(allow.includes("inherit"), "settings.json: modelScope must allow parent-model inheritance");
+  requireCondition(new Set(allow).size === allow.length, "settings.json: modelScope allow list contains duplicates");
 
   const overrides = settings.subagents?.agentOverrides || {};
-  for (const role of ["scout", "researcher", "worker", "reviewer", "oracle"]) {
-    const override = overrides[role];
-    requireCondition(override && override.disabled !== true && typeof override.model === "string" && override.model.length > 0, `settings.json: required role '${role}' must be enabled with a model`);
-    if (override?.model) {
-      requireCondition(allow.includes(override.model), `settings.json: ${role} model is outside the enforced allow list`);
-    }
-  }
-
-  for (const [role, override] of Object.entries(overrides)) {
-    if (override?.disabled === true || !override?.model) continue;
-    requireCondition(allow.includes(override.model), `settings.json: ${role} model is outside the enforced allow list`);
-  }
+  requireCondition(overrides.worker?.model === undefined, "settings.json: worker must not pin a model; pstack inherit-parent must remain effective");
+  requireCondition(overrides.worker?.tools === "inherit", "settings.json: worker tools must inherit ambient engineering capabilities");
+  requireCondition(overrides["poteto-agent"]?.tools === "inherit", "settings.json: poteto-agent must inherit ambient engineering capabilities");
+  requireCondition(overrides["poteto-agent"]?.allowNestedSubagents === true, "settings.json: poteto-agent must allow pstack nested workflow fan-out");
 
   const lensReadTools = ["lens_diagnostics", "lsp_diagnostics", "module_report", "read_symbol", "read_enclosing", "symbol_search"];
   for (const role of ["scout", "reviewer", "oracle"]) {
@@ -88,135 +81,70 @@ if (settings) {
     for (const tool of lensReadTools) {
       requireCondition(tools?.includes(tool), `settings.json: ${role} must expose Lens tool '${tool}'`);
     }
-    requireCondition(tools?.includes("grep") && tools?.includes("find"), `settings.json: ${role} must expose stable grep/find tool names`);
+    requireCondition(tools?.includes("grep") && tools?.includes("find"), `settings.json: ${role} must expose stable grep/find names`);
   }
-
   for (const role of ["reviewer", "oracle"]) {
     for (const tool of ["edit", "write", "ast_grep_replace", "lens_diagnostic_mark", "debug"]) {
-      requireCondition(!overrides[role]?.tools?.includes(tool), `settings.json: ${role} must not expose mutation/debug tool '${tool}'`);
+      requireCondition(!overrides[role]?.tools?.includes(tool), `settings.json: ${role} must remain read-only; found '${tool}'`);
     }
   }
-
-  requireCondition(overrides.worker?.tools === "inherit", "settings.json: worker tools must remain 'inherit'");
-  requireCondition(overrides.delegate?.disabled === true, "settings.json: delegate must remain disabled");
-  requireCondition(overrides["gpt-pro"]?.disabled === true, "settings.json: gpt-pro must remain disabled");
-  if (btw?.model) requireCondition(allow.includes(btw.model), "pi-btw.json: model must be in the enforced subagent allow list");
-}
-
-if (fff) {
-  requireCondition(fff.mode === "override", "pi-fff.json: mode must remain 'override'");
+  for (const [role, override] of Object.entries(overrides)) {
+    if (override?.disabled === true || !override?.model) continue;
+    requireCondition(allow.includes(override.model), `settings.json: ${role} model is outside modelScope`);
+  }
 }
 
 if (subagents) {
-  requireCondition(subagents.toolDescriptionMode === "compact", "subagent-config.json: toolDescriptionMode must remain 'compact'");
-  requireCondition(subagents.artifactDir === "session", "subagent-config.json: artifactDir must remain 'session'");
-  requireCondition(subagents.maxSubagentDepth === 1, "subagent-config.json: maxSubagentDepth must remain 1");
+  requireCondition(subagents.toolDescriptionMode === "compact", "subagent-config.json: compact tool descriptions required");
+  requireCondition(subagents.artifactDir === "session", "subagent-config.json: artifactDir must be session");
+  requireCondition(subagents.defaultSubagentContext === "fresh", "subagent-config.json: default delegated context must be fresh");
+  requireCondition(subagents.maxSubagentDepth === 2, "subagent-config.json: maxSubagentDepth must be 2 for Poteto nested fan-out");
+  requireCondition(Number.isInteger(subagents.maxSubagentSpawnsPerRun) && subagents.maxSubagentSpawnsPerRun > 0, "subagent-config.json: explicit positive per-run spawn budget required");
+  requireCondition(Number.isInteger(subagents.globalConcurrencyLimit) && subagents.globalConcurrencyLimit > 0, "subagent-config.json: explicit positive global concurrency limit required");
+  requireCondition(subagents.parallel?.concurrency <= subagents.globalConcurrencyLimit, "subagent-config.json: parallel concurrency must not exceed global concurrency");
   requireCondition(subagents.missions?.enabled === false, "subagent-config.json: missions must remain disabled");
   requireCondition(subagents.scheduledRuns?.enabled === false, "subagent-config.json: scheduled runs must remain disabled");
-  requireCondition(subagents.authorityPolicy?.discardWorktree === "auto", "subagent-config.json: worktree discard must remain automatic");
-  requireCondition(subagents.authorityPolicy?.destructiveCleanup === "auto", "subagent-config.json: destructive cleanup must remain automatic");
   requireCondition(subagents.authorityPolicy?.scheduleCreate === "forbid", "subagent-config.json: schedule creation must remain forbidden");
 }
 
-const spec = read("docs/pi-spec.md");
-const design = read("docs/pi-design.md");
-requireCondition(spec.includes("Use `override` mode through the revision-controlled `pi-fff.json`."), "docs/pi-spec.md: FFF override policy is missing");
-requireCondition(spec.includes("Scout, Reviewer, and Oracle use explicit tool allow lists."), "docs/pi-spec.md: specialist tool policy is missing");
-requireCondition(spec.includes("explicit Lens read-tool allow lists for Scout, Reviewer, and Oracle"), "docs/pi-spec.md: global Lens capability invariant is missing");
-requireCondition(design.includes("stable `grep` and `find` tool names while"), "docs/pi-design.md: FFF override operation guidance is missing");
-requireCondition(design.includes("Scout, Reviewer, and Oracle use explicit tool allow lists."), "docs/pi-design.md: specialist tool guidance is missing");
+if (pstack) {
+  requireCondition(pstack.version === 1, "pstack-models.json: unsupported version");
+  requireCondition(pstack.skillsEnabled === true, "pstack-models.json: pstack skills must be enabled");
+  const roles = pstack.roles || {};
+  for (const role of ["feature, refactoring", "bug-fix", "hardest tasks", "how explorer", "how explainer", "swarm workers", "architect runners", "interrogate reviewers"]) {
+    requireCondition(roles[role] !== undefined, `pstack-models.json: missing role '${role}'`);
+  }
+  const selectors = Object.values(roles).flatMap((value) => Array.isArray(value) ? value : [value]);
+  const allow = settings?.subagents?.modelScope?.allow || [];
+  for (const selector of selectors) {
+    if (selector === "inherit-parent" || selector === "auto") continue;
+    requireCondition(allow.includes(selector), `pstack-models.json: model '${selector}' is outside enforced modelScope`);
+  }
+}
 
-const agents = read("AGENTS.md");
-requireCondition((agents.match(/^# Global Engineering Instructions$/gm) || []).length === 1, "AGENTS.md: expected exactly one global heading");
-requireCondition((agents.match(/The parent owns task decomposition, integration, and the final response\./g) || []).length === 1, "AGENTS.md: parent ownership statement must not be duplicated");
-requireCondition((agents.match(/load and follow the\s+`development-loop` skill before the first repository write/g) || []).length === 1, "AGENTS.md: development-loop load gate is missing");
-requireCondition(agents.includes("completion and durable-knowledge gates"), "AGENTS.md: development-loop completion gate is missing");
-requireCondition(!agents.includes("engineering-cache"), "AGENTS.md: engineering-cache must remain behind development-loop");
+if (fff) {
+  requireCondition(fff.mode === "override", "pi-fff.json: mode must remain override");
+}
 
 const dockerfile = read("Dockerfile");
-requireCondition(/^ARG BASE_IMAGE=.*@sha256:[0-9a-f]{64}$/m.test(dockerfile), "Dockerfile: BASE_IMAGE must use a sha256 digest");
+requireCondition(/^ARG BASE_IMAGE=.*@sha256:[0-9a-f]{64}$/m.test(dockerfile), "Dockerfile: base image must use a SHA-256 digest");
 for (const match of dockerfile.matchAll(/^ARG ([A-Z0-9_]+_VERSION)=(.+)$/gm)) {
   const [, name, value] = match;
   requireCondition(value.trim() !== "" && value.trim() !== "latest", `Dockerfile: ${name} must use an explicit version`);
 }
-if (dockerfile.includes("MICROMAMBA_VERSION=")) {
-  requireCondition(/^ARG MICROMAMBA_SHA256=[0-9a-f]{64}$/m.test(dockerfile), "Dockerfile: micromamba download must declare a sha256 checksum");
-}
-requireCondition(dockerfile.includes("COPY --chown=agent:agent skills"), "Dockerfile: global skills directory is not installed");
-requireCondition(dockerfile.includes("/home/agent/.pi/agent/skills"), "Dockerfile: global skills destination is missing");
-requireCondition(dockerfile.includes("COPY --chown=agent:agent pi-fff.json"), "Dockerfile: pi-fff global configuration is not installed");
-requireCondition(dockerfile.includes("/home/agent/.pi/agent/pi-fff.json"), "Dockerfile: pi-fff configuration destination is missing");
-requireCondition(dockerfile.includes('"@earendil-works/pi-coding-agent@${PI_VERSION}"'), "Dockerfile: Pi package installation is missing");
-requireCondition(dockerfile.includes("ENV PLANNOTATOR_REMOTE=1"), "Dockerfile: Plannotator must use remote mode inside Docker Sandbox");
-requireCondition(dockerfile.includes("ENV PLANNOTATOR_BROWSER=xdg-open"), "Dockerfile: Plannotator must use the Docker Sandbox host-browser bridge");
-requireCondition(!/^ENV\s+PLANNOTATOR_PORT(?:=|\s)/m.test(dockerfile), "Dockerfile: Plannotator port must remain sandbox-instance configuration");
+requireCondition(dockerfile.includes("ARG PI_PSTACK_VERSION=0.4.0"), "Dockerfile: pi-pstack 0.4.0 pin missing");
+requireCondition(dockerfile.includes('pi install "npm:@zenspc/pi-pstack@${PI_PSTACK_VERSION}"'), "Dockerfile: pi-pstack installation missing");
+requireCondition(dockerfile.includes("ARG BUN_VERSION="), "Dockerfile: Bun pin missing");
+requireCondition(dockerfile.includes('npm install -g "bun@${BUN_VERSION}"'), "Dockerfile: Bun installation missing");
+requireCondition(dockerfile.includes("COPY --chown=agent:agent pstack-models.json"), "Dockerfile: pstack model config copy missing");
+requireCondition(dockerfile.includes("ENV PI_SUBAGENT_TASK_DELIVERY=file"), "Dockerfile: file-backed subagent task delivery required");
+requireCondition(dockerfile.includes("ENV PLANNOTATOR_REMOTE=1"), "Dockerfile: Plannotator remote mode required");
+requireCondition(dockerfile.includes("ENV PLANNOTATOR_BROWSER=xdg-open"), "Dockerfile: Plannotator browser bridge required");
 
-for (const [packageName, versionArg] of [
-  ["pi-subagents", "PI_SUBAGENTS_VERSION"],
-  ["pi-web-access", "PI_WEB_ACCESS_VERSION"],
-  ["pi-lens", "PI_LENS_VERSION"],
-  ["@ff-labs/pi-fff", "PI_FFF_VERSION"],
-  ["pi-context-view", "PI_CONTEXT_VIEW_VERSION"],
-  ["@piex-dev/dap", "DAP_VERSION"],
-  ["pi-powerline-footer", "PI_POWERLINE_FOOTER_VERSION"],
-  ["pi-rewind-hook", "PI_REWIND_HOOK_VERSION"],
-  ["@plannotator/pi-extension", "PLANNOTATOR_VERSION"],
-  ["@narumitw/pi-btw", "PI_BTW_VERSION"],
-]) {
-  const versionRef = "${" + versionArg + "}";
-  requireCondition(dockerfile.includes(`ARG ${versionArg}=`), `Dockerfile: ${packageName} version argument is missing`);
-  requireCondition(dockerfile.includes(`pi install "npm:${packageName}@${versionRef}"`), `Dockerfile: required extension ${packageName} is not installed`);
-}
-
-requireCondition(
-  !dockerfile.includes("@narumitw/pi-statusline") && !dockerfile.includes("PI_STATUSLINE_VERSION"),
-  "Dockerfile: legacy pi-statusline configuration must not remain",
-);
-
-function validateSkill(relative, name) {
-  const skill = read(relative);
-  requireCondition(new RegExp(`^---\\nname: ${name}\\ndescription: .+\\n---\\n`, "s").test(skill), `${relative}: invalid frontmatter`);
-  return skill;
-}
-
-function validateAgentMetadata(relative) {
-  const metadata = read(relative);
-  requireCondition(/^interface:\s*$/m.test(metadata), `${relative}: interface mapping is missing`);
-  requireCondition(/^\s+display_name:\s*.+$/m.test(metadata), `${relative}: display_name is missing`);
-  requireCondition(/^\s+short_description:\s*.+$/m.test(metadata), `${relative}: short_description is missing`);
-}
-
-function validateNodeSyntax(relative) {
-  const file = path.join(root, relative);
-  const result = spawnSync(process.execPath, ["--check", file], { encoding: "utf8" });
-  requireCondition(result.status === 0, `${relative}: JavaScript syntax check failed${result.stderr ? `: ${result.stderr.trim()}` : ""}`);
-}
-
-function validateBehavior(relative) {
-  const file = path.join(root, relative);
-  const result = spawnSync(process.execPath, [file], { cwd: root, encoding: "utf8" });
-  requireCondition(result.status === 0, `${relative}: behavior check failed${result.stderr || result.stdout ? `: ${(result.stderr || result.stdout).trim()}` : ""}`);
-}
-
-const developmentLoop = validateSkill("skills/development-loop/SKILL.md", "development-loop");
-const engineeringCache = validateSkill("skills/engineering-cache/SKILL.md", "engineering-cache");
-validateAgentMetadata("skills/development-loop/agents/openai.yaml");
-validateAgentMetadata("skills/engineering-cache/agents/openai.yaml");
-validateNodeSyntax("skills/engineering-cache/scripts/cache.mjs");
-validateNodeSyntax("scripts/test-engineering-cache.mjs");
-validateBehavior("scripts/test-engineering-cache.mjs");
-
-requireCondition(developmentLoop.includes("Do not replace it with a rewritten task prompt"), "development-loop: original user intent policy is missing");
-requireCondition(developmentLoop.includes("current repository-owned verification"), "development-loop: completion verification gate is missing");
-requireCondition(developmentLoop.includes("`docs/engineering/cache/` exists"), "development-loop: deterministic cache lookup gate is missing");
-requireCondition(developmentLoop.includes("Close each material completion claim with current evidence"), "development-loop: claim-to-evidence gate is missing");
-requireCondition(developmentLoop.includes("Classify whether the task produced durable knowledge"), "development-loop: durable-knowledge classification gate is missing");
-requireCondition(developmentLoop.includes("credible alternative"), "development-loop: ADR selection criteria are incomplete");
-requireCondition(developmentLoop.includes("do not invent a repository-wide ADR location or format"), "development-loop: ADR destination boundary is missing");
-requireCondition(developmentLoop.includes("`engineering-cache`"), "development-loop: cache routing is missing");
-requireCondition(engineeringCache.includes("belong to `development-loop`"), "engineering-cache: lifecycle ownership boundary is missing");
-requireCondition(engineeringCache.includes("watch_fingerprint"), "engineering-cache: fingerprint validity semantics are missing");
-requireCondition(engineeringCache.includes("status: superseded"), "engineering-cache: supersession semantics are missing");
+const agents = read("AGENTS.md");
+requireCondition(agents.includes("pstack's Poteto Mode"), "AGENTS.md: Poteto policy missing");
+requireCondition(!agents.includes("development-loop"), "AGENTS.md: obsolete development-loop policy remains");
+requireCondition(!agents.includes("engineering-cache"), "AGENTS.md: obsolete engineering-cache policy remains");
 
 if (errors.length) {
   for (const error of errors) console.error(`FAIL ${error}`);

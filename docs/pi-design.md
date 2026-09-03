@@ -1,572 +1,65 @@
-# Pi Engineering Environment Setup and Operations Guide
+# Pi Engineering Design
 
-**File:** `pi-design.md`
-**Revision date:** 2026-09-02
-**Companion specification:** `pi-spec.md`
+## Architecture
 
-## 1. Host setup
+The template uses a layered design.
 
-Install:
+`@zenspc/pi-pstack` owns engineering policy. Poteto Mode selects playbooks and principles, and pstack workflow skills provide architecture exploration, adversarial review, swarms, arena comparisons, debugging discipline, and shipping gates.
 
-- Docker Desktop with Docker Sandboxes;
-- `sbx`;
-- Git.
+`pi-subagents` owns delegated execution. It provides agent discovery, model routing, bounded nested delegation, concurrency control, worktree isolation, and run artifacts.
 
-Authenticate Docker Sandboxes:
+pi-fff, pi-lens, DAP, web access, Plannotator, and other installed extensions provide concrete capabilities. They are not workflow owners.
 
-```bash
-sbx login
-```
+Docker Sandbox owns process and filesystem isolation outside Pi.
 
-Initialize the balanced sandbox network policy:
+This separation is deliberate. A local lifecycle skill that redefines planning, completion, or durable knowledge would compete with pstack and increase prompt and maintenance cost.
 
-```bash
-sbx policy init balanced
-```
+## Poteto agent capability
 
-If a required provider, package host, registry, or development service is
-blocked, inspect `sbx policy log` and add the narrowest required allow rule.
+The upstream `poteto-agent` package definition declares a fixed tool list. pi-subagents applies `agentOverrides` to package agents, so this template overrides `poteto-agent.tools` to `inherit` and enables nested delegation.
 
----
+This avoids forking pstack while preserving access to installed engineering tools. It also keeps upstream pstack updates independently consumable.
 
-## 2. Create the template source
+## Parent model inheritance
 
-Create:
+Pstack's default semantic is `inherit-parent`. A fixed model override on the generic `worker` would silently defeat that behavior. The template therefore leaves `worker.model` unset and includes `inherit` in the strict pi-subagents model scope.
 
-```text
-pi-engineering-template/
-├── .gitignore
-├── README.md
-├── LICENSE
-├── Dockerfile
-├── settings.json
-├── subagent-config.json
-├── web-search.json
-├── pi-btw.json
-├── pi-fff.json
-├── AGENTS.md
-├── docs/
-│   ├── pi-spec.md
-│   └── pi-design.md
-├── scripts/
-│   └── verify-template.mjs
-└── skills/
-    ├── development-loop/
-    │   ├── SKILL.md
-    │   └── agents/openai.yaml
-    └── engineering-cache/
-        ├── SKILL.md
-        ├── agents/openai.yaml
-        └── scripts/cache.mjs
-```
+Explicit pstack roles are committed in `pstack-models.json`. High-judgment roles use GPT-5.6 Sol. Exploration and swarm roles use a cheaper model. Multi-model review roles use heterogeneous models where possible.
 
-Use a revisioned image name:
+## Nested fan-out
+
+A top-level Poteto agent may need to invoke a routed pstack workflow, which then starts worker agents. `maxSubagentDepth: 1` blocks this valid shape. The template raises the bound to `2` and keeps explicit spawn and concurrency limits.
+
+The intended shape is:
 
 ```text
-local/pi-engineering:<revision>
+parent Pi
+  -> poteto-agent or pstack workflow
+      -> bounded workers/reviewers
 ```
 
----
+Additional recursive orchestration is outside the default design.
 
-## 3. Create `settings.json`
+## Tool policy
 
-Use the revision-controlled `settings.json`. It is authoritative for provider,
-model, trust, model-scope, and role-routing values. Do not duplicate those
-values in this guide.
+pi-fff runs in override mode. This gives stable `grep` and `find` tool names while allowing stronger search and navigation behavior.
 
----
+Scout, Reviewer, and Oracle use explicit tool allow lists. They receive Lens read tools. Reviewer and Oracle do not receive source mutation or debug mutation tools.
 
-## 4. Create `subagent-config.json`
+Worker and Poteto agents inherit tools because implementation and verification can benefit from repository-specific and installed extensions. Capability inheritance remains bounded by the parent process and pi-subagents runtime policy.
 
-Use the revision-controlled `subagent-config.json`. It is the authoritative
-subagent runtime configuration for the template. Subagent artifacts are
-session-scoped so execution metadata does not modify the project working tree.
+## Pstack scripts
 
-Destination:
+Pstack ships `orch` and `watch-pr` scripts that run under Bun. The image installs a pinned Bun package instead of relying on a host-provided binary.
 
-```text
-~/.pi/agent/extensions/subagent/config.json
-```
+## Removed components
 
----
+The previous `development-loop` skill is removed. Poteto Mode already provides task classification, playbook selection, sequencing, verification, review, and shipping discipline.
 
-## 5. Create `web-search.json`
+The previous `engineering-cache` skill is removed. Pstack already provides `recall`, `why`, and `show-me-your-work` for reconstructing context, investigating shared history, and recording decision trails. Durable repository knowledge should be encoded in repository artifacts and checks instead of a parallel cache protocol.
 
-Use the revision-controlled `web-search.json`. Do not duplicate its values in
-this guide.
+## Verification strategy
 
-Destination:
+`scripts/verify-template.mjs` checks structure and configuration without relying on model behavior. It verifies dependency pins, pstack model configuration, model-scope compatibility, tool boundaries, recursion and concurrency bounds, required environment variables, and removal of obsolete lifecycle files.
 
-```text
-~/.pi/web-search.json
-```
-
----
-
-## 6. Create `pi-btw.json`
-
-Use the revision-controlled `pi-btw.json`. It is authoritative for the side
-thread model and reasoning behavior.
-
-Destination:
-
-```text
-~/.pi/agent/pi-btw.json
-```
-
-### 6.1 Create `pi-fff.json`
-
-Use the revision-controlled `pi-fff.json`. It keeps FFF in `override` mode so
-Parent and strict subagents use the stable `grep` and `find` tool names while
-FFF provides their implementation.
-
-Destination:
-
-```text
-~/.pi/agent/pi-fff.json
-```
-
----
-
-## 7. Create global `AGENTS.md`
-
-Use the revision-controlled `AGENTS.md`. Keep it short because it is always in
-agent context. It points repository-changing work to `development-loop` while
-detailed lifecycle and cache procedures remain in on-demand Skills.
-
-Destination:
-
-```text
-~/.pi/agent/AGENTS.md
-```
-
----
-
-## 8. Create the Dockerfile
-
-Use the revision-controlled `Dockerfile` as the image definition. It owns the
-installed global tools, configuration destinations, and global Skill
-installation. Do not maintain a second Dockerfile copy in this guide.
-
----
-
-## 9. Build and load the template
-
-Build the selected revision:
-
-```bash
-docker build \
-  -t local/pi-engineering:<revision> \
-  .
-```
-
-Export it:
-
-```bash
-docker image save \
-  local/pi-engineering:<revision> \
-  -o pi-engineering.tar
-```
-
-Load it into Docker Sandboxes:
-
-```bash
-sbx template load pi-engineering.tar
-```
-
----
-
-## 10. Create a project sandbox
-
-Run from the repository's main checkout. Choose a distinct
-`<plannotator-port>` for each concurrently running sandbox:
-
-```bash
-sbx run \
-  --clone \
-  --name pi-<project> \
-  --template local/pi-engineering:<revision> \
-  --publish <plannotator-port>:<plannotator-port> \
-  --env PLANNOTATOR_PORT=<plannotator-port> \
-  shell \
-  .
-```
-
-The template runs Plannotator in remote mode and uses `xdg-open` for Docker
-Sandboxes' host-browser bridge. Publishing the same port on the host makes the
-advertised `localhost` review URL reach the Plannotator server.
-
-Inside the sandbox, create a working branch:
-
-```bash
-git switch -c agent/<task>
-```
-
-Start Pi:
-
-```bash
-pi
-```
-
-Clone mode protects the host checkout from modification, not inspection. The
-read-only source mount includes untracked and ignored files. Keep secrets
-outside the repository tree or use Docker Sandbox credential isolation.
-
----
-
-## 11. Authenticate model providers
-
-Authenticate the providers referenced by the current `settings.json` and
-`pi-btw.json` through Pi inside the named sandbox. Use Pi's provider
-authentication flow, including `/login` where supported.
-
-The named sandbox retains provider state while it exists.
-
----
-
-## 12. Normal operation
-
-Reattach to the project sandbox:
-
-```bash
-sbx run --name pi-<project>
-```
-
-Start Pi from the private clone:
-
-```bash
-pi
-```
-
-The normal role topology is:
-
-```text
-Parent
-│
-├── Scout
-├── Researcher
-├── Worker
-├── Reviewer
-└── Oracle
-```
-
-`settings.json` is authoritative for the model and reasoning level assigned to
-each role.
-
-The Parent chooses the smallest useful execution graph for each task:
-
-```text
-direct
-    Parent
-
-specialized
-    Parent -> specialist -> Parent
-
-parallel
-    Parent -> specialists in parallel -> Parent
-
-implementation review
-    Parent -> Worker -> fresh Reviewer -> Parent/Worker -> Parent
-```
-
-Use direct Parent execution when it is the simplest useful path.
-
----
-
-## 13. Repository work
-
-### 13.1 Discovery
-
-Use the simplest discovery surface that answers the current question:
-
-```text
-grep/find
-    stable Pi tool names backed by FFF override mode
-
-Lens
-    semantic discovery, bounded source reads, and diagnostics
-```
-
-Scout, Reviewer, and Oracle receive the always-active read-oriented Lens tools
-needed for repository inspection. They do not rely on ambient extension-tool
-inheritance for those capabilities.
-
-### 13.2 Implementation and validation
-
-The Worker uses:
-
-```text
-tools = inherit
-```
-
-Delegated implementation can use the ambient Pi tools, extensions, shell, repository tooling, and sandbox-private Docker Engine.
-
-Scout, Reviewer, and Oracle use explicit tool allow lists. Their Lens baseline is
-`lens_diagnostics`, `lsp_diagnostics`, `module_report`, `read_symbol`,
-`read_enclosing`, and `symbol_search`. Reviewer and Oracle do not receive
-source-mutation or runtime-debug tools.
-
-Use repository-provided build, test, lint, type-check, benchmark, and generation commands as the authoritative project validation surface.
-
-### 13.3 Runtime debugging
-
-Use the DAP `debug` tool for structured runtime debugging. Install the debugger adapter required by the active project inside the sandbox when needed.
-
-### 13.4 External research
-
-Use:
-
-```text
-Researcher
-    selects and evaluates evidence
-
-pi-web-access
-    searches and retrieves sources
-
-Researcher
-    synthesizes the result
-```
-
-### 13.5 Human review
-
-Enter reviewed planning when explicit plan approval adds value:
-
-```text
-/plannotator-plan-mode
-```
-
-or:
-
-```bash
-pi --plan
-```
-
-Use the review surfaces directly when useful:
-
-```text
-/plannotator-review
-/plannotator-annotate <file.md>
-/plannotator-last
-```
-
-### 13.6 Side questions
-
-Use:
-
-```text
-/btw <question>
-```
-
-or open the side-thread menu with:
-
-```text
-/btw
-```
-
-`pi-btw.json` is authoritative for the side-thread model and reasoning behavior.
-
-### 13.7 Terminal interaction and context inspection
-
-Use `pi-powerline-footer` for continuous operating-state visibility and its
-built-in terminal interaction features. Use `pi-context-view` for detailed
-context inspection.
-
-### 13.8 Session rewind
-
-Use Pi session navigation when you need to return to an earlier conversation
-point. When `pi-rewind-hook` has an exact checkpoint for that point, choose
-whether to restore the associated file state.
-
-Rewind is recovery state, not durable Git history. Commit useful work normally.
-
----
-
-## 14. Parallel work
-
-A clone-mode sandbox can contain multiple Git branches and worktrees.
-
-Use `pi-subagents` worktree execution for independent writer tasks that benefit from isolated working state:
-
-```text
-Docker clone
-├── main task branch
-├── worker worktree A
-└── worker worktree B
-```
-
-The Parent integrates the resulting work.
-
----
-
-## 15. Pause and resume
-
-Pause the environment:
-
-```bash
-sbx stop pi-<project>
-```
-
-Resume it:
-
-```bash
-sbx run --name pi-<project>
-```
-
-The named sandbox retains its filesystem, repository state, installed packages, and private Docker images.
-
----
-
-## 16. Transfer work to the host
-
-Commit useful work inside the sandbox:
-
-```bash
-git add -A
-git commit
-```
-
-Keep the sandbox running while fetching its clone-mode remote from the host:
-
-```bash
-git fetch sandbox-pi-<project>
-```
-
-Inspect the sandbox branch:
-
-```bash
-git log sandbox-pi-<project>/agent/<task>
-```
-
-Create a host-side branch from it:
-
-```bash
-git switch -c agent/<task> \
-  sandbox-pi-<project>/agent/<task>
-```
-
-The host repository owns the integrated result. Rewind snapshot refs remain
-sandbox-local recovery state and are not part of the branch transfer workflow.
-
----
-
-## 17. Remove a sandbox
-
-After retaining the desired Git branches, remove the project environment:
-
-```bash
-sbx rm pi-<project>
-```
-
----
-
-## 18. Project `AGENTS.md`
-
-Use repository `AGENTS.md` only for project facts that materially improve engineering work:
-
-```markdown
-# Project Instructions
-
-## Governing Sources
-
-- Specification: `<path>`
-- Architecture decisions: `<path>`
-
-## Commands
-
-- Build: `<command>`
-- Test: `<command>`
-- Lint / type check: `<command>`
-
-## Generated Artifacts
-
-- `<path>` is generated by `<command>`.
-
-## Repository Notes
-
-- `<non-obvious repository fact>`
-```
-
-Global model routing, extension topology, Docker behavior, and generic engineering policy remain in the global environment.
-
----
-
-## 19. Update the template
-
-Resolve the current base template digest:
-
-```bash
-docker pull docker/sandbox-templates:shell-docker
-
-docker image inspect \
-  docker/sandbox-templates:shell-docker \
-  --format '{{index .RepoDigests 0}}'
-```
-
-Resolve current npm releases:
-
-```bash
-docker run --rm node:lts-alpine sh -c '
-for package in \
-  @earendil-works/pi-coding-agent \
-  pi-subagents \
-  pi-web-access \
-  pi-lens \
-  @ff-labs/pi-fff \
-  pi-context-view \
-  @piex-dev/dap \
-  pi-powerline-footer \
-  pi-rewind-hook \
-  @plannotator/pi-extension \
-  @narumitw/pi-btw
-do
-  printf "%s %s\\n" "$package" "$(npm view "$package" version)"
-done
-'
-```
-
-Update the selected Dockerfile dependencies and assign a new revision tag.
-
-Build and load the new revision:
-
-```bash
-docker build \
-  -t local/pi-engineering:<new-revision> \
-  .
-
-docker image save \
-  local/pi-engineering:<new-revision> \
-  -o pi-engineering.tar
-
-sbx template load pi-engineering.tar
-```
-
-Create new project sandboxes from the new revision. Existing named sandboxes remain on their current revision.
-
----
-
-## 20. Verify the template and preserve engineering knowledge
-
-Before committing a template revision, run:
-
-```bash
-node scripts/verify-template.mjs
-```
-
-The verifier checks branch-independent invariants such as required role
-configuration, strict model scope, subagent safety settings, extension and Skill
-installation, and bundled script syntax. Branch variants remain free to select
-different allowed models and toolchains.
-
-For repository-changing work, global `AGENTS.md` requires `development-loop`
-before the first repository write and again at completion. The Skill supplies
-risk-scaled engineering gates while preserving the user's original request as
-authoritative intent. It uses existing planning, subagent, review, and
-repository-verification mechanisms rather than introducing another workflow
-engine.
-
-When `docs/engineering/cache/` exists, `development-loop` performs one narrow
-task-relevant cache lookup before non-trivial investigation. `engineering-cache`
-owns freshness checks and selected note storage. After verification,
-`development-loop` always classifies durable knowledge as discard, ADR, cache,
-or reusable Skill. Cache notes remain advisory history; current governing
-sources, code, tests, and verification evidence remain authoritative.
+A successful static verifier does not prove that every external model or package service is available at runtime. Docker build and a live Pi smoke test remain the strongest integration checks when the execution environment permits them.

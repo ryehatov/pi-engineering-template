@@ -8,16 +8,19 @@ RUN apt-get update \
       build-essential \
  && rm -rf /var/lib/apt/lists/*
 
-# pi
 ARG PI_VERSION=0.84.4
+ARG BUN_VERSION=1.4.0
 
 RUN npm install -g --ignore-scripts \
-    "@earendil-works/pi-coding-agent@${PI_VERSION}"
+    "@earendil-works/pi-coding-agent@${PI_VERSION}" \
+ && npm install -g "bun@${BUN_VERSION}" \
+ && bun --version
 
 USER agent
 
 RUN mkdir -p \
     /home/agent/.pi/agent/extensions/subagent \
+    /home/agent/.pi/agent/pstack \
     /home/agent/.pi
 
 COPY --chown=agent:agent settings.json \
@@ -25,6 +28,11 @@ COPY --chown=agent:agent settings.json \
 
 COPY --chown=agent:agent subagent-config.json \
     /home/agent/.pi/agent/extensions/subagent/config.json
+
+COPY --chown=agent:agent pstack-models.json \
+    /home/agent/.pi/agent/pstack/models.json
+
+RUN chmod 600 /home/agent/.pi/agent/pstack/models.json
 
 COPY --chown=agent:agent web-search.json \
     /home/agent/.pi/web-search.json
@@ -38,10 +46,8 @@ COPY --chown=agent:agent pi-fff.json \
 COPY --chown=agent:agent AGENTS.md \
     /home/agent/.pi/agent/AGENTS.md
 
-COPY --chown=agent:agent skills \
-    /home/agent/.pi/agent/skills
-
-ARG PI_SUBAGENTS_VERSION=0.58.0
+ARG PI_SUBAGENTS_VERSION=0.63.0
+ARG PI_PSTACK_VERSION=0.4.0
 ARG PI_WEB_ACCESS_VERSION=0.25.0
 ARG PI_LENS_VERSION=4.1.3
 ARG PI_FFF_VERSION=0.10.5
@@ -53,6 +59,7 @@ ARG PLANNOTATOR_VERSION=0.27.9
 ARG PI_BTW_VERSION=0.55.4
 
 RUN pi install "npm:pi-subagents@${PI_SUBAGENTS_VERSION}" \
+ && pi install "npm:@zenspc/pi-pstack@${PI_PSTACK_VERSION}" \
  && pi install "npm:pi-web-access@${PI_WEB_ACCESS_VERSION}" \
  && pi install "npm:pi-lens@${PI_LENS_VERSION}" \
  && pi install "npm:@ff-labs/pi-fff@${PI_FFF_VERSION}" \
@@ -66,6 +73,7 @@ RUN pi install "npm:pi-subagents@${PI_SUBAGENTS_VERSION}" \
 ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8
 ENV POWERLINE_NERD_FONTS=1
+ENV PI_SUBAGENT_TASK_DELIVERY=file
 
 ENV PLANNOTATOR_REMOTE=1
 ENV PLANNOTATOR_BROWSER=xdg-open
