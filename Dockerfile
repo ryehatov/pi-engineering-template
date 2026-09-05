@@ -8,7 +8,7 @@ RUN apt-get update \
       build-essential \
  && rm -rf /var/lib/apt/lists/*
 
-ARG PI_VERSION=0.84.4
+ARG PI_VERSION=0.85.1
 ARG BUN_VERSION=1.4.0
 
 RUN npm install -g --ignore-scripts \
