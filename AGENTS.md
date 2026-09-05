@@ -40,7 +40,7 @@ Redesign from first principles when a requirement makes the current shape artifi
 
 Use one writer for overlapping source state. Parallel mutation requires separate worktrees or disjoint ownership. Parallel read-only investigation is encouraged when it increases evidence coverage.
 
-Use pi-fff and pi-lens when they provide stronger structural evidence than raw file walking. Use DAP for runtime debugging when source inspection is insufficient. Tool choice must serve the pstack playbook rather than replace it.
+Use pi-fff and pi-lens when they provide stronger structural evidence than raw file walking. Tool choice must serve the pstack playbook rather than replace it.
 
 Keep the parent context clean. Delegate bulk exploration and repetitive inspection. Return compact evidence with exact paths, symbols, commands, and observed results.
 

@@ -58,7 +58,6 @@ ARG PI_WEB_ACCESS_VERSION=0.28.0
 ARG PI_LENS_VERSION=4.1.3
 ARG PI_FFF_VERSION=0.10.6
 ARG PI_CONTEXT_VIEW_VERSION=0.5.0
-ARG DAP_VERSION=0.1.1
 ARG PI_POWERLINE_FOOTER_VERSION=0.17.0
 ARG PI_REWIND_HOOK_VERSION=1.8.6
 ARG PLANNOTATOR_VERSION=0.27.12
@@ -71,7 +70,6 @@ RUN pi install "npm:pi-subagents@${PI_SUBAGENTS_VERSION}" \
  && pi install "npm:pi-lens@${PI_LENS_VERSION}" \
  && pi install "npm:@ff-labs/pi-fff@${PI_FFF_VERSION}" \
  && pi install "npm:pi-context-view@${PI_CONTEXT_VIEW_VERSION}" \
- && pi install "npm:@piex-dev/dap@${DAP_VERSION}" \
  && pi install "npm:pi-powerline-footer@${PI_POWERLINE_FOOTER_VERSION}" \
  && pi install "npm:pi-rewind-hook@${PI_REWIND_HOOK_VERSION}" \
  && pi install "npm:@plannotator/pi-extension@${PLANNOTATOR_VERSION}" \

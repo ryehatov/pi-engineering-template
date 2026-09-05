@@ -105,6 +105,7 @@ const docker = read("Dockerfile");
 ok(/^ARG BASE_IMAGE=.*@sha256:[0-9a-f]{64}$/m.test(docker), "Dockerfile: base image digest pin missing");
 for (const [needle, msg] of [["ARG PI_VERSION=0.85.1", "Pi pin"], ["ARG PI_SUBAGENTS_VERSION=0.65.1", "pi-subagents pin"], ["ARG PI_PSTACK_VERSION=0.5.0", "pi-pstack pin"], ["ARG PONYTAIL_VERSION=4.9.0", "Ponytail pin"], ["ARG PI_WEB_ACCESS_VERSION=0.28.0", "pi-web-access pin"], ["ARG PI_POWERLINE_FOOTER_VERSION=0.17.0", "pi-powerline-footer pin"], ["ARG PLANNOTATOR_VERSION=0.27.12", "Plannotator pin"], ["ARG PI_BTW_VERSION=0.57.0", "pi-btw pin"], ["ARG BUN_VERSION=1.4.0", "Bun pin"], ["COPY --chown=agent:agent models.json", "models.json copy"], ["COPY --chown=agent:agent pstack-models.json", "pstack profile copy"], ["ENV CMD_ZDR=1", "CMD_ZDR"], ["ENV PI_SUBAGENT_TASK_DELIVERY=file", "file task delivery"]]) ok(docker.includes(needle), `Dockerfile: ${msg} missing`);
 ok(docker.includes("npm:@dietrichgebert/ponytail@${PONYTAIL_VERSION}"), "Dockerfile: Ponytail install missing");
+ok(!docker.includes("@piex-dev/dap"), "Dockerfile: DAP must not be installed");
 for (const legacy of ["opencode-go", "pi-commandcode-provider", "/alpha/generate"]) ok(!docker.includes(legacy), `Dockerfile: legacy route remains (${legacy})`);
 for (const f of ["settings.json", "models.json", "pstack-models.json", "pi-btw.json", "subagent-config.json"]) for (const legacy of ["opencode-go", "pi-commandcode-provider"]) ok(!read(f).includes(legacy), `${f}: legacy route remains (${legacy})`);
 
