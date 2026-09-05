@@ -42,6 +42,8 @@ Use one writer for overlapping source state. Parallel mutation requires separate
 
 Use pi-fff and pi-lens when they provide stronger structural evidence than raw file walking. Tool choice must serve the pstack playbook rather than replace it.
 
+Subagent launches default to background execution. Keep that default for roles that depend on ambient extensions such as pi-fff, pi-lens, or pi-web-access. An explicit foreground launch must use only Pi-native tools or explicitly loaded child extensions.
+
 Keep the parent context clean. Delegate bulk exploration and repetitive inspection. Return compact evidence with exact paths, symbols, commands, and observed results.
 
 Before claiming completion, verify the real artifact with the strongest available repository-owned check. For runtime behavior, reproduce or smoke-test the actual surface when feasible. Report only checks that actually ran. State unverified claims explicitly.

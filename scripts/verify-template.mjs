@@ -83,7 +83,7 @@ for (const m of entries) {
   ok(seteq(active, efforts[m.id].map((x) => `${x}:${x}`)), `models.json: ${m.id} effort map mismatch`);
 }
 
-ok(sub.toolDescriptionMode === "compact" && sub.artifactDir === "session" && sub.defaultSubagentContext === "fresh", "subagent-config.json: compact/session/fresh contract mismatch");
+ok(sub.toolDescriptionMode === "compact" && sub.artifactDir === "session" && sub.defaultSubagentContext === "fresh" && sub.asyncByDefault === true, "subagent-config.json: compact/session/fresh/async-default contract mismatch");
 ok(sub.maxSubagentDepth === 2 && sub.maxSubagentSpawnsPerRun > 0 && sub.maxSubagentSpawnsPerRun <= 32, "subagent-config.json: depth/spawn bound invalid");
 ok(sub.globalConcurrencyLimit > 0 && sub.globalConcurrencyLimit <= 8 && sub.parallel?.concurrency > 0 && sub.parallel.concurrency <= 4 && sub.parallel.concurrency <= sub.globalConcurrencyLimit, "subagent-config.json: concurrency bound invalid");
 ok(sub.parallel?.maxTasks > 0 && sub.parallel.maxTasks <= 8, "subagent-config.json: parallel maxTasks invalid");

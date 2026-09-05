@@ -2,6 +2,7 @@
   "toolDescriptionMode": "compact",
   "artifactDir": "session",
   "defaultSubagentContext": "fresh",
+  "asyncByDefault": true,
   "maxSubagentDepth": 2,
   "maxSubagentSpawnsPerRun": 32,
   "globalConcurrencyLimit": 8,
