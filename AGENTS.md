@@ -14,6 +14,8 @@ Everything else is a capability provider, not a workflow owner. Do not create a 
 
 For nontrivial engineering work, use Poteto Mode and match the task to the applicable pstack playbook. The parent owns decomposition, integration, final judgment, and the final response. Subagents produce evidence and candidate work; they do not transfer ownership.
 
+Ponytail constrains implementation scope inside the active pstack workflow. It is not a workflow owner. Apply its YAGNI-first rules after locating the correct change boundary; prefer deletion, reuse, native facilities, and the smallest correct diff without weakening required safeguards.
+
 ## Model routing
 
 Route by task shape, not prestige.

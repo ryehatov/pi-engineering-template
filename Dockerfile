@@ -53,6 +53,7 @@ COPY --chown=agent:agent AGENTS.md \
 
 ARG PI_SUBAGENTS_VERSION=0.65.1
 ARG PI_PSTACK_VERSION=0.5.0
+ARG PONYTAIL_VERSION=4.9.0
 ARG PI_WEB_ACCESS_VERSION=0.28.0
 ARG PI_LENS_VERSION=4.1.3
 ARG PI_FFF_VERSION=0.10.6
@@ -65,6 +66,7 @@ ARG PI_BTW_VERSION=0.57.0
 
 RUN pi install "npm:pi-subagents@${PI_SUBAGENTS_VERSION}" \
  && pi install "npm:@zenspc/pi-pstack@${PI_PSTACK_VERSION}" \
+ && pi install "npm:@dietrichgebert/ponytail@${PONYTAIL_VERSION}" \
  && pi install "npm:pi-web-access@${PI_WEB_ACCESS_VERSION}" \
  && pi install "npm:pi-lens@${PI_LENS_VERSION}" \
  && pi install "npm:@ff-labs/pi-fff@${PI_FFF_VERSION}" \

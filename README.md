@@ -12,7 +12,7 @@ The `pstack` branch is intentionally opinionated. It treats Pi, `pi-subagents`, 
 - **OpenAI Codex** provides GPT-5.6 Luna and Sol.
 - **Command Code GOAT Provider API** provides the specialist Flash models through Pi's native OpenAI-compatible provider path with ZDR forced on every request.
 
-Supporting extensions such as pi-fff, pi-lens, web access, DAP, Plannotator, and the footer remain tools. They do not define a second engineering lifecycle.
+Supporting extensions such as pi-fff, pi-lens, web access, DAP, Plannotator, and the footer remain tools. Ponytail supplies a YAGNI-first implementation constraint inside pstack workflows. None of them defines a second engineering lifecycle.
 
 ## Model portfolio
 
