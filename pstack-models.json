@@ -1,42 +1,42 @@
 {
   "version": 1,
   "roles": {
-    "feature, refactoring": "openai-codex/gpt-5.6-luna:high",
-    "bug-fix": "openai-codex/gpt-5.6-sol:high",
-    "perf-issue": "openai-codex/gpt-5.6-sol:high",
-    "hillclimb": "commandcode-goat/deepseek/deepseek-v4-flash:high",
+    "feature, refactoring": "commandcode-goat/z-ai/glm-5.3-flash:high",
+    "bug-fix": "commandcode-goat/z-ai/glm-5.3-flash:high",
+    "perf-issue": "commandcode-goat/z-ai/glm-5.3-flash:high",
+    "hillclimb": "commandcode-goat/z-ai/glm-5.3-flash:high",
     "judgment and prose": "commandcode-goat/Qwen/Qwen3.8-Flash:xhigh",
-    "hardest tasks": "openai-codex/gpt-5.6-sol:max",
-    "how explorer": "commandcode-goat/z-ai/glm-5.3-flash:high",
-    "how explainer": "openai-codex/gpt-5.6-luna:high",
+    "hardest tasks": "openai-codex/gpt-6-astra:high",
+    "how explorer": "commandcode-goat/deepseek/deepseek-v4-flash:high",
+    "how explainer": "commandcode-goat/Qwen/Qwen3.8-Flash:medium",
     "how critics": [
       "commandcode-goat/Qwen/Qwen3.8-Flash:xhigh",
-      "openai-codex/gpt-5.6-sol:high",
-      "commandcode-goat/z-ai/glm-5.3-flash:high"
+      "commandcode-goat/z-ai/glm-5.3-flash:max",
+      "commandcode-goat/deepseek/deepseek-v4-flash:high"
     ],
     "why investigators": "commandcode-goat/z-ai/glm-5.3-flash:high",
-    "why synthesizer": "openai-codex/gpt-5.6-sol:max",
-    "reflect tooling": "commandcode-goat/deepseek/deepseek-v4-flash:max",
-    "reflect judgment, divergent, synthesizer": "openai-codex/gpt-5.6-sol:max",
+    "why synthesizer": "commandcode-goat/Qwen/Qwen3.8-Flash:xhigh",
+    "reflect tooling": "commandcode-goat/deepseek/deepseek-v4-flash:high",
+    "reflect judgment, divergent, synthesizer": "commandcode-goat/Qwen/Qwen3.8-Flash:xhigh",
     "arena runners": [
-      "openai-codex/gpt-5.6-luna:high",
-      "commandcode-goat/deepseek/deepseek-v4-flash:max",
-      "commandcode-goat/z-ai/glm-5.3-flash:max"
+      "commandcode-goat/z-ai/glm-5.3-flash:max",
+      "commandcode-goat/Qwen/Qwen3.8-Flash:xhigh",
+      "commandcode-goat/deepseek/deepseek-v4-flash:high"
     ],
     "arena cross-judge pool": [
       "commandcode-goat/Qwen/Qwen3.8-Flash:xhigh",
-      "openai-codex/gpt-5.6-sol:high"
+      "commandcode-goat/z-ai/glm-5.3-flash:max"
     ],
-    "swarm workers": "commandcode-goat/deepseek/deepseek-v4-flash:high",
+    "swarm workers": "commandcode-goat/z-ai/glm-5.3-flash:high",
     "architect runners": [
-      "openai-codex/gpt-5.6-sol:max",
-      "openai-codex/gpt-5.6-luna:max",
+      "openai-codex/gpt-6-astra:high",
+      "commandcode-goat/z-ai/glm-5.3-flash:max",
       "commandcode-goat/Qwen/Qwen3.8-Flash:xhigh"
     ],
     "interrogate reviewers": [
       "commandcode-goat/Qwen/Qwen3.8-Flash:xhigh",
-      "openai-codex/gpt-5.6-sol:high",
-      "commandcode-goat/z-ai/glm-5.3-flash:high"
+      "commandcode-goat/z-ai/glm-5.3-flash:max",
+      "commandcode-goat/deepseek/deepseek-v4-flash:high"
     ]
   },
   "skillsEnabled": true

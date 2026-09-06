@@ -1,3 +1,4 @@
 {
-  "model": "openai-codex/gpt-5.6-luna"
+  "model": "commandcode-goat/Qwen/Qwen3.8-Flash",
+  "thinkingLevel": "medium"
 }

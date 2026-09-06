@@ -9,7 +9,7 @@ The `pstack` branch is intentionally opinionated. It treats Pi, `pi-subagents`, 
 - **Pi** is the parent runtime and integration point.
 - **pi-subagents** provides isolated children, bounded parallelism, worktrees, artifacts, and model enforcement.
 - **pi-pstack** provides Poteto Mode, engineering principles, playbooks, multi-model review, arena, swarm, architecture, and reflection workflows.
-- **OpenAI Codex** provides GPT-5.6 Luna and Sol.
+- **OpenAI Codex** provides GPT-6 Astra and GPT-5.6 Sol.
 - **Command Code GOAT Provider API** provides the specialist Flash models through Pi's native OpenAI-compatible provider path with ZDR forced on every request.
 
 Supporting extensions such as pi-fff, pi-lens, web access, Plannotator, and the footer remain tools. Ponytail supplies a YAGNI-first implementation constraint inside pstack workflows. None of them defines a second engineering lifecycle.
@@ -20,13 +20,13 @@ The default policy is deliberately small.
 
 | Function | Model | Typical thinking |
 | --- | --- | --- |
-| Coordinate and integrate | `openai-codex/gpt-5.6-luna` | `max` |
-| Escalate and synthesize | `openai-codex/gpt-5.6-sol` | `high` / `max` |
-| Find evidence | `commandcode-goat/z-ai/glm-5.3-flash` | `high` |
-| Finish bounded work | `commandcode-goat/deepseek/deepseek-v4-flash` | `high` / `max` |
-| Judge and review | `commandcode-goat/Qwen/Qwen3.8-Flash` | `medium` / `xhigh` |
+| Coordinate and integrate | `openai-codex/gpt-6-astra` | `low` |
+| Explicit deep oracle | `openai-codex/gpt-5.6-sol` | `max` |
+| Execute delegated work | `commandcode-goat/z-ai/glm-5.3-flash` | `high` / `max` |
+| Read cache-heavy context | `commandcode-goat/deepseek/deepseek-v4-flash` | `high` |
+| Judge, explain, synthesize | `commandcode-goat/Qwen/Qwen3.8-Flash` | `medium` / `xhigh` |
 
-This split reflects both upstream pstack's role-oriented design and observed model behavior: GLM is used for discovery, DeepSeek for task completion, and Qwen for disciplined judgment. Luna remains the normal parent. Sol is the escalation model rather than the default hammer.
+This split is role-driven. Astra coordinates; GLM executes; DeepSeek absorbs cache-heavy reads; Qwen judges; Sol is reserved for an explicit bounded second opinion. `Qwen3.8-Flash` is the production model corresponding to Qwen3.8-Flash-Next in this portfolio.
 
 See `docs/model-policy.md` for the exact pstack role matrix and rationale.
 
@@ -77,6 +77,8 @@ Use Pi normally. For nontrivial work, enable Poteto Mode:
 ```
 
 The committed `pstack-models.json` is already curated. Do not run `/setup-pstack` unless you intentionally want to replace the profile and then update the repository configuration to match.
+
+Keep the Astra parent focused on decomposition and integration. Delegate bulk reads and repetitive inspection so the parent receives compact evidence instead of raw context. Prompt-cache hits reduce provider cost but do not remove cached tokens from a child context.
 
 See `docs/operations.md` for runtime authentication, smoke checks, upgrades, and failure handling.
 

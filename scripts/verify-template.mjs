@@ -10,36 +10,36 @@ const ok = (v, m) => { if (!v) errors.push(m); };
 const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 const seteq = (a, b) => Array.isArray(a) && a.length === b.length && b.every((x) => a.includes(x)) && new Set(a).size === a.length;
 
-const LUNA = "openai-codex/gpt-5.6-luna";
+const ASTRA = "openai-codex/gpt-6-astra";
 const SOL = "openai-codex/gpt-5.6-sol";
 const DS = "commandcode-goat/deepseek/deepseek-v4-flash";
 const GLM = "commandcode-goat/z-ai/glm-5.3-flash";
 const QWEN = "commandcode-goat/Qwen/Qwen3.8-Flash";
-const approved = [LUNA, SOL, DS, GLM, QWEN];
+const approved = [ASTRA, SOL, DS, GLM, QWEN];
 const efforts = {
   "deepseek/deepseek-v4-flash": ["high", "max"],
   "z-ai/glm-5.3-flash": ["low", "high", "max"],
   "Qwen/Qwen3.8-Flash": ["low", "medium", "xhigh"]
 };
 const roles = {
-  "feature, refactoring": `${LUNA}:high`,
-  "bug-fix": `${SOL}:high`,
-  "perf-issue": `${SOL}:high`,
-  "hillclimb": `${DS}:high`,
+  "feature, refactoring": `${GLM}:high`,
+  "bug-fix": `${GLM}:high`,
+  "perf-issue": `${GLM}:high`,
+  "hillclimb": `${GLM}:high`,
   "judgment and prose": `${QWEN}:xhigh`,
-  "hardest tasks": `${SOL}:max`,
-  "how explorer": `${GLM}:high`,
-  "how explainer": `${LUNA}:high`,
-  "how critics": [`${QWEN}:xhigh`, `${SOL}:high`, `${GLM}:high`],
+  "hardest tasks": `${ASTRA}:high`,
+  "how explorer": `${DS}:high`,
+  "how explainer": `${QWEN}:medium`,
+  "how critics": [`${QWEN}:xhigh`, `${GLM}:max`, `${DS}:high`],
   "why investigators": `${GLM}:high`,
-  "why synthesizer": `${SOL}:max`,
-  "reflect tooling": `${DS}:max`,
-  "reflect judgment, divergent, synthesizer": `${SOL}:max`,
-  "arena runners": [`${LUNA}:high`, `${DS}:max`, `${GLM}:max`],
-  "arena cross-judge pool": [`${QWEN}:xhigh`, `${SOL}:high`],
-  "swarm workers": `${DS}:high`,
-  "architect runners": [`${SOL}:max`, `${LUNA}:max`, `${QWEN}:xhigh`],
-  "interrogate reviewers": [`${QWEN}:xhigh`, `${SOL}:high`, `${GLM}:high`]
+  "why synthesizer": `${QWEN}:xhigh`,
+  "reflect tooling": `${DS}:high`,
+  "reflect judgment, divergent, synthesizer": `${QWEN}:xhigh`,
+  "arena runners": [`${GLM}:max`, `${QWEN}:xhigh`, `${DS}:high`],
+  "arena cross-judge pool": [`${QWEN}:xhigh`, `${GLM}:max`],
+  "swarm workers": `${GLM}:high`,
+  "architect runners": [`${ASTRA}:high`, `${GLM}:max`, `${QWEN}:xhigh`],
+  "interrogate reviewers": [`${QWEN}:xhigh`, `${GLM}:max`, `${DS}:high`]
 };
 
 const required = ["Dockerfile", "AGENTS.md", "README.md", "settings.json", "models.json", "subagent-config.json", "pstack-models.json", "web-search.json", "pi-btw.json", "pi-fff.json", "docs/pi-spec.md", "docs/pi-design.md", "docs/model-policy.md", "docs/operations.md"];
@@ -53,21 +53,21 @@ const pstack = json("pstack-models.json");
 const btw = json("pi-btw.json");
 const fff = json("pi-fff.json");
 
-ok(settings.defaultProvider === "openai-codex" && settings.defaultModel === "gpt-5.6-luna" && settings.defaultThinkingLevel === "max", "settings.json: parent must be Luna/max via openai-codex");
+ok(settings.defaultProvider === "openai-codex" && settings.defaultModel === "gpt-6-astra" && settings.defaultThinkingLevel === "low", "settings.json: parent must be Astra/low via openai-codex");
 ok(settings.defaultProjectTrust === "never", "settings.json: defaultProjectTrust must be never");
 const sa = settings.subagents || {};
-ok(sa.defaultModel === DS && sa.defaultThinking === "high" && sa.maxThinking === "max", "settings.json: generic child must be DeepSeek/high with max ceiling");
+ok(sa.defaultModel === GLM && sa.defaultThinking === "high" && sa.maxThinking === "max", "settings.json: generic child must be GLM/high with max ceiling");
 ok(sa.modelScope?.enforce === true && sa.modelScope?.strict === true, "settings.json: modelScope must be strict");
 ok(seteq(sa.modelScope?.allow, ["inherit", ...approved]), "settings.json: modelScope differs from approved portfolio");
 
 const ao = sa.agentOverrides || {};
-for (const [name, model, thinking] of [["scout", GLM, "low"], ["researcher", GLM, "high"], ["worker", DS, "high"], ["reviewer", QWEN, "medium"], ["oracle", SOL, "max"], ["comment-sicko", QWEN, "medium"]]) {
+for (const [name, model, thinking] of [["scout", DS, "high"], ["researcher", GLM, "high"], ["worker", GLM, "high"], ["reviewer", QWEN, "medium"], ["oracle", SOL, "max"], ["comment-sicko", QWEN, "medium"]]) {
   ok(ao[name]?.model === model && ao[name]?.thinking === thinking, `settings.json: ${name} routing mismatch`);
 }
 ok(ao.worker?.tools === "inherit", "settings.json: worker tools must inherit");
-ok(ao["poteto-agent"]?.model === "inherit" && ao["poteto-agent"]?.tools === "inherit" && ao["poteto-agent"]?.thinking === "high" && ao["poteto-agent"]?.allowNestedSubagents === true, "settings.json: poteto-agent contract mismatch");
+ok(ao["poteto-agent"]?.model === GLM && ao["poteto-agent"]?.tools === "inherit" && ao["poteto-agent"]?.thinking === "high" && ao["poteto-agent"]?.allowNestedSubagents === true, "settings.json: poteto-agent contract mismatch");
 ok(ao.delegate?.disabled === true && ao["gpt-pro"]?.disabled === true, "settings.json: delegate/gpt-pro must be disabled");
-for (const name of ["reviewer", "oracle"]) for (const tool of ["edit", "write", "ast_grep_replace", "lens_diagnostic_mark", "debug"]) ok(!ao[name]?.tools?.includes(tool), `settings.json: ${name} must remain source read-only (${tool})`);
+for (const name of ["scout", "reviewer", "oracle"]) for (const tool of ["edit", "write", "ast_grep_replace", "lens_diagnostic_mark", "debug"]) ok(!ao[name]?.tools?.includes(tool), `settings.json: ${name} must remain source read-only (${tool})`);
 
 const provider = models.providers?.["commandcode-goat"];
 ok(provider && Object.keys(models.providers || {}).length === 1, "models.json: commandcode-goat must be the only custom provider");
@@ -98,7 +98,7 @@ for (const selector of Object.values(roles).flatMap((v) => Array.isArray(v) ? v 
   if (m?.[1].startsWith("commandcode-goat/")) ok(efforts[m[1].slice("commandcode-goat/".length)]?.includes(m[2]), `pstack-models.json: unsupported effort ${selector}`);
 }
 
-ok(btw.model === LUNA, "pi-btw.json: must use Codex Luna");
+ok(btw.model === QWEN && btw.thinkingLevel === "medium", "pi-btw.json: must use Qwen/medium");
 ok(fff.mode === "override", "pi-fff.json: mode must remain override");
 
 const docker = read("Dockerfile");
@@ -110,7 +110,8 @@ for (const legacy of ["opencode-go", "pi-commandcode-provider", "/alpha/generate
 for (const f of ["settings.json", "models.json", "pstack-models.json", "pi-btw.json", "subagent-config.json"]) for (const legacy of ["opencode-go", "pi-commandcode-provider"]) ok(!read(f).includes(legacy), `${f}: legacy route remains (${legacy})`);
 
 const agents = read("AGENTS.md");
-for (const phrase of ["Find -> GLM", "Finish -> DeepSeek", "Judge -> Qwen", "Coordinate -> GPT-5.6 Luna", "Escalate -> GPT-5.6 Sol", "x-cmd-zdr", "pstack"]) ok(agents.includes(phrase), `AGENTS.md: missing ${phrase}`);
+for (const phrase of ["Read -> DeepSeek V4 Flash", "Execute -> GLM 5.3 Flash", "Judge -> Qwen 3.8 Flash", "Coordinate -> GPT-6 Astra", "Oracle -> GPT-5.6 Sol", "Qwen3.8-Flash-Next", "x-cmd-zdr", "pstack"]) ok(agents.includes(phrase), `AGENTS.md: missing ${phrase}`);
+ok(!agents.includes("GPT-5.6 Luna"), "AGENTS.md: Luna routing must be removed");
 
 if (errors.length) { for (const e of errors) console.error(`FAIL ${e}`); process.exit(1); }
 console.log("template verification: ok");

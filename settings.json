@@ -1,10 +1,10 @@
 {
   "defaultProvider": "openai-codex",
-  "defaultModel": "gpt-5.6-luna",
-  "defaultThinkingLevel": "max",
+  "defaultModel": "gpt-6-astra",
+  "defaultThinkingLevel": "low",
   "defaultProjectTrust": "never",
   "subagents": {
-    "defaultModel": "commandcode-goat/deepseek/deepseek-v4-flash",
+    "defaultModel": "commandcode-goat/z-ai/glm-5.3-flash",
     "defaultThinking": "high",
     "maxThinking": "max",
     "modelScope": {
@@ -12,7 +12,7 @@
       "strict": true,
       "allow": [
         "inherit",
-        "openai-codex/gpt-5.6-luna",
+        "openai-codex/gpt-6-astra",
         "openai-codex/gpt-5.6-sol",
         "commandcode-goat/deepseek/deepseek-v4-flash",
         "commandcode-goat/z-ai/glm-5.3-flash",
@@ -21,15 +21,14 @@
     },
     "agentOverrides": {
       "scout": {
-        "model": "commandcode-goat/z-ai/glm-5.3-flash",
-        "thinking": "low",
+        "model": "commandcode-goat/deepseek/deepseek-v4-flash",
+        "thinking": "high",
         "tools": [
           "read",
           "grep",
           "find",
           "ls",
           "bash",
-          "write",
           "lens_diagnostics",
           "lsp_diagnostics",
           "module_report",
@@ -43,7 +42,7 @@
         "thinking": "high"
       },
       "worker": {
-        "model": "commandcode-goat/deepseek/deepseek-v4-flash",
+        "model": "commandcode-goat/z-ai/glm-5.3-flash",
         "thinking": "high",
         "tools": "inherit"
       },
@@ -81,7 +80,7 @@
         ]
       },
       "poteto-agent": {
-        "model": "inherit",
+        "model": "commandcode-goat/z-ai/glm-5.3-flash",
         "tools": "inherit",
         "thinking": "high",
         "allowNestedSubagents": true
