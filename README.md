@@ -2,86 +2,55 @@
 
 A Docker Sandbox template for rigorous software engineering with Pi.
 
-The `pstack` branch is intentionally opinionated. It treats Pi, `pi-subagents`, and `@zenspc/pi-pstack` as the core system and uses a small role-specialized model portfolio rather than a general model gateway.
+The `pstack` branch keeps engineering policy in the runtime mechanisms that can enforce it. It does not ship a repository-global `AGENTS.md` for generic workflow or safety rules.
 
-## Core architecture
+## Architecture
 
-- **Pi** is the parent runtime and integration point.
-- **pi-subagents** provides isolated children, bounded parallelism, worktrees, artifacts, and model enforcement.
-- **pi-pstack** provides Poteto Mode, engineering principles, playbooks, multi-model review, arena, swarm, architecture, and reflection workflows.
-- **OpenAI Codex** provides GPT-6 Astra and GPT-5.6 Sol.
-- **Command Code GOAT Provider API** provides the specialist Flash models through Pi's native OpenAI-compatible provider path with ZDR forced on every request.
+- **Pi** is the interactive parent runtime.
+- **pi-subagents** owns delegated execution, isolation, tool capability, model scope, concurrency, and authority controls.
+- **@zenspc/pi-pstack** supplies engineering playbooks, Poteto Mode, review topology, and role-oriented model selection.
+- **Ponytail** supplies YAGNI-first implementation guidance when active.
+- Supporting extensions provide capabilities such as structural search, diagnostics, web access, context inspection, and UI.
 
-Supporting extensions such as pi-fff, pi-lens, web access, Plannotator, and the footer remain tools. Ponytail supplies a YAGNI-first implementation constraint inside pstack workflows. None of them defines a second engineering lifecycle.
+The executable sources of truth are:
 
-## Model portfolio
+- `settings.json` for Pi and generic subagent routing/capabilities;
+- `models.json` for the Command Code provider and model metadata;
+- `subagent-config.json` for delegated execution and authority policy;
+- `pstack-models.json` for pstack role routing.
 
-The default policy is deliberately small.
+`docs/model-policy.md` explains the routing rationale. It is descriptive, not an enforcement surface.
 
-| Function | Model | Typical thinking |
-| --- | --- | --- |
-| Coordinate and integrate | `openai-codex/gpt-6-astra` | `low` |
-| Explicit deep oracle | `openai-codex/gpt-5.6-sol` | `max` |
-| Execute delegated work | `commandcode-goat/z-ai/glm-5.3-flash` | `high` / `max` |
-| Read cache-heavy context | `commandcode-goat/deepseek/deepseek-v4-flash` | `high` |
-| Judge, explain, synthesize | `commandcode-goat/Qwen/Qwen3.8-Flash` | `medium` / `xhigh` |
+## Privacy
 
-This split is role-driven. Astra coordinates; GLM executes; DeepSeek absorbs cache-heavy reads; Qwen judges; Sol is reserved for an explicit bounded second opinion. `Qwen3.8-Flash` is the production model corresponding to Qwen3.8-Flash-Next in this portfolio.
+Command Code uses Pi's native OpenAI-compatible provider path. `models.json` sends `x-cmd-zdr: 1` on every request, and the image also sets `CMD_ZDR=1`.
 
-See `docs/model-policy.md` for the exact pstack role matrix and rationale.
-
-## Command Code GOAT
-
-This branch does **not** install `pi-commandcode-provider`. `models.json` registers a native Pi provider named `commandcode-goat` against the official Provider API:
-
-```text
-https://api.commandcode.ai/provider/v1
-```
-
-The config hard-codes:
-
-```text
-x-cmd-zdr: 1
-```
-
-The Docker image also sets `CMD_ZDR=1`. ZDR is an invariant, not an optional mode. If Command Code cannot find ZDR-capable capacity, the request is expected to fail closed.
-
-Provide the API key at runtime. Do not bake it into the image:
+Provide the API key only at runtime:
 
 ```sh
 export COMMAND_CODE_API_KEY='...'
 ```
 
-OpenAI Codex authentication remains independent and is handled by Pi's normal `openai-codex` auth path.
+OpenAI Codex authentication remains independent and uses Pi's normal `openai-codex` path.
 
-## Build
+## Build and validate
 
 ```sh
 docker build -t pi-engineering-template:pstack .
-```
-
-## Validate
-
-```sh
 node scripts/verify-template.mjs
 ```
 
-The verifier checks provider invariants, ZDR enforcement, pinned dependencies, the curated model set, supported thinking levels, pstack role coverage, subagent routing, concurrency bounds, and removal of legacy providers.
+The verifier checks machine-readable configuration invariants and cross-file consistency. It does not validate prompt wording.
 
 ## Operate
 
-Use Pi normally. For nontrivial work, enable Poteto Mode:
+The normal interactive startup routine is to inspect pstack state and enable Poteto Mode:
 
 ```text
+pstack state
 /poteto-mode
 ```
 
-The committed `pstack-models.json` is already curated. Do not run `/setup-pstack` unless you intentionally want to replace the profile and then update the repository configuration to match.
+After activation, pstack supplies the workflow context. The template does not duplicate Poteto Mode or Ponytail instructions in a global agent prompt.
 
-Keep the Astra parent focused on decomposition and integration. Delegate bulk reads and repetitive inspection so the parent receives compact evidence instead of raw context. Prompt-cache hits reduce provider cost but do not remove cached tokens from a child context.
-
-See `docs/operations.md` for runtime authentication, smoke checks, upgrades, and failure handling.
-
-## Design stance
-
-This branch optimizes for correctness, explicit policy, bounded cost, and reproducibility. It does not preserve old provider names, role assignments, or local workflow abstractions merely for compatibility. When a better foundational design makes an old layer unnecessary, the old layer should disappear.
+See `docs/operations.md` for authentication, smoke checks, upgrades, and failure handling. See `docs/pi-design.md` and `docs/pi-spec.md` for ownership boundaries and invariants.

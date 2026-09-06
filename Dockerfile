@@ -48,9 +48,6 @@ COPY --chown=agent:agent pi-btw.json \
 COPY --chown=agent:agent pi-fff.json \
     /home/agent/.pi/agent/pi-fff.json
 
-COPY --chown=agent:agent AGENTS.md \
-    /home/agent/.pi/agent/AGENTS.md
-
 ARG PI_SUBAGENTS_VERSION=0.65.1
 ARG PI_PSTACK_VERSION=0.5.0
 ARG PONYTAIL_VERSION=4.9.0

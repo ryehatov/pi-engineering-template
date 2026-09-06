@@ -1,126 +1,84 @@
 # Pi Engineering Design
 
-## System shape
+## Design goal
 
-The template is a three-layer engineering core with a narrow model runtime.
+The template separates enforcement, contextual method, and documentation. A rule lives at the lowest layer that can enforce or supply it correctly.
 
 ```text
-Human
+operator
   |
   v
-Pi parent (Luna by default)
+Pi parent
   |
-  +-- pstack: method, playbooks, principles, review topology
+  +-- pi-pstack -------- playbooks, Poteto Mode, role selection context
+  +-- Ponytail --------- implementation-minimization context
+  +-- pi-subagents ----- child lifecycle, capabilities, isolation, authority
+  +-- supporting tools - search, diagnostics, web, UI, context inspection
   |
-  +-- pi-subagents: child lifecycle, isolation, worktrees, budgets
-          |
-          +-- GLM 5.3 Flash: discover
-          +-- DeepSeek V4 Flash: execute
-          +-- Qwen 3.8 Flash: judge
-          +-- Luna: integrate
-          +-- Sol: escalate
+  +-- executable configuration
+       settings.json
+       models.json
+       subagent-config.json
+       pstack-models.json
 ```
 
-Pi is the only parent runtime. Pstack decides *how engineering should proceed*. Pi-subagents decides *how delegated work is executed*. Models are workers with explicit roles, not additional workflow layers.
+There is intentionally no template-level `AGENTS.md` between the runtime and these mechanisms.
 
-Supporting extensions supply capabilities such as structural search, diagnostics, web access, debugging, context inspection, and UI. They are intentionally below the workflow boundary.
+## Why no global agent contract
 
-## Why the old provider model was replaced
+A global prompt is appropriate only for instructions that the model must judge globally and that no lower layer can provide. This template no longer has such generic instructions.
 
-The previous branch routed specialist models through OpenCode Go and relied on a broad provider catalog. That shape did not encode the current privacy or task-specialization policy strongly enough.
+Model allowlists, thinking ceilings, tool access, concurrency, scheduling authority, and provider privacy are machine-readable controls. Repeating them in `AGENTS.md` would add prompt tokens without strengthening enforcement and would create a second policy copy that can drift.
 
-The new design removes OpenCode Go entirely. Command Code uses the official GOAT Provider API through Pi's native OpenAI-compatible provider support. The provider is static and repository-owned:
+Pstack and Ponytail already provide their own runtime guidance. When the operator starts a session by inspecting pstack state and enabling `/poteto-mode`, duplicating those methods in a repository-global prompt is also unnecessary.
 
-```text
-commandcode-goat
-  base: https://api.commandcode.ai/provider/v1
-  api: openai-completions
-  auth: COMMAND_CODE_API_KEY at runtime
-  privacy: x-cmd-zdr: 1 on every request
-  models: exactly three reviewed specialists
-```
+Downstream repositories remain free to add project-specific agent instructions for local architecture, domain constraints, compatibility contracts, or other facts that the harness cannot infer.
 
-No Command Code extension is needed in the runtime. This avoids dynamic provider registration, transport auto-detection, generic model discovery, and a second source of model metadata. It also makes ZDR a committed request invariant instead of an optional environment toggle.
+## Source-of-truth boundaries
 
-`CMD_ZDR=1` remains set in the image as defense in depth. The literal provider header is the authoritative enforcement for Pi requests.
+| Concern | Authoritative surface |
+| --- | --- |
+| Pi parent defaults | `settings.json` |
+| Generic subagent routing and tool capabilities | `settings.json` |
+| Allowed delegated models | `settings.json` `modelScope` |
+| Command Code transport and ZDR | `models.json` |
+| Delegation context, limits, and authority | `subagent-config.json` |
+| Pstack role selectors | `pstack-models.json` |
+| Pstack method and Poteto Mode | `@zenspc/pi-pstack` runtime |
+| Ponytail implementation guidance | Ponytail runtime |
+| Human rationale | `docs/model-policy.md`, this document |
+| Operator procedures | `docs/operations.md` |
+| Cross-file invariant checking | `scripts/verify-template.mjs` |
 
-## Why the portfolio is small
+Documentation explains the configuration but does not override it.
 
-The portfolio is organized around failure modes.
+## Model portfolio
 
-- GLM finds relevant evidence but can over-search.
-- DeepSeek finishes scoped work but should not own final taste or policy judgment.
-- Qwen judges well and can say the evidence is insufficient, but it is not the default autonomous implementer.
-- Luna integrates broad work and keeps the parent coherent.
-- Sol handles the expensive tail of difficult reasoning.
+The portfolio is intentionally small and role-oriented. Its current assignments are documented in `docs/model-policy.md`; the executable assignments are only the JSON configuration files.
 
-These roles are complementary. Adding another generalist that overlaps all five increases routing ambiguity, fan-out cost, and maintenance without closing a real capability gap.
+The verifier therefore checks that every configured role resolves to an explicitly allowed model and that Command Code thinking selectors are supported. It does not require model-routing prose to exist anywhere.
 
-## Pstack as policy
+This allows a future model rebalance to change configuration and rationale without also editing a global prompt.
 
-Poteto Mode is the engineering policy for nontrivial work. The repository does not add another mandatory develop-plan-review loop.
+## Provider boundary
 
-The committed pstack profile is stronger than the generic `/setup-pstack` default in two ways:
+Command Code is registered directly through Pi's native OpenAI-compatible provider path. The provider configuration owns the ZDR request header. `CMD_ZDR=1` in the image is defense in depth.
 
-1. Every pstack role is explicit. Reproducibility does not depend on the current parent model except where a package agent intentionally uses `model: inherit`.
-2. Thinking is encoded in each pstack model selector. The role therefore selects the model *and* the reasoning budget.
+This makes privacy a transport invariant rather than a behavioral request to the model. A provider-capacity failure cannot be repaired by asking the model to respect ZDR; the request must fail closed or use another already-approved route selected by normal policy.
 
-The parent still owns the final decision. Multi-model panels are evidence, not votes that automatically bind the parent.
+## Delegation boundary
 
-## Delegation topology
+`pi-subagents` owns child execution mechanics. The template configures fresh delegated context, finite depth and concurrency, model scope, tool capability, and authority policy there.
 
-The normal topology is two levels deep:
+The parent model may decide whether delegation is useful for the current task, but it does not enforce the resource or authority limits itself. Those limits remain effective even if model behavior is imperfect.
 
-```text
-parent Pi
-  -> poteto-agent or direct pstack workflow
-      -> worker/reviewer panel
-```
+## Verification strategy
 
-`maxSubagentDepth` is therefore `2`. More depth is not part of the default design.
+Verification is layered by failure class:
 
-The generic child default is DeepSeek V4 Flash at `high`, because an unspecified delegation is usually asking for bounded work to be completed. Named builtin roles override this:
+1. `scripts/verify-template.mjs` checks static configuration structure and consistency.
+2. Docker build checks that pinned packages install together and files land at the intended paths.
+3. Live Pi smoke checks authentication, registry resolution, thinking translation, and provider availability.
+4. The developed project supplies its own artifact-specific tests.
 
-- scout -> GLM 5.3 Flash `low`
-- researcher -> GLM 5.3 Flash `high`
-- reviewer -> Qwen 3.8 Flash `medium`
-- oracle -> GPT-5.6 Sol `max`
-- poteto-agent -> inherit the parent model at `high`
-- comment-sicko -> Qwen 3.8 Flash `medium`
-
-Pstack per-run model selectors take precedence over these generic defaults.
-
-## Tool boundaries
-
-Worker and Poteto agents inherit ambient tools because implementation tasks may need repository-specific extensions.
-
-Scout receives read/search tools plus its output write path and Lens inspection tools. Reviewer and Oracle remain source-read-only. Researcher keeps its package-defined web research tool set so it can write its isolated research artifact without inheriting arbitrary mutation tools.
-
-Pstack workflows that request read-only children further narrow tools at launch. The most specific launch contract wins.
-
-## Parallelism and provider pressure
-
-Parallelism is a means to increase evidence diversity or throughput, not a goal by itself.
-
-The template bounds a workflow to 32 child spawns, 8 globally active children, and 4 concurrent tasks in an ordinary parallel batch. This is enough for pstack's 2-4-way explorers and three-model panels without creating a large homogeneous request burst against one provider.
-
-The model-exclusion TTL is reduced to five minutes. A transient provider or rate-limit failure should not poison a small curated model portfolio for a full day.
-
-Use worktree isolation for parallel writers. If tasks would modify overlapping state, separate ownership before trying to serialize access.
-
-## Context discipline
-
-Delegated context defaults to `fresh`. The parent should pass the smallest durable packet that makes the child autonomous: task, relevant paths, constraints, acceptance criteria, and artifacts.
-
-This preserves the parent's context for integration and avoids copying a large transcript into every fan-out child. Pstack's `how`, `why`, arena, and reflect workflows already define when broader context must be materialized.
-
-## Verification layers
-
-Verification is layered by failure class.
-
-1. `scripts/verify-template.mjs` proves repository configuration invariants without credentials or network access.
-2. Docker build proves the package pins install together.
-3. A live Pi smoke proves authentication, model registry resolution, thinking translation, and ZDR-capable Command Code routing.
-4. Project-specific tests prove the artifact being engineered.
-
-No static check can prove live provider availability. No live model call can replace deterministic configuration validation. Both layers have distinct jobs.
+The static verifier intentionally avoids natural-language assertions such as requiring specific phrases in `AGENTS.md`. It validates executable state instead.
