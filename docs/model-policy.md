@@ -11,7 +11,7 @@ If this document and executable configuration diverge, the configuration control
 The current profile uses four models across two provider paths:
 
 - `openai-codex/gpt-6-astra`
-- `commandcode-goat/deepseek/deepseek-v4-flash`
+- `commandcode-goat/deepseek/deepseek-v4.1-flash-beta`
 - `commandcode-goat/z-ai/glm-5.3-flash`
 - `commandcode-goat/Qwen/Qwen3.8-Flash`
 
@@ -21,7 +21,7 @@ The split is task-oriented rather than leaderboard-oriented.
 | --- | --- | --- |
 | Coordinate and escalate | GPT-6 Astra | low-effort parent decomposition and integration; high-effort bounded reasoning for the hardest tasks and explicit oracle calls |
 | Execute | GLM 5.3 Flash | normal bounded implementation, debugging, tooling analysis, and delegated engineering work |
-| Read and investigate | DeepSeek V4 Flash | cache-heavy reconnaissance, research, evidence collection, and divergent exploration |
+| Read and investigate | DeepSeek V4.1 Flash Beta | cache-heavy reconnaissance, research, evidence collection, and divergent exploration |
 | Judge | Qwen 3.8 Flash | review, ambiguity detection, synthesis, and structured prose |
 
 `Qwen3.8-Flash` is the deployed model corresponding to Qwen3.8-Flash-Next in this portfolio.
@@ -33,7 +33,7 @@ GPT-6 Astra is deliberately not routed above `high`. Public Artificial Analysis 
 `pstack-models.json` contains the authoritative selectors. At the current revision, the role families are arranged as follows:
 
 - feature/refactoring, bug-fix, performance, hillclimb, tooling reflection, and swarm execution use GLM 5.3 Flash;
-- code exploration, evidence-heavy investigation, and research use DeepSeek V4 Flash;
+- code exploration, evidence-heavy investigation, and research use DeepSeek V4.1 Flash Beta;
 - explanation, review, judgment, synthesis, and cross-judging use Qwen 3.8 Flash;
 - the hardest-task route uses GPT-6 Astra at `high`;
 - architecture, arena, and adversarial-review panels use the three specialist model families, while the Astra parent performs final integration.
@@ -42,7 +42,7 @@ The exact thinking level belongs to the selector in `pstack-models.json`, not to
 
 ## Generic subagents
 
-`settings.json` is authoritative for generic subagent defaults and named overrides. The current profile uses GLM as the generic delegated worker, DeepSeek for scouting and research, Qwen for reviewer-style judgment, and Astra at `high` for the explicit oracle.
+`settings.json` is authoritative for generic subagent defaults and named overrides. The current profile uses GLM as the generic delegated worker, DeepSeek V4.1 Flash Beta for scouting and research, Qwen for reviewer-style judgment, and Astra at `high` for the explicit oracle.
 
 The oracle is a fresh-context capability escalation, not a separate model-family diversity mechanism. Multi-model diversity belongs to pstack panels.
 

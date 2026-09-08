@@ -7,21 +7,21 @@
     "hillclimb": "commandcode-goat/z-ai/glm-5.3-flash:high",
     "judgment and prose": "commandcode-goat/Qwen/Qwen3.8-Flash:xhigh",
     "hardest tasks": "openai-codex/gpt-6-astra:high",
-    "how explorer": "commandcode-goat/deepseek/deepseek-v4-flash:high",
+    "how explorer": "commandcode-goat/deepseek/deepseek-v4.1-flash-beta:high",
     "how explainer": "commandcode-goat/Qwen/Qwen3.8-Flash:medium",
     "how critics": [
       "commandcode-goat/Qwen/Qwen3.8-Flash:xhigh",
       "commandcode-goat/z-ai/glm-5.3-flash:max",
-      "commandcode-goat/deepseek/deepseek-v4-flash:high"
+      "commandcode-goat/deepseek/deepseek-v4.1-flash-beta:high"
     ],
-    "why investigators": "commandcode-goat/deepseek/deepseek-v4-flash:high",
+    "why investigators": "commandcode-goat/deepseek/deepseek-v4.1-flash-beta:high",
     "why synthesizer": "commandcode-goat/Qwen/Qwen3.8-Flash:xhigh",
     "reflect tooling": "commandcode-goat/z-ai/glm-5.3-flash:high",
     "reflect judgment, divergent, synthesizer": "commandcode-goat/Qwen/Qwen3.8-Flash:xhigh",
     "arena runners": [
       "commandcode-goat/z-ai/glm-5.3-flash:max",
       "commandcode-goat/Qwen/Qwen3.8-Flash:xhigh",
-      "commandcode-goat/deepseek/deepseek-v4-flash:high"
+      "commandcode-goat/deepseek/deepseek-v4.1-flash-beta:high"
     ],
     "arena cross-judge pool": [
       "commandcode-goat/Qwen/Qwen3.8-Flash:xhigh",
@@ -31,12 +31,12 @@
     "architect runners": [
       "commandcode-goat/z-ai/glm-5.3-flash:max",
       "commandcode-goat/Qwen/Qwen3.8-Flash:xhigh",
-      "commandcode-goat/deepseek/deepseek-v4-flash:high"
+      "commandcode-goat/deepseek/deepseek-v4.1-flash-beta:high"
     ],
     "interrogate reviewers": [
       "commandcode-goat/Qwen/Qwen3.8-Flash:xhigh",
       "commandcode-goat/z-ai/glm-5.3-flash:max",
-      "commandcode-goat/deepseek/deepseek-v4-flash:high"
+      "commandcode-goat/deepseek/deepseek-v4.1-flash-beta:high"
     ]
   },
   "skillsEnabled": true

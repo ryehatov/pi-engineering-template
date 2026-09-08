@@ -17,8 +17,8 @@
       },
       "models": [
         {
-          "id": "deepseek/deepseek-v4-flash",
-          "name": "DeepSeek V4 Flash (GOAT ZDR)",
+          "id": "deepseek/deepseek-v4.1-flash-beta",
+          "name": "DeepSeek V4.1 Flash Beta (GOAT ZDR)",
           "reasoning": true,
           "input": ["text"],
           "contextWindow": 1000000,
