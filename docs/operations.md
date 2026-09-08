@@ -54,18 +54,17 @@ This catches package-version and installation incompatibilities that the static 
 After injecting the appropriate credentials, verify model registry resolution for routes affected by the change. For the current portfolio, a useful filter is:
 
 ```sh
-pi --list-models | grep -E 'openai-codex/(gpt-6-astra|gpt-5.6-sol)|commandcode-goat/(deepseek/deepseek-v4-flash|z-ai/glm-5.3-flash|Qwen/Qwen3.8-Flash)'
+pi --list-models | grep -E 'openai-codex/gpt-6-astra|commandcode-goat/(deepseek/deepseek-v4-flash|z-ai/glm-5.3-flash|Qwen/Qwen3.8-Flash)'
 ```
 
-Then make bounded one-shot calls for changed Command Code routes. Examples:
+Then make bounded one-shot calls for changed routes. Examples:
 
 ```sh
+pi -p --no-tools --model 'openai-codex/gpt-6-astra:high' 'Reply with exactly: ASTRA_OK'
 pi -p --no-tools --model 'commandcode-goat/z-ai/glm-5.3-flash:high' 'Reply with exactly: GLM_OK'
 pi -p --no-tools --model 'commandcode-goat/deepseek/deepseek-v4-flash:high' 'Reply with exactly: DEEPSEEK_OK'
 pi -p --no-tools --model 'commandcode-goat/Qwen/Qwen3.8-Flash:xhigh' 'Reply with exactly: QWEN_OK'
 ```
-
-Use equivalent small checks for Astra or Sol when their route or Pi version changes.
 
 A Command Code `422 cmd_zdr_no_providers` is a capacity or coverage failure. Do not weaken the ZDR configuration to make the smoke pass.
 

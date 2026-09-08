@@ -14,9 +14,9 @@
       "commandcode-goat/z-ai/glm-5.3-flash:max",
       "commandcode-goat/deepseek/deepseek-v4-flash:high"
     ],
-    "why investigators": "commandcode-goat/z-ai/glm-5.3-flash:high",
+    "why investigators": "commandcode-goat/deepseek/deepseek-v4-flash:high",
     "why synthesizer": "commandcode-goat/Qwen/Qwen3.8-Flash:xhigh",
-    "reflect tooling": "commandcode-goat/deepseek/deepseek-v4-flash:high",
+    "reflect tooling": "commandcode-goat/z-ai/glm-5.3-flash:high",
     "reflect judgment, divergent, synthesizer": "commandcode-goat/Qwen/Qwen3.8-Flash:xhigh",
     "arena runners": [
       "commandcode-goat/z-ai/glm-5.3-flash:max",
@@ -29,9 +29,9 @@
     ],
     "swarm workers": "commandcode-goat/z-ai/glm-5.3-flash:high",
     "architect runners": [
-      "openai-codex/gpt-6-astra:high",
       "commandcode-goat/z-ai/glm-5.3-flash:max",
-      "commandcode-goat/Qwen/Qwen3.8-Flash:xhigh"
+      "commandcode-goat/Qwen/Qwen3.8-Flash:xhigh",
+      "commandcode-goat/deepseek/deepseek-v4-flash:high"
     ],
     "interrogate reviewers": [
       "commandcode-goat/Qwen/Qwen3.8-Flash:xhigh",

@@ -8,10 +8,9 @@ If this document and executable configuration diverge, the configuration control
 
 ## Portfolio
 
-The current profile uses five models across two provider paths:
+The current profile uses four models across two provider paths:
 
 - `openai-codex/gpt-6-astra`
-- `openai-codex/gpt-5.6-sol`
 - `commandcode-goat/deepseek/deepseek-v4-flash`
 - `commandcode-goat/z-ai/glm-5.3-flash`
 - `commandcode-goat/Qwen/Qwen3.8-Flash`
@@ -20,29 +19,32 @@ The split is task-oriented rather than leaderboard-oriented.
 
 | Function | Current model | Rationale |
 | --- | --- | --- |
-| Coordinate | GPT-6 Astra | parent decomposition, integration, and final judgment |
-| Execute | GLM 5.3 Flash | normal bounded implementation and delegated engineering work |
-| Read | DeepSeek V4 Flash | cache-heavy reconnaissance and compact evidence collection |
+| Coordinate and escalate | GPT-6 Astra | low-effort parent decomposition and integration; high-effort bounded reasoning for the hardest tasks and explicit oracle calls |
+| Execute | GLM 5.3 Flash | normal bounded implementation, debugging, tooling analysis, and delegated engineering work |
+| Read and investigate | DeepSeek V4 Flash | cache-heavy reconnaissance, research, evidence collection, and divergent exploration |
 | Judge | Qwen 3.8 Flash | review, ambiguity detection, synthesis, and structured prose |
-| Oracle | GPT-5.6 Sol | explicit bounded second opinion for unusually hard decisions |
 
 `Qwen3.8-Flash` is the deployed model corresponding to Qwen3.8-Flash-Next in this portfolio.
+
+GPT-6 Astra is deliberately not routed above `high`. Public Artificial Analysis comparisons at this revision show only small Intelligence Index gains from `high` to `xhigh` and `max`, while first-token latency rises sharply. The profile therefore treats `high` as the cost-performance ceiling for bounded Astra escalation and keeps the interactive parent at `low`.
 
 ## Current pstack assignments
 
 `pstack-models.json` contains the authoritative selectors. At the current revision, the role families are arranged as follows:
 
-- feature/refactoring, bug-fix, performance, hillclimb, investigation, and swarm execution use GLM 5.3 Flash;
-- cache-heavy exploration and tooling reflection use DeepSeek V4 Flash;
+- feature/refactoring, bug-fix, performance, hillclimb, tooling reflection, and swarm execution use GLM 5.3 Flash;
+- code exploration, evidence-heavy investigation, and research use DeepSeek V4 Flash;
 - explanation, review, judgment, synthesis, and cross-judging use Qwen 3.8 Flash;
-- the hardest-task and architecture panels may include GPT-6 Astra;
-- GPT-5.6 Sol is reserved for the explicit `oracle` subagent rather than automatic pstack panels.
+- the hardest-task route uses GPT-6 Astra at `high`;
+- architecture, arena, and adversarial-review panels use the three specialist model families, while the Astra parent performs final integration.
 
 The exact thinking level belongs to the selector in `pstack-models.json`, not to this prose.
 
 ## Generic subagents
 
-`settings.json` is authoritative for generic subagent defaults and named overrides. The current profile uses GLM as the generic delegated worker, DeepSeek for scout-style reading, Qwen for reviewer-style judgment, and Sol for the explicit oracle.
+`settings.json` is authoritative for generic subagent defaults and named overrides. The current profile uses GLM as the generic delegated worker, DeepSeek for scouting and research, Qwen for reviewer-style judgment, and Astra at `high` for the explicit oracle.
+
+The oracle is a fresh-context capability escalation, not a separate model-family diversity mechanism. Multi-model diversity belongs to pstack panels.
 
 Read-only capability is enforced by tool configuration, not by asking those models to avoid writes.
 
@@ -50,21 +52,11 @@ Read-only capability is enforced by tool configuration, not by asking those mode
 
 Each permanent model should own a materially different task shape. Adding another generalist increases routing ambiguity, maintenance, and fan-out cost without necessarily closing a capability gap.
 
-A candidate should therefore replace an existing role owner or demonstrate an uncovered role. Evaluate candidates at the exact provider and thinking level proposed for production.
-
-Useful role-specific measures include:
-
-1. task success and usable-artifact rate;
-2. evidence recall and unnecessary continuation for discovery roles;
-3. false-premise and insufficient-evidence handling for judgment roles;
-4. wall time, provider failures, and plan or credit cost;
-5. behavior under the concurrency used by the real pstack workflow.
-
-Synthetic benchmark rank alone is insufficient.
+A candidate should therefore replace an existing role owner or demonstrate an uncovered role. Prefer current provider documentation and public benchmark results that identify the exact model and reasoning-effort setting. Do not keep a weaker model only to increase the model count when existing panels already provide independent families.
 
 ## Provider separation
 
-GPT-6 Astra and GPT-5.6 Sol use `openai-codex`. The specialist Flash models use the repository-defined `commandcode-goat` provider.
+GPT-6 Astra uses `openai-codex`. The specialist Flash models use the repository-defined `commandcode-goat` provider.
 
 Privacy enforcement belongs to `models.json`: Command Code requests include the literal ZDR header there. Model-routing prose is not part of that privacy boundary.
 

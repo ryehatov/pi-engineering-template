@@ -9,7 +9,7 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 
 ARG PI_VERSION=0.85.1
-ARG BUN_VERSION=1.4.0
+ARG BUN_VERSION=1.4.2
 
 RUN npm install -g --ignore-scripts \
     "@earendil-works/pi-coding-agent@${PI_VERSION}" \
@@ -48,7 +48,7 @@ COPY --chown=agent:agent pi-btw.json \
 COPY --chown=agent:agent pi-fff.json \
     /home/agent/.pi/agent/pi-fff.json
 
-ARG PI_SUBAGENTS_VERSION=0.65.1
+ARG PI_SUBAGENTS_VERSION=0.66.0
 ARG PI_PSTACK_VERSION=0.5.0
 ARG PONYTAIL_VERSION=4.9.0
 ARG PI_WEB_ACCESS_VERSION=0.28.0
