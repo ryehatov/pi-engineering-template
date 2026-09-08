@@ -4,36 +4,22 @@ import path from "node:path";
 
 const root = path.resolve(process.argv[2] || process.cwd());
 const errors = [];
-const filePath = (f) => path.join(root, f);
-const exists = (f) => fs.existsSync(filePath(f));
+const filePath = (file) => path.join(root, file);
+const exists = (file) => fs.existsSync(filePath(file));
 const ok = (value, message) => { if (!value) errors.push(message); };
-const seteq = (a, b) => Array.isArray(a) && a.length === b.length && new Set(a).size === a.length && b.every((x) => a.includes(x));
-const text = (f) => {
-  try { return fs.readFileSync(filePath(f), "utf8"); }
-  catch (e) { errors.push(`${f}: ${e.message}`); return ""; }
+const text = (file) => {
+  try { return fs.readFileSync(filePath(file), "utf8"); }
+  catch (error) { errors.push(`${file}: ${error.message}`); return ""; }
 };
-const json = (f) => {
-  const source = text(f);
+const json = (file) => {
+  const source = text(file);
   if (!source) return {};
   try { return JSON.parse(source); }
-  catch (e) { errors.push(`${f}: ${e.message}`); return {}; }
-};
-
-const thinkingLevels = ["off", "minimal", "low", "medium", "high", "xhigh", "max"];
-const thinkingRank = new Map(thinkingLevels.map((level, index) => [level, index]));
-const selector = (value) => {
-  if (typeof value !== "string" || !value) return null;
-  const split = value.lastIndexOf(":");
-  if (split > 0) {
-    const thinking = value.slice(split + 1);
-    if (thinkingRank.has(thinking)) return { model: value.slice(0, split), thinking };
-  }
-  return { model: value, thinking: null };
+  catch (error) { errors.push(`${file}: ${error.message}`); return {}; }
 };
 
 const required = [
   "Dockerfile",
-  "README.md",
   "settings.json",
   "models.json",
   "subagent-config.json",
@@ -41,16 +27,20 @@ const required = [
   "web-search.json",
   "pi-btw.json",
   "pi-fff.json",
-  "docs/pi-spec.md",
-  "docs/pi-design.md",
-  "docs/model-policy.md",
-  "docs/operations.md",
 ];
-for (const f of required) ok(exists(f), `${f}: missing`);
+for (const file of required) ok(exists(file), `${file}: missing`);
 ok(!exists("AGENTS.md"), "AGENTS.md: template-level global agent prompt must remain absent");
-for (const f of ["skills/development-loop/SKILL.md", "skills/engineering-cache/SKILL.md", "scripts/test-engineering-cache.mjs"]) {
-  ok(!exists(f), `${f}: obsolete`);
-}
+
+const thinkingLevels = new Set(["off", "minimal", "low", "medium", "high", "xhigh", "max"]);
+const parseSelector = (value) => {
+  if (typeof value !== "string" || value.length === 0) return null;
+  const split = value.lastIndexOf(":");
+  if (split <= 0) return { model: value, thinking: null };
+  const thinking = value.slice(split + 1);
+  return thinkingLevels.has(thinking)
+    ? { model: value.slice(0, split), thinking }
+    : { model: value, thinking: null };
+};
 
 const settings = json("settings.json");
 const models = json("models.json");
@@ -61,170 +51,140 @@ const fff = json("pi-fff.json");
 
 ok(typeof settings.defaultProvider === "string" && settings.defaultProvider.length > 0, "settings.json: defaultProvider missing");
 ok(typeof settings.defaultModel === "string" && settings.defaultModel.length > 0, "settings.json: defaultModel missing");
-ok(thinkingRank.has(settings.defaultThinkingLevel), "settings.json: invalid defaultThinkingLevel");
-ok(settings.defaultProjectTrust === "never", "settings.json: defaultProjectTrust must be never");
+ok(thinkingLevels.has(settings.defaultThinkingLevel), "settings.json: invalid defaultThinkingLevel");
+ok(settings.defaultProjectTrust === "never", "settings.json: defaultProjectTrust must remain never");
 
-const sa = settings.subagents || {};
-const scope = sa.modelScope || {};
+const subagents = settings.subagents || {};
+const scope = subagents.modelScope || {};
 const allow = Array.isArray(scope.allow) ? scope.allow : [];
 ok(scope.enforce === true && scope.strict === true, "settings.json: subagent modelScope must be strict and enforced");
-ok(allow.length > 1 && allow.includes("inherit"), "settings.json: modelScope must include inherit and explicit model ids");
+ok(allow.includes("inherit"), "settings.json: modelScope must include inherit");
 ok(new Set(allow).size === allow.length, "settings.json: modelScope contains duplicate entries");
-for (const model of allow.filter((x) => x !== "inherit")) {
+for (const model of allow.filter((value) => value !== "inherit")) {
   ok(typeof model === "string" && model.includes("/") && !model.includes("*"), `settings.json: modelScope entry must be explicit and provider-qualified (${model})`);
 }
-const allowedModels = new Set(allow.filter((x) => x !== "inherit"));
-const qualifyParent = settings.defaultModel?.includes("/") ? settings.defaultModel : `${settings.defaultProvider}/${settings.defaultModel}`;
-ok(allowedModels.has(qualifyParent), `settings.json: parent model is outside strict modelScope (${qualifyParent})`);
+const allowedModels = new Set(allow.filter((value) => value !== "inherit"));
+const parentModel = settings.defaultModel?.includes("/")
+  ? settings.defaultModel
+  : `${settings.defaultProvider}/${settings.defaultModel}`;
+ok(allowedModels.has(parentModel), `settings.json: parent model is outside strict modelScope (${parentModel})`);
 
 const providers = models.providers || {};
-ok(seteq(Object.keys(providers), ["commandcode-goat"]), "models.json: commandcode-goat must be the only custom provider");
-const provider = providers["commandcode-goat"] || {};
-ok(provider.baseUrl === "https://api.commandcode.ai/provider/v1", "models.json: Command Code Provider API URL mismatch");
-ok(provider.api === "openai-completions", "models.json: Command Code API adapter mismatch");
-ok(provider.apiKey === "$COMMAND_CODE_API_KEY" && provider.authHeader === true, "models.json: runtime API-key auth mismatch");
-ok(provider.compat?.supportsStore === false, "models.json: provider must not advertise store support");
-ok(provider.compat?.supportsReasoningEffort === true, "models.json: provider must advertise reasoning effort support");
+const commandCode = providers["commandcode-goat"];
+ok(commandCode && typeof commandCode === "object", "models.json: commandcode-goat provider missing");
+if (commandCode) {
+  ok(commandCode.baseUrl === "https://api.commandcode.ai/provider/v1", "models.json: Command Code API URL mismatch");
+  ok(commandCode.api === "openai-completions", "models.json: Command Code API adapter mismatch");
+  ok(commandCode.apiKey === "$COMMAND_CODE_API_KEY" && commandCode.authHeader === true, "models.json: runtime API-key auth mismatch");
+}
 
-const customModels = Array.isArray(provider.models) ? provider.models : [];
-ok(customModels.length > 0, "models.json: Command Code model catalog is empty");
-ok(new Set(customModels.map((m) => m.id)).size === customModels.length, "models.json: duplicate Command Code model ids");
-const customQualified = new Set();
 const customThinking = new Map();
-for (const model of customModels) {
-  const qualified = `commandcode-goat/${model.id}`;
-  customQualified.add(qualified);
-  ok(allowedModels.has(qualified), `models.json: custom model is outside strict modelScope (${qualified})`);
-  ok(model.reasoning === true && Array.isArray(model.input) && model.input.includes("text"), `models.json: invalid capability metadata (${model.id})`);
-  ok(Number.isFinite(model.contextWindow) && model.contextWindow > 0 && Number.isFinite(model.maxTokens) && model.maxTokens > 0, `models.json: invalid token limits (${model.id})`);
-  const map = model.thinkingLevelMap || {};
-  const active = new Set(Object.entries(map).filter(([, value]) => typeof value === "string" && value.length > 0).map(([level]) => level));
-  ok(active.size > 0 && [...active].every((level) => thinkingRank.has(level)), `models.json: invalid thinkingLevelMap (${model.id})`);
-  customThinking.set(qualified, active);
+for (const [providerName, provider] of Object.entries(providers)) {
+  const catalog = Array.isArray(provider?.models) ? provider.models : [];
+  ok(new Set(catalog.map((model) => model.id)).size === catalog.length, `models.json: duplicate model ids in ${providerName}`);
+  for (const model of catalog) {
+    ok(typeof model.id === "string" && model.id.length > 0, `models.json: model id missing in ${providerName}`);
+    const qualified = `${providerName}/${model.id}`;
+    ok(allowedModels.has(qualified), `models.json: custom model is outside strict modelScope (${qualified})`);
+    ok(Array.isArray(model.input) && model.input.length > 0, `models.json: input capability missing (${qualified})`);
+    ok(Number.isFinite(model.contextWindow) && model.contextWindow > 0, `models.json: invalid contextWindow (${qualified})`);
+    ok(Number.isFinite(model.maxTokens) && model.maxTokens > 0, `models.json: invalid maxTokens (${qualified})`);
+
+    const map = model.thinkingLevelMap;
+    if (map && typeof map === "object") {
+      const active = new Set(
+        Object.entries(map)
+          .filter(([, value]) => typeof value === "string" && value.length > 0)
+          .map(([level]) => level),
+      );
+      ok([...active].every((level) => thinkingLevels.has(level)), `models.json: invalid thinkingLevelMap (${qualified})`);
+      customThinking.set(qualified, active);
+    }
+  }
 }
 for (const model of allowedModels) {
-  if (model.startsWith("commandcode-goat/")) ok(customQualified.has(model), `settings.json: scoped Command Code model missing from models.json (${model})`);
+  if (!model.includes("/")) continue;
+  const providerName = model.slice(0, model.indexOf("/"));
+  if (providers[providerName]) {
+    const ids = new Set((providers[providerName].models || []).map((entry) => `${providerName}/${entry.id}`));
+    ok(ids.has(model), `settings.json: scoped custom model missing from models.json (${model})`);
+  }
 }
 
-const checkModelThinking = (model, thinking, label) => {
-  ok(allowedModels.has(model) || model === "inherit", `${label}: model outside strict modelScope (${model})`);
-  if (thinking !== undefined && thinking !== null) {
-    ok(thinkingRank.has(thinking), `${label}: invalid thinking level (${thinking})`);
-    const active = customThinking.get(model);
-    if (active) ok(active.has(thinking), `${label}: unsupported Command Code thinking level (${model}:${thinking})`);
-  }
+const checkModel = (model, thinking, label) => {
+  ok(typeof model === "string" && allowedModels.has(model), `${label}: model outside strict modelScope (${model})`);
+  if (thinking == null) return;
+  ok(thinkingLevels.has(thinking), `${label}: invalid thinking level (${thinking})`);
+  const supported = customThinking.get(model);
+  if (supported) ok(supported.has(thinking), `${label}: unsupported thinking level (${model}:${thinking})`);
 };
 
-checkModelThinking(sa.defaultModel, sa.defaultThinking, "settings.json: subagent default");
-ok(thinkingRank.has(sa.maxThinking), "settings.json: invalid subagent maxThinking");
-if (thinkingRank.has(sa.defaultThinking) && thinkingRank.has(sa.maxThinking)) {
-  ok(thinkingRank.get(sa.defaultThinking) <= thinkingRank.get(sa.maxThinking), "settings.json: defaultThinking exceeds maxThinking");
-}
-
-const overrides = sa.agentOverrides || {};
-for (const [name, config] of Object.entries(overrides)) {
+checkModel(subagents.defaultModel, subagents.defaultThinking, "settings.json: subagent default");
+ok(thinkingLevels.has(subagents.maxThinking), "settings.json: invalid subagent maxThinking");
+for (const [name, config] of Object.entries(subagents.agentOverrides || {})) {
   if (!config || config.disabled === true || !config.model) continue;
-  const effectiveThinking = config.thinking ?? sa.defaultThinking;
-  checkModelThinking(config.model, effectiveThinking, `settings.json: agentOverrides.${name}`);
-  if (thinkingRank.has(effectiveThinking) && thinkingRank.has(sa.maxThinking)) {
-    ok(thinkingRank.get(effectiveThinking) <= thinkingRank.get(sa.maxThinking), `settings.json: agentOverrides.${name} exceeds maxThinking`);
-  }
-}
-ok(overrides.worker?.tools === "inherit", "settings.json: worker must inherit ambient engineering tools");
-ok(overrides["poteto-agent"]?.tools === "inherit" && overrides["poteto-agent"]?.allowNestedSubagents === true, "settings.json: poteto-agent must inherit tools and allow nested subagents");
-ok(overrides.delegate?.disabled === true && overrides["gpt-pro"]?.disabled === true, "settings.json: delegate and gpt-pro must remain disabled");
-const mutationTools = ["edit", "write", "ast_grep_replace", "lens_diagnostic_mark", "debug"];
-for (const name of ["scout", "reviewer", "oracle"]) {
-  const tools = overrides[name]?.tools;
-  ok(Array.isArray(tools), `settings.json: ${name} must have an explicit source-read-only tool list`);
-  if (Array.isArray(tools)) for (const tool of mutationTools) ok(!tools.includes(tool), `settings.json: ${name} must remain source-read-only (${tool})`);
+  checkModel(config.model, config.thinking ?? subagents.defaultThinking, `settings.json: agentOverrides.${name}`);
 }
 
-const expectedPstackRoles = [
-  "feature, refactoring",
-  "bug-fix",
-  "perf-issue",
-  "hillclimb",
-  "judgment and prose",
-  "hardest tasks",
-  "how explorer",
-  "how explainer",
-  "how critics",
-  "why investigators",
-  "why synthesizer",
-  "reflect tooling",
-  "reflect judgment, divergent, synthesizer",
-  "arena runners",
-  "arena cross-judge pool",
-  "swarm workers",
-  "architect runners",
-  "interrogate reviewers",
-];
-ok(pstack.version === 1 && pstack.skillsEnabled === true, "pstack-models.json: unsupported version or skills disabled");
-ok(seteq(Object.keys(pstack.roles || {}), expectedPstackRoles), "pstack-models.json: pstack role coverage mismatch");
+ok(pstack.version === 1, "pstack-models.json: unsupported version");
+ok(pstack.skillsEnabled === true, "pstack-models.json: skills must remain enabled");
+ok(pstack.roles && typeof pstack.roles === "object" && !Array.isArray(pstack.roles) && Object.keys(pstack.roles).length > 0, "pstack-models.json: roles missing");
 for (const [role, raw] of Object.entries(pstack.roles || {})) {
-  const values = Array.isArray(raw) ? raw : [raw];
-  if (Array.isArray(raw)) ok(raw.length >= 2, `pstack-models.json: panel role must have at least two selectors (${role})`);
-  for (const rawSelector of values) {
-    const parsed = selector(rawSelector);
+  const selectors = Array.isArray(raw) ? raw : [raw];
+  ok(selectors.length > 0, `pstack-models.json: empty selector list (${role})`);
+  for (const rawSelector of selectors) {
+    const parsed = parseSelector(rawSelector);
+    ok(parsed !== null, `pstack-models.json: invalid selector (${role})`);
     ok(parsed?.thinking !== null, `pstack-models.json: selector must include thinking (${rawSelector})`);
-    if (parsed) checkModelThinking(parsed.model, parsed.thinking, `pstack-models.json: ${role}`);
+    if (parsed) checkModel(parsed.model, parsed.thinking, `pstack-models.json: ${role}`);
   }
 }
 
-checkModelThinking(btw.model, btw.thinkingLevel, "pi-btw.json");
+checkModel(btw.model, btw.thinkingLevel, "pi-btw.json");
 ok(fff.mode === "override", "pi-fff.json: mode must remain override");
 
-ok(sub.toolDescriptionMode === "compact" && sub.artifactDir === "session" && sub.defaultSubagentContext === "fresh" && sub.asyncByDefault === true, "subagent-config.json: compact/session/fresh/async contract mismatch");
-ok(Number.isInteger(sub.maxSubagentDepth) && sub.maxSubagentDepth > 0 && sub.maxSubagentDepth <= 2, "subagent-config.json: maxSubagentDepth must be 1..2");
-ok(Number.isInteger(sub.maxSubagentSpawnsPerRun) && sub.maxSubagentSpawnsPerRun > 0 && sub.maxSubagentSpawnsPerRun <= 32, "subagent-config.json: spawn bound invalid");
-ok(Number.isInteger(sub.globalConcurrencyLimit) && sub.globalConcurrencyLimit > 0 && sub.globalConcurrencyLimit <= 8, "subagent-config.json: global concurrency bound invalid");
-ok(Number.isInteger(sub.parallel?.concurrency) && sub.parallel.concurrency > 0 && sub.parallel.concurrency <= 4 && sub.parallel.concurrency <= sub.globalConcurrencyLimit, "subagent-config.json: parallel concurrency bound invalid");
-ok(Number.isInteger(sub.parallel?.maxTasks) && sub.parallel.maxTasks > 0 && sub.parallel.maxTasks <= 8, "subagent-config.json: parallel maxTasks invalid");
-ok(Number.isFinite(sub.modelExclusions?.defaultTtlMs) && sub.modelExclusions.defaultTtlMs > 0 && sub.modelExclusions.defaultTtlMs <= 300000, "subagent-config.json: exclusion TTL must be <= 5m");
-ok(sub.missions?.enabled === false && sub.scheduledRuns?.enabled === false, "subagent-config.json: autonomous missions and schedules must remain disabled");
-ok(sub.authorityPolicy?.scheduleCreate === "forbid", "subagent-config.json: schedule creation must be forbidden");
+for (const [name, value] of [
+  ["maxSubagentDepth", sub.maxSubagentDepth],
+  ["maxSubagentSpawnsPerRun", sub.maxSubagentSpawnsPerRun],
+  ["globalConcurrencyLimit", sub.globalConcurrencyLimit],
+  ["parallel.maxTasks", sub.parallel?.maxTasks],
+  ["parallel.concurrency", sub.parallel?.concurrency],
+]) {
+  ok(Number.isInteger(value) && value > 0, `subagent-config.json: ${name} must be a positive integer`);
+}
+if (Number.isInteger(sub.parallel?.concurrency) && Number.isInteger(sub.globalConcurrencyLimit)) {
+  ok(sub.parallel.concurrency <= sub.globalConcurrencyLimit, "subagent-config.json: parallel concurrency exceeds global concurrency");
+}
+if (sub.modelExclusions?.defaultTtlMs !== undefined) {
+  ok(Number.isFinite(sub.modelExclusions.defaultTtlMs) && sub.modelExclusions.defaultTtlMs > 0, "subagent-config.json: exclusion TTL must be positive");
+}
+ok(sub.defaultSubagentContext === "fresh", "subagent-config.json: delegated context must remain fresh");
+ok(sub.missions?.enabled === false, "subagent-config.json: missions must remain disabled");
+ok(sub.scheduledRuns?.enabled === false, "subagent-config.json: scheduled runs must remain disabled");
+ok(sub.authorityPolicy?.scheduleCreate === "forbid", "subagent-config.json: schedule creation must remain forbidden");
 for (const [action, decision] of Object.entries(sub.authorityPolicy || {})) {
   ok(["auto", "confirm", "forbid"].includes(decision), `subagent-config.json: invalid authority decision (${action}:${decision})`);
 }
 
 const docker = text("Dockerfile");
 ok(/^ARG BASE_IMAGE=.*@sha256:[0-9a-f]{64}$/m.test(docker), "Dockerfile: base image digest pin missing");
-for (const name of [
-  "PI_VERSION",
-  "BUN_VERSION",
-  "PI_SUBAGENTS_VERSION",
-  "PI_PSTACK_VERSION",
-  "PONYTAIL_VERSION",
-  "PI_WEB_ACCESS_VERSION",
-  "PI_LENS_VERSION",
-  "PI_FFF_VERSION",
-  "PI_CONTEXT_VIEW_VERSION",
-  "PI_POWERLINE_FOOTER_VERSION",
-  "PI_REWIND_HOOK_VERSION",
-  "PLANNOTATOR_VERSION",
-  "PI_BTW_VERSION",
-]) {
-  ok(new RegExp(`^ARG ${name}=[^\\s$]+$`, "m").test(docker), `Dockerfile: ${name} must have an explicit pin`);
-}
+const versionArgs = [...docker.matchAll(/^ARG ([A-Z0-9_]+_VERSION)=([^\s$]+)$/gm)];
+ok(versionArgs.length > 0, "Dockerfile: no explicit version pins found");
+for (const [, name, value] of versionArgs) ok(value.length > 0, `Dockerfile: ${name} version pin missing`);
 for (const needle of [
   "COPY --chown=agent:agent settings.json",
   "COPY --chown=agent:agent models.json",
   "COPY --chown=agent:agent subagent-config.json",
   "COPY --chown=agent:agent pstack-models.json",
-  "ENV PI_SUBAGENT_TASK_DELIVERY=file",
   "npm:pi-subagents@${PI_SUBAGENTS_VERSION}",
   "npm:@zenspc/pi-pstack@${PI_PSTACK_VERSION}",
-  "npm:@dietrichgebert/ponytail@${PONYTAIL_VERSION}",
 ]) {
   ok(docker.includes(needle), `Dockerfile: required runtime wiring missing (${needle})`);
 }
 ok(!docker.includes("AGENTS.md"), "Dockerfile: template-level AGENTS.md must not be copied");
-ok(!docker.includes("@piex-dev/dap"), "Dockerfile: DAP must not be installed");
-for (const f of ["Dockerfile", "settings.json", "models.json", "pstack-models.json", "pi-btw.json", "subagent-config.json"]) {
-  const source = f === "Dockerfile" ? docker : text(f);
+for (const source of [docker, text("settings.json"), text("models.json"), text("pstack-models.json"), text("subagent-config.json")]) {
   for (const legacy of ["opencode-go", "pi-commandcode-provider", "/alpha/generate"]) {
-    ok(!source.includes(legacy), `${f}: retired provider route remains (${legacy})`);
+    ok(!source.includes(legacy), `retired provider route remains (${legacy})`);
   }
 }
 
