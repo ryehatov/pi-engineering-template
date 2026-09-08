@@ -58,14 +58,14 @@ A candidate should therefore replace an existing role owner or demonstrate an un
 
 GPT-6 Astra uses `openai-codex`. The specialist Flash models use the repository-defined `commandcode-goat` provider.
 
-Privacy enforcement belongs to `models.json`: Command Code requests include the literal ZDR header there. Model-routing prose is not part of that privacy boundary.
+The Command Code transport configuration lives in `models.json`. Model-routing prose is not part of that transport boundary.
 
 ## Changing the portfolio
 
 For a model-policy change:
 
 1. change the executable assignment in `settings.json` and/or `pstack-models.json`;
-2. change `models.json` only when the custom provider model catalog or thinking metadata changes;
+2. change `models.json` only when the custom provider catalog or thinking metadata changes;
 3. update this rationale if the task ownership changes;
 4. run `node scripts/verify-template.mjs`;
 5. build and smoke the affected provider path when release qualification requires it.

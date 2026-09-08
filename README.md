@@ -21,11 +21,9 @@ The executable sources of truth are:
 
 `docs/model-policy.md` explains the routing rationale. It is descriptive, not an enforcement surface.
 
-## Privacy
+## Authentication
 
-Command Code uses Pi's native OpenAI-compatible provider path. `models.json` sends `x-cmd-zdr: 1` on every request, and the image also sets `CMD_ZDR=1`.
-
-Provide the API key only at runtime:
+Command Code uses Pi's native OpenAI-compatible provider path. Provide its API key only at runtime:
 
 ```sh
 export COMMAND_CODE_API_KEY='...'

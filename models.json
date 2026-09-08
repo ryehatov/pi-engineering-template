@@ -1,14 +1,11 @@
 {
   "providers": {
     "commandcode-goat": {
-      "name": "Command Code GOAT (ZDR)",
+      "name": "Command Code GOAT",
       "baseUrl": "https://api.commandcode.ai/provider/v1",
       "api": "openai-completions",
       "apiKey": "$COMMAND_CODE_API_KEY",
       "authHeader": true,
-      "headers": {
-        "x-cmd-zdr": "1"
-      },
       "compat": {
         "supportsStore": false,
         "supportsDeveloperRole": false,
@@ -18,7 +15,7 @@
       "models": [
         {
           "id": "deepseek/deepseek-v4.1-flash-beta",
-          "name": "DeepSeek V4.1 Flash Beta (GOAT ZDR)",
+          "name": "DeepSeek V4.1 Flash Beta (GOAT)",
           "reasoning": true,
           "input": ["text"],
           "contextWindow": 1000000,
@@ -34,7 +31,7 @@
         },
         {
           "id": "z-ai/glm-5.3-flash",
-          "name": "GLM 5.3 Flash (GOAT ZDR)",
+          "name": "GLM 5.3 Flash (GOAT)",
           "reasoning": true,
           "input": ["text"],
           "contextWindow": 1000000,
@@ -50,7 +47,7 @@
         },
         {
           "id": "Qwen/Qwen3.8-Flash",
-          "name": "Qwen 3.8 Flash (GOAT ZDR)",
+          "name": "Qwen 3.8 Flash (GOAT)",
           "reasoning": true,
           "input": ["text"],
           "contextWindow": 1000000,

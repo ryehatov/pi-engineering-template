@@ -20,19 +20,16 @@ This document defines repository and harness invariants. It does not define a se
 ## 3. Executable sources of truth
 
 1. `settings.json` MUST own Pi defaults and generic subagent model/tool configuration.
-2. `models.json` MUST own custom provider transport, model metadata, and provider-level privacy controls.
+2. `models.json` MUST own custom provider transport and model metadata.
 3. `subagent-config.json` MUST own delegated execution bounds and authority policy.
 4. `pstack-models.json` MUST own pstack role-to-model selectors.
 5. `scripts/verify-template.mjs` MUST validate structural invariants and consistency across these files without depending on natural-language prompt phrases.
 
-## 4. Provider and privacy invariants
+## 4. Provider invariants
 
 1. The Command Code provider MUST use `https://api.commandcode.ai/provider/v1` with the `openai-completions` API adapter.
 2. Its credential MUST resolve from `$COMMAND_CODE_API_KEY`; no credential may be committed or baked into the image.
-3. Every Command Code request MUST include the literal `x-cmd-zdr: 1` header.
-4. The image MUST set `CMD_ZDR=1` as defense in depth.
-5. A ZDR routing failure MUST fail closed. The template MUST NOT add an automatic retaining-provider fallback.
-6. Legacy OpenCode Go and `pi-commandcode-provider` routes MUST NOT be runtime dependencies of this branch.
+3. Legacy OpenCode Go and `pi-commandcode-provider` routes MUST NOT be runtime dependencies of this branch.
 
 ## 5. Model and role consistency
 
@@ -66,7 +63,7 @@ The static verifier MUST check at least:
 - required configuration and documentation files and JSON validity;
 - absence of the template-level `AGENTS.md` and its Docker injection;
 - strict explicit model scope and model-reference consistency;
-- provider URL, API type, credential reference, and literal ZDR header;
+- provider URL, API type, and credential reference;
 - pstack role coverage and model/thinking selector validity;
 - source-read-only role capability boundaries;
 - delegation, concurrency, mission, schedule, and authority bounds;

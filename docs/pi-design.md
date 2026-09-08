@@ -28,7 +28,7 @@ There is intentionally no template-level `AGENTS.md` between the runtime and the
 
 A global prompt is appropriate only for instructions that the model must judge globally and that no lower layer can provide. This template no longer has such generic instructions.
 
-Model allowlists, thinking ceilings, tool access, concurrency, scheduling authority, and provider privacy are machine-readable controls. Repeating them in `AGENTS.md` would add prompt tokens without strengthening enforcement and would create a second policy copy that can drift.
+Model allowlists, thinking ceilings, tool access, concurrency, scheduling authority, and provider configuration are machine-readable controls. Repeating them in `AGENTS.md` would add prompt tokens without strengthening enforcement and would create a second policy copy that can drift.
 
 Pstack and Ponytail already provide their own runtime guidance. When the operator starts a session by inspecting pstack state and enabling `/poteto-mode`, duplicating those methods in a repository-global prompt is also unnecessary.
 
@@ -41,7 +41,7 @@ Downstream repositories remain free to add project-specific agent instructions f
 | Pi parent defaults | `settings.json` |
 | Generic subagent routing and tool capabilities | `settings.json` |
 | Allowed delegated models | `settings.json` `modelScope` |
-| Command Code transport and ZDR | `models.json` |
+| Command Code transport | `models.json` |
 | Delegation context, limits, and authority | `subagent-config.json` |
 | Pstack role selectors | `pstack-models.json` |
 | Pstack method and Poteto Mode | `@zenspc/pi-pstack` runtime |
@@ -62,9 +62,9 @@ This allows a future model rebalance to change configuration and rationale witho
 
 ## Provider boundary
 
-Command Code is registered directly through Pi's native OpenAI-compatible provider path. The provider configuration owns the ZDR request header. `CMD_ZDR=1` in the image is defense in depth.
+Command Code is registered directly through Pi's native OpenAI-compatible provider path. Provider URL, adapter, authentication, compatibility, and model metadata live in `models.json`.
 
-This makes privacy a transport invariant rather than a behavioral request to the model. A provider-capacity failure cannot be repaired by asking the model to respect ZDR; the request must fail closed or use another already-approved route selected by normal policy.
+Provider policy therefore stays in executable configuration instead of a behavioral request to the model.
 
 ## Delegation boundary
 

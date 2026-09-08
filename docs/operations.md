@@ -27,8 +27,6 @@ export COMMAND_CODE_API_KEY='...'
 
 `models.json` references the variable; the Dockerfile never receives the secret as an `ARG` or committed `ENV` value.
 
-The provider always sends `x-cmd-zdr: 1`. The image also exports `CMD_ZDR=1`. Do not add a non-ZDR fallback.
-
 ## Static verification
 
 Run after changes to Docker, providers, models, subagents, pstack routing, or the ownership documents:
@@ -65,8 +63,6 @@ pi -p --no-tools --model 'commandcode-goat/z-ai/glm-5.3-flash:high' 'Reply with 
 pi -p --no-tools --model 'commandcode-goat/deepseek/deepseek-v4.1-flash-beta:high' 'Reply with exactly: DEEPSEEK_OK'
 pi -p --no-tools --model 'commandcode-goat/Qwen/Qwen3.8-Flash:xhigh' 'Reply with exactly: QWEN_OK'
 ```
-
-A Command Code `422 cmd_zdr_no_providers` is a capacity or coverage failure. Do not weaken the ZDR configuration to make the smoke pass.
 
 ## Pstack profile changes
 

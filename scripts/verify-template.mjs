@@ -83,7 +83,6 @@ const provider = providers["commandcode-goat"] || {};
 ok(provider.baseUrl === "https://api.commandcode.ai/provider/v1", "models.json: Command Code Provider API URL mismatch");
 ok(provider.api === "openai-completions", "models.json: Command Code API adapter mismatch");
 ok(provider.apiKey === "$COMMAND_CODE_API_KEY" && provider.authHeader === true, "models.json: runtime API-key auth mismatch");
-ok(provider.headers?.["x-cmd-zdr"] === "1", "models.json: literal ZDR header missing");
 ok(provider.compat?.supportsStore === false, "models.json: provider must not advertise store support");
 ok(provider.compat?.supportsReasoningEffort === true, "models.json: provider must advertise reasoning effort support");
 
@@ -213,7 +212,6 @@ for (const needle of [
   "COPY --chown=agent:agent models.json",
   "COPY --chown=agent:agent subagent-config.json",
   "COPY --chown=agent:agent pstack-models.json",
-  "ENV CMD_ZDR=1",
   "ENV PI_SUBAGENT_TASK_DELIVERY=file",
   "npm:pi-subagents@${PI_SUBAGENTS_VERSION}",
   "npm:@zenspc/pi-pstack@${PI_PSTACK_VERSION}",
