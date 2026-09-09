@@ -19,14 +19,14 @@ The split is task-oriented rather than leaderboard-oriented.
 
 | Function | Current model | Rationale |
 | --- | --- | --- |
-| Coordinate and escalate | GPT-6 Astra | low-effort parent decomposition and integration; medium-effort explicit oracle calls; high-effort bounded reasoning for the hardest tasks |
+| Coordinate and escalate | GPT-6 Astra | low-effort parent decomposition and integration; medium-effort explicit oracle calls and bounded reasoning for the hardest tasks |
 | Execute | GLM 5.3 Flash | normal bounded implementation, debugging, tooling analysis, and delegated engineering work |
 | Read and investigate | DeepSeek V4.1 Flash Beta | cache-heavy reconnaissance, research, evidence collection, and divergent exploration |
 | Judge | Qwen 3.8 Flash | review, ambiguity detection, synthesis, and structured prose |
 
 `Qwen3.8-Flash` is the deployed model corresponding to Qwen3.8-Flash-Next in this portfolio.
 
-GPT-6 Astra is deliberately not routed above `high`. Public Artificial Analysis comparisons at this revision show only small Intelligence Index gains from `high` to `xhigh` and `max`, while first-token latency rises sharply. The profile therefore treats `high` as the cost-performance ceiling for bounded Astra escalation and keeps the interactive parent at `low`.
+GPT-6 Astra is deliberately routed no higher than `medium` in this profile. The interactive parent remains at `low`, while explicit oracle calls and the hardest-task route use `medium` to cap latency and cost while retaining bounded escalation.
 
 ## Current pstack assignments
 
@@ -35,7 +35,7 @@ GPT-6 Astra is deliberately not routed above `high`. Public Artificial Analysis 
 - feature/refactoring, bug-fix, performance, hillclimb, tooling reflection, and swarm execution use GLM 5.3 Flash;
 - code exploration, evidence-heavy investigation, and research use DeepSeek V4.1 Flash Beta;
 - explanation, review, judgment, synthesis, and cross-judging use Qwen 3.8 Flash;
-- the hardest-task route uses GPT-6 Astra at `high`;
+- the hardest-task route uses GPT-6 Astra at `medium`;
 - architecture, arena, and adversarial-review panels use the three specialist model families, while the Astra parent performs final integration.
 
 The exact thinking level belongs to the selector in `pstack-models.json`, not to this prose.

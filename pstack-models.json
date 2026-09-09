@@ -6,7 +6,7 @@
     "perf-issue": "commandcode-goat/z-ai/glm-5.3-flash:high",
     "hillclimb": "commandcode-goat/z-ai/glm-5.3-flash:high",
     "judgment and prose": "commandcode-goat/Qwen/Qwen3.8-Flash:xhigh",
-    "hardest tasks": "openai-codex/gpt-6-astra:high",
+    "hardest tasks": "openai-codex/gpt-6-astra:medium",
     "how explorer": "commandcode-goat/deepseek/deepseek-v4.1-flash-beta:high",
     "how explainer": "commandcode-goat/Qwen/Qwen3.8-Flash:medium",
     "how critics": [
