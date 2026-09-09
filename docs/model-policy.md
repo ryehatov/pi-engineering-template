@@ -19,7 +19,7 @@ The split is task-oriented rather than leaderboard-oriented.
 
 | Function | Current model | Rationale |
 | --- | --- | --- |
-| Coordinate and escalate | GPT-6 Astra | low-effort parent decomposition and integration; high-effort bounded reasoning for the hardest tasks and explicit oracle calls |
+| Coordinate and escalate | GPT-6 Astra | low-effort parent decomposition and integration; medium-effort explicit oracle calls; high-effort bounded reasoning for the hardest tasks |
 | Execute | GLM 5.3 Flash | normal bounded implementation, debugging, tooling analysis, and delegated engineering work |
 | Read and investigate | DeepSeek V4.1 Flash Beta | cache-heavy reconnaissance, research, evidence collection, and divergent exploration |
 | Judge | Qwen 3.8 Flash | review, ambiguity detection, synthesis, and structured prose |
@@ -42,7 +42,7 @@ The exact thinking level belongs to the selector in `pstack-models.json`, not to
 
 ## Generic subagents
 
-`settings.json` is authoritative for generic subagent defaults and named overrides. The current profile uses GLM as the generic delegated worker, DeepSeek V4.1 Flash Beta for scouting and research, Qwen for reviewer-style judgment, and Astra at `high` for the explicit oracle.
+`settings.json` is authoritative for generic subagent defaults and named overrides. The current profile uses GLM as the generic delegated worker, DeepSeek V4.1 Flash Beta for scouting and research, Qwen for reviewer-style judgment, and Astra at `medium` for the explicit oracle.
 
 The oracle is a fresh-context capability escalation, not a separate model-family diversity mechanism. Multi-model diversity belongs to pstack panels.
 

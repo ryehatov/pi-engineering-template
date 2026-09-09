@@ -63,7 +63,7 @@
       },
       "oracle": {
         "model": "openai-codex/gpt-6-astra",
-        "thinking": "high",
+        "thinking": "medium",
         "tools": [
           "read",
           "grep",
