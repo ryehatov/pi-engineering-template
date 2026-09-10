@@ -64,9 +64,7 @@ for (const model of allow.filter((value) => value !== "inherit")) {
   ok(typeof model === "string" && model.includes("/") && !model.includes("*"), `settings.json: modelScope entry must be explicit and provider-qualified (${model})`);
 }
 const allowedModels = new Set(allow.filter((value) => value !== "inherit"));
-const parentModel = settings.defaultModel?.includes("/")
-  ? settings.defaultModel
-  : `${settings.defaultProvider}/${settings.defaultModel}`;
+const parentModel = `${settings.defaultProvider}/${settings.defaultModel}`;
 ok(allowedModels.has(parentModel), `settings.json: parent model is outside strict modelScope (${parentModel})`);
 
 const providers = models.providers || {};
@@ -76,6 +74,7 @@ if (commandCode) {
   ok(commandCode.baseUrl === "https://api.commandcode.ai/provider/v1", "models.json: Command Code API URL mismatch");
   ok(commandCode.api === "openai-completions", "models.json: Command Code API adapter mismatch");
   ok(commandCode.apiKey === "$COMMAND_CODE_API_KEY" && commandCode.authHeader === true, "models.json: runtime API-key auth mismatch");
+  ok(commandCode.headers?.["x-cmd-zdr"] === "1", "models.json: Command Code ZDR header must be enforced");
 }
 
 const customThinking = new Map();
@@ -122,8 +121,18 @@ const checkModel = (model, thinking, label) => {
 checkModel(subagents.defaultModel, subagents.defaultThinking, "settings.json: subagent default");
 ok(thinkingLevels.has(subagents.maxThinking), "settings.json: invalid subagent maxThinking");
 for (const [name, config] of Object.entries(subagents.agentOverrides || {})) {
-  if (!config || config.disabled === true || !config.model) continue;
-  checkModel(config.model, config.thinking ?? subagents.defaultThinking, `settings.json: agentOverrides.${name}`);
+  if (!config || config.disabled === true) continue;
+  if (config.model) checkModel(config.model, config.thinking ?? subagents.defaultThinking, `settings.json: agentOverrides.${name}`);
+  if (config.fallbackModels !== undefined) {
+    ok(Array.isArray(config.fallbackModels), `settings.json: agentOverrides.${name}.fallbackModels must be an array`);
+    if (Array.isArray(config.fallbackModels)) {
+      for (const rawSelector of config.fallbackModels) {
+        const parsed = parseSelector(rawSelector);
+        ok(parsed !== null, `settings.json: agentOverrides.${name}.fallbackModels contains an invalid selector`);
+        if (parsed) checkModel(parsed.model, parsed.thinking, `settings.json: agentOverrides.${name}.fallbackModels`);
+      }
+    }
+  }
 }
 
 ok(pstack.version === 1, "pstack-models.json: unsupported version");
@@ -183,8 +192,8 @@ for (const needle of [
 }
 ok(!docker.includes("AGENTS.md"), "Dockerfile: template-level AGENTS.md must not be copied");
 for (const source of [docker, text("settings.json"), text("models.json"), text("pstack-models.json"), text("subagent-config.json")]) {
-  for (const legacy of ["opencode-go", "pi-commandcode-provider", "/alpha/generate"]) {
-    ok(!source.includes(legacy), `retired provider route remains (${legacy})`);
+  for (const legacy of ["opencode-go", "pi-commandcode-provider", "/alpha/generate", "deepseek-v4.1-flash-beta"]) {
+    ok(!source.includes(legacy), `retired provider/model route remains (${legacy})`);
   }
 }
 
