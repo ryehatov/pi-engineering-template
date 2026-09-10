@@ -1,10 +1,10 @@
 {
   "defaultProvider": "commandcode-goat",
-  "defaultModel": "deepseek/deepseek-v4-flash",
+  "defaultModel": "deepseek/deepseek-v4.1-flash",
   "defaultThinkingLevel": "high",
   "defaultProjectTrust": "never",
   "subagents": {
-    "defaultModel": "commandcode-goat/deepseek/deepseek-v4-flash",
+    "defaultModel": "commandcode-goat/deepseek/deepseek-v4.1-flash",
     "defaultThinking": "high",
     "maxThinking": "max",
     "modelScope": {
@@ -13,14 +13,14 @@
       "allow": [
         "inherit",
         "openai-codex/gpt-6-astra",
-        "commandcode-goat/deepseek/deepseek-v4-flash",
+        "commandcode-goat/deepseek/deepseek-v4.1-flash",
         "commandcode-goat/z-ai/glm-5.3-flash",
         "commandcode-goat/Qwen/Qwen3.8-Flash"
       ]
     },
     "agentOverrides": {
       "scout": {
-        "model": "commandcode-goat/deepseek/deepseek-v4-flash",
+        "model": "commandcode-goat/deepseek/deepseek-v4.1-flash",
         "thinking": "low",
         "fallbackModels": [
           "commandcode-goat/z-ai/glm-5.3-flash:low"
@@ -40,14 +40,14 @@
         ]
       },
       "researcher": {
-        "model": "commandcode-goat/deepseek/deepseek-v4-flash",
+        "model": "commandcode-goat/deepseek/deepseek-v4.1-flash",
         "thinking": "high",
         "fallbackModels": [
           "commandcode-goat/z-ai/glm-5.3-flash:high"
         ]
       },
       "worker": {
-        "model": "commandcode-goat/deepseek/deepseek-v4-flash",
+        "model": "commandcode-goat/deepseek/deepseek-v4.1-flash",
         "thinking": "high",
         "fallbackModels": [
           "commandcode-goat/z-ai/glm-5.3-flash:high"
@@ -91,7 +91,7 @@
         ]
       },
       "poteto-agent": {
-        "model": "commandcode-goat/deepseek/deepseek-v4-flash",
+        "model": "commandcode-goat/deepseek/deepseek-v4.1-flash",
         "tools": "inherit",
         "thinking": "high",
         "allowNestedSubagents": true

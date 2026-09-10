@@ -6,9 +6,6 @@
       "api": "openai-completions",
       "apiKey": "$COMMAND_CODE_API_KEY",
       "authHeader": true,
-      "headers": {
-        "x-cmd-zdr": "1"
-      },
       "compat": {
         "supportsStore": false,
         "supportsDeveloperRole": false,
@@ -17,8 +14,8 @@
       },
       "models": [
         {
-          "id": "deepseek/deepseek-v4-flash",
-          "name": "DeepSeek V4 Flash (latest)",
+          "id": "deepseek/deepseek-v4.1-flash",
+          "name": "DeepSeek V4.1 Flash (GOAT)",
           "reasoning": true,
           "input": ["text"],
           "contextWindow": 1000000,
@@ -30,6 +27,10 @@
             "high": "high",
             "xhigh": "high",
             "max": "max"
+          },
+          "compat": {
+            "thinkingFormat": "deepseek",
+            "requiresReasoningContentOnAssistantMessages": true
           }
         },
         {

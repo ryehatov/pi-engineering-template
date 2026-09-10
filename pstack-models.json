@@ -1,24 +1,24 @@
 {
   "version": 1,
   "roles": {
-    "feature, refactoring": "commandcode-goat/deepseek/deepseek-v4-flash:high",
-    "bug-fix": "commandcode-goat/deepseek/deepseek-v4-flash:max",
-    "perf-issue": "commandcode-goat/deepseek/deepseek-v4-flash:max",
-    "hillclimb": "commandcode-goat/deepseek/deepseek-v4-flash:max",
+    "feature, refactoring": "commandcode-goat/deepseek/deepseek-v4.1-flash:high",
+    "bug-fix": "commandcode-goat/deepseek/deepseek-v4.1-flash:max",
+    "perf-issue": "commandcode-goat/deepseek/deepseek-v4.1-flash:max",
+    "hillclimb": "commandcode-goat/deepseek/deepseek-v4.1-flash:max",
     "judgment and prose": "commandcode-goat/Qwen/Qwen3.8-Flash:xhigh",
     "hardest tasks": "openai-codex/gpt-6-astra:medium",
-    "how explorer": "commandcode-goat/deepseek/deepseek-v4-flash:high",
+    "how explorer": "commandcode-goat/deepseek/deepseek-v4.1-flash:high",
     "how explainer": "commandcode-goat/Qwen/Qwen3.8-Flash:medium",
     "how critics": [
       "commandcode-goat/z-ai/glm-5.3-flash:max",
       "commandcode-goat/Qwen/Qwen3.8-Flash:xhigh"
     ],
-    "why investigators": "commandcode-goat/deepseek/deepseek-v4-flash:high",
+    "why investigators": "commandcode-goat/deepseek/deepseek-v4.1-flash:high",
     "why synthesizer": "commandcode-goat/Qwen/Qwen3.8-Flash:xhigh",
     "reflect tooling": "commandcode-goat/z-ai/glm-5.3-flash:high",
     "reflect judgment, divergent, synthesizer": "commandcode-goat/Qwen/Qwen3.8-Flash:xhigh",
     "arena runners": [
-      "commandcode-goat/deepseek/deepseek-v4-flash:max",
+      "commandcode-goat/deepseek/deepseek-v4.1-flash:max",
       "commandcode-goat/z-ai/glm-5.3-flash:max",
       "commandcode-goat/Qwen/Qwen3.8-Flash:xhigh",
       "openai-codex/gpt-6-astra:medium"
@@ -28,9 +28,9 @@
       "commandcode-goat/Qwen/Qwen3.8-Flash:xhigh",
       "openai-codex/gpt-6-astra:medium"
     ],
-    "swarm workers": "commandcode-goat/deepseek/deepseek-v4-flash:high",
+    "swarm workers": "commandcode-goat/deepseek/deepseek-v4.1-flash:high",
     "architect runners": [
-      "commandcode-goat/deepseek/deepseek-v4-flash:max",
+      "commandcode-goat/deepseek/deepseek-v4.1-flash:max",
       "commandcode-goat/z-ai/glm-5.3-flash:max",
       "commandcode-goat/Qwen/Qwen3.8-Flash:xhigh",
       "openai-codex/gpt-6-astra:medium"

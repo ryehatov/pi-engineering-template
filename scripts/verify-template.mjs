@@ -74,7 +74,8 @@ if (commandCode) {
   ok(commandCode.baseUrl === "https://api.commandcode.ai/provider/v1", "models.json: Command Code API URL mismatch");
   ok(commandCode.api === "openai-completions", "models.json: Command Code API adapter mismatch");
   ok(commandCode.apiKey === "$COMMAND_CODE_API_KEY" && commandCode.authHeader === true, "models.json: runtime API-key auth mismatch");
-  ok(commandCode.headers?.["x-cmd-zdr"] === "1", "models.json: Command Code ZDR header must be enforced");
+  const hasForcedZdr = Object.keys(commandCode.headers || {}).some((name) => name.toLowerCase() === "x-cmd-zdr");
+  ok(!hasForcedZdr, "models.json: default Command Code provider must not force ZDR routing");
 }
 
 const customThinking = new Map();
@@ -192,7 +193,7 @@ for (const needle of [
 }
 ok(!docker.includes("AGENTS.md"), "Dockerfile: template-level AGENTS.md must not be copied");
 for (const source of [docker, text("settings.json"), text("models.json"), text("pstack-models.json"), text("subagent-config.json")]) {
-  for (const legacy of ["opencode-go", "pi-commandcode-provider", "/alpha/generate", "deepseek-v4.1-flash-beta"]) {
+  for (const legacy of ["opencode-go", "pi-commandcode-provider", "/alpha/generate", "deepseek/deepseek-v4-flash", "deepseek-v4.1-flash-beta"]) {
     ok(!source.includes(legacy), `retired provider/model route remains (${legacy})`);
   }
 }
