@@ -10,43 +10,64 @@ If this document and executable configuration diverge, the configuration control
 
 The current profile uses four models across two provider paths:
 
-- `openai-codex/gpt-6-astra`
-- `commandcode-goat/deepseek/deepseek-v4.1-flash-beta`
+- `commandcode-goat/deepseek/deepseek-v4-flash`
 - `commandcode-goat/z-ai/glm-5.3-flash`
 - `commandcode-goat/Qwen/Qwen3.8-Flash`
+- `openai-codex/gpt-6-astra`
 
 The split is task-oriented rather than leaderboard-oriented.
 
 | Function | Current model | Rationale |
 | --- | --- | --- |
-| Coordinate and escalate | GPT-6 Astra | low-effort parent decomposition and integration; medium-effort explicit oracle calls and bounded reasoning for the hardest tasks |
-| Execute | GLM 5.3 Flash | normal bounded implementation, debugging, tooling analysis, and delegated engineering work |
-| Read and investigate | DeepSeek V4.1 Flash Beta | cache-heavy reconnaissance, research, evidence collection, and divergent exploration |
-| Judge | Qwen 3.8 Flash | review, ambiguity detection, synthesis, and structured prose |
+| Coordinate and execute | DeepSeek V4 Flash (latest) | fast, low-cost parent coordination plus normal implementation, debugging, research, and delegated execution |
+| Verify engineering work | GLM 5.3 Flash | independent code and plan review that is not correlated with the primary DeepSeek execution path |
+| Judge and synthesize | Qwen 3.8 Flash | intent, prose, synthesis, ambiguity detection, and a second independent review family |
+| Escalate | GPT-6 Astra | bounded `medium`-effort oracle calls and high-stakes panel participation |
+
+`deepseek/deepseek-v4-flash` is Command Code's stable latest-model route. At this revision it serves DeepSeek V4.1 Flash. The template uses the stable route instead of the retired V4.1 beta model id.
 
 `Qwen3.8-Flash` is the deployed model corresponding to Qwen3.8-Flash-Next in this portfolio.
 
-GPT-6 Astra is deliberately routed no higher than `medium` in this profile. The interactive parent remains at `low`, while explicit oracle calls and the hardest-task route use `medium` to cap latency and cost while retaining bounded escalation.
+The interactive Pi parent uses DeepSeek at `high`. DeepSeek documents `low` for simple work, `high` for normal agent work, and `max` for complex work. Pstack therefore uses `max` only for task families that benefit from a deeper execution pass. GPT-6 Astra remains capped at `medium` and is not the normal parent or worker.
 
 ## Current pstack assignments
 
 `pstack-models.json` contains the authoritative selectors. At the current revision, the role families are arranged as follows:
 
-- feature/refactoring, bug-fix, performance, hillclimb, tooling reflection, and swarm execution use GLM 5.3 Flash;
-- code exploration, evidence-heavy investigation, and research use DeepSeek V4.1 Flash Beta;
-- explanation, review, judgment, synthesis, and cross-judging use Qwen 3.8 Flash;
+- feature/refactoring uses DeepSeek at `high`;
+- bug-fix, performance, and hillclimb execution use DeepSeek at `max`;
+- exploration, investigation, and swarm execution use DeepSeek at `high`;
+- tooling reflection and the primary engineering critic use GLM;
+- explanation, judgment, prose, synthesis, and a second critic use Qwen;
 - the hardest-task route uses GPT-6 Astra at `medium`;
-- architecture, arena, and adversarial-review panels use the three specialist model families, while the Astra parent performs final integration.
+- architecture and arena generation include all four families;
+- critic and cross-judge pools exclude DeepSeek when they evaluate DeepSeek-led work, so review diversity is real rather than self-review by the same family.
 
 The exact thinking level belongs to the selector in `pstack-models.json`, not to this prose.
 
 ## Generic subagents
 
-`settings.json` is authoritative for generic subagent defaults and named overrides. The current profile uses GLM as the generic delegated worker, DeepSeek V4.1 Flash Beta for scouting and research, Qwen for reviewer-style judgment, and Astra at `medium` for the explicit oracle.
+`settings.json` is authoritative for generic subagent defaults and named overrides.
 
-The oracle is a fresh-context capability escalation, not a separate model-family diversity mechanism. Multi-model diversity belongs to pstack panels.
+- `scout`: DeepSeek `low` for local reconnaissance; GLM `low` is the startup fallback.
+- `researcher`: DeepSeek `high` for evidence collection; GLM `high` is the startup fallback.
+- `worker`: DeepSeek `high` as the single normal writer; GLM `high` is the startup fallback.
+- `reviewer`: GLM `high` for independent verification; Qwen `xhigh` is the startup fallback.
+- `oracle`: GPT-6 Astra `medium` with no semantic downgrade fallback.
+- `poteto-agent`: DeepSeek `high` for delegated pstack execution.
+- `comment-sicko`: Qwen `medium` for comment and prose judgment.
+
+Pi-subagents fallback models are only availability recovery. Retryable provider/model failures can select a fallback before tool activity. The normal writer is not replayed on another model after it has already changed files.
+
+The oracle is a fresh capability escalation that protects decision consistency. It is not a default executor and has no weaker fallback that could silently change the meaning of an oracle call.
 
 Read-only capability is enforced by tool configuration, not by asking those models to avoid writes.
+
+## Provider and data boundary
+
+GPT-6 Astra uses `openai-codex`. The Flash models use the repository-defined `commandcode-goat` provider.
+
+The Command Code transport configuration lives in `models.json`. It sends `x-cmd-zdr: 1`, so Command Code must use a zero-data-retention route or fail the request instead of silently selecting a non-ZDR upstream.
 
 ## Why the portfolio is small
 
@@ -54,18 +75,12 @@ Each permanent model should own a materially different task shape. Adding anothe
 
 A candidate should therefore replace an existing role owner or demonstrate an uncovered role. Prefer current provider documentation and public benchmark results that identify the exact model and reasoning-effort setting. Do not keep a weaker model only to increase the model count when existing panels already provide independent families.
 
-## Provider separation
-
-GPT-6 Astra uses `openai-codex`. The specialist Flash models use the repository-defined `commandcode-goat` provider.
-
-The Command Code transport configuration lives in `models.json`. Model-routing prose is not part of that transport boundary.
-
 ## Changing the portfolio
 
 For a model-policy change:
 
 1. change the executable assignment in `settings.json` and/or `pstack-models.json`;
-2. change `models.json` only when the custom provider catalog or thinking metadata changes;
+2. change `models.json` only when the custom provider catalog, transport policy, or thinking metadata changes;
 3. update this rationale if the task ownership changes;
 4. run `node scripts/verify-template.mjs`;
 5. build and smoke the affected provider path when release qualification requires it.

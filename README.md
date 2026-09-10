@@ -7,7 +7,7 @@ The `pstack` branch keeps engineering policy in the runtime mechanisms that can 
 ## Architecture
 
 - **Pi** is the interactive parent runtime.
-- **pi-subagents** owns delegated execution, isolation, tool capability, model scope, concurrency, and authority controls.
+- **pi-subagents** owns delegated execution, isolation, tool capability, model scope, concurrency, fallback selection, and authority controls.
 - **@zenspc/pi-pstack** supplies engineering playbooks, Poteto Mode, review topology, and role-oriented model selection.
 - **Ponytail** supplies YAGNI-first implementation guidance when active.
 - Supporting extensions provide capabilities such as structural search, diagnostics, web access, context inspection, and UI.
@@ -15,7 +15,7 @@ The `pstack` branch keeps engineering policy in the runtime mechanisms that can 
 The executable sources of truth are:
 
 - `settings.json` for Pi and generic subagent routing/capabilities;
-- `models.json` for the Command Code provider and model metadata;
+- `models.json` for the Command Code provider, ZDR transport policy, and model metadata;
 - `subagent-config.json` for delegated execution and authority policy;
 - `pstack-models.json` for pstack role routing.
 
@@ -28,6 +28,8 @@ Command Code uses Pi's native OpenAI-compatible provider path. Provide its API k
 ```sh
 export COMMAND_CODE_API_KEY='...'
 ```
+
+The committed provider configuration sends `x-cmd-zdr: 1`, so Command Code requests fail if a ZDR-capable route is unavailable.
 
 OpenAI Codex authentication remains independent and uses Pi's normal `openai-codex` path.
 
