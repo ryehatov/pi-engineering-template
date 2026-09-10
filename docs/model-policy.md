@@ -10,7 +10,7 @@ If this document and executable configuration diverge, the configuration control
 
 The current profile uses four models across two provider paths:
 
-- `commandcode-goat/deepseek/deepseek-v4-flash`
+- `commandcode-goat/deepseek/deepseek-v4.1-flash`
 - `commandcode-goat/z-ai/glm-5.3-flash`
 - `commandcode-goat/Qwen/Qwen3.8-Flash`
 - `openai-codex/gpt-6-astra`
@@ -19,16 +19,16 @@ The split is task-oriented rather than leaderboard-oriented.
 
 | Function | Current model | Rationale |
 | --- | --- | --- |
-| Coordinate and execute | DeepSeek V4 Flash (latest) | fast, low-cost parent coordination plus normal implementation, debugging, research, and delegated execution |
+| Coordinate and execute | DeepSeek V4.1 Flash | fast, low-cost parent coordination plus normal implementation, debugging, research, and delegated execution |
 | Verify engineering work | GLM 5.3 Flash | independent code and plan review that is not correlated with the primary DeepSeek execution path |
 | Judge and synthesize | Qwen 3.8 Flash | intent, prose, synthesis, ambiguity detection, and a second independent review family |
 | Escalate | GPT-6 Astra | bounded `medium`-effort oracle calls and high-stakes panel participation |
 
-`deepseek/deepseek-v4-flash` is Command Code's stable latest-model route. At this revision it serves DeepSeek V4.1 Flash. The template uses the stable route instead of the retired V4.1 beta model id.
+The profile uses Command Code's explicit `deepseek/deepseek-v4.1-flash` model id rather than the older `deepseek/deepseek-v4-flash` latest alias or the retired beta id.
 
 `Qwen3.8-Flash` is the deployed model corresponding to Qwen3.8-Flash-Next in this portfolio.
 
-The interactive Pi parent uses DeepSeek at `high`. DeepSeek documents `low` for simple work, `high` for normal agent work, and `max` for complex work. Pstack therefore uses `max` only for task families that benefit from a deeper execution pass. GPT-6 Astra remains capped at `medium` and is not the normal parent or worker.
+The interactive Pi parent uses DeepSeek at `high`. Pstack uses `max` only for task families that benefit from a deeper execution pass. GPT-6 Astra remains capped at `medium` and is not the normal parent or worker.
 
 ## Current pstack assignments
 
@@ -63,11 +63,15 @@ The oracle is a fresh capability escalation that protects decision consistency. 
 
 Read-only capability is enforced by tool configuration, not by asking those models to avoid writes.
 
-## Provider and data boundary
+## Command Code transport and privacy
 
 GPT-6 Astra uses `openai-codex`. The Flash models use the repository-defined `commandcode-goat` provider.
 
-The Command Code transport configuration lives in `models.json`. It sends `x-cmd-zdr: 1`, so Command Code must use a zero-data-retention route or fail the request instead of silently selecting a non-ZDR upstream.
+The Command Code transport configuration lives in `models.json`. The default profile intentionally does not send `x-cmd-zdr`. Enforced ZDR can reject a model with `422 cmd_zdr_no_providers` when no ZDR-capable upstream is available, which conflicts with the goal of keeping DeepSeek and GLM usable.
+
+Without enforced ZDR, this template does not guarantee zero retention. Command Code states that it does not train foundation models on prompts or source code and enables upstream no-training settings where available, while AI request content may be retained for up to 30 days and some upstream terms can differ. Treat these as provider policy, not as an invariant enforced by this repository.
+
+DeepSeek is behind the Command Code proxy URL, so Pi cannot infer DeepSeek-specific OpenAI-completions compatibility from the provider id or URL. `models.json` therefore sets DeepSeek's `thinkingFormat` and assistant reasoning-history requirement explicitly at the model level.
 
 ## Why the portfolio is small
 
@@ -80,7 +84,7 @@ A candidate should therefore replace an existing role owner or demonstrate an un
 For a model-policy change:
 
 1. change the executable assignment in `settings.json` and/or `pstack-models.json`;
-2. change `models.json` only when the custom provider catalog, transport policy, or thinking metadata changes;
+2. change `models.json` only when the custom provider catalog, transport behavior, or thinking metadata changes;
 3. update this rationale if the task ownership changes;
 4. run `node scripts/verify-template.mjs`;
 5. build and smoke the affected provider path when release qualification requires it.

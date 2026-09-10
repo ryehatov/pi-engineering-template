@@ -25,7 +25,9 @@ Create a Command Code API key in Studio and inject it only at runtime:
 export COMMAND_CODE_API_KEY='...'
 ```
 
-`models.json` references the variable; the Dockerfile never receives the secret as an `ARG` or committed `ENV` value. The provider also sends `x-cmd-zdr: 1`. A request must therefore use a ZDR-capable upstream or fail closed.
+`models.json` references the variable; the Dockerfile never receives the secret as an `ARG` or committed `ENV` value.
+
+The committed provider does not force `x-cmd-zdr`. This avoids `422 cmd_zdr_no_providers` failures when DeepSeek, GLM, or another selected model has no ZDR-capable upstream with capacity. This also means the template does not guarantee zero retention. Use only data appropriate for the active Command Code and upstream-provider terms.
 
 ## Static verification
 
@@ -35,7 +37,7 @@ Run after changes to Docker, providers, models, subagents, pstack routing, or th
 node scripts/verify-template.mjs
 ```
 
-The command requires no credentials and no network access. It validates executable configuration rather than natural-language prompt phrases. It also validates the Command Code ZDR header, parent model qualification, subagent fallback selectors, strict model scope, and supported thinking levels.
+The command requires no credentials and no network access. It validates executable configuration rather than natural-language prompt phrases. It validates that the default Command Code provider does not force ZDR, parent model qualification, subagent fallback selectors, strict model scope, and supported thinking levels.
 
 ## Docker verification
 
@@ -52,21 +54,21 @@ This catches package-version and installation incompatibilities that the static 
 After injecting the appropriate credentials, verify model registry resolution for routes affected by the change. For the current portfolio, a useful filter is:
 
 ```sh
-pi --list-models | grep -E 'openai-codex/gpt-6-astra|commandcode-goat/(deepseek/deepseek-v4-flash|z-ai/glm-5.3-flash|Qwen/Qwen3.8-Flash)'
+pi --list-models | grep -E 'openai-codex/gpt-6-astra|commandcode-goat/(deepseek/deepseek-v4.1-flash|z-ai/glm-5.3-flash|Qwen/Qwen3.8-Flash)'
 ```
 
 Then make bounded one-shot calls for changed routes. Examples:
 
 ```sh
-pi -p --no-tools --model 'commandcode-goat/deepseek/deepseek-v4-flash:low' 'Reply with exactly: DEEPSEEK_LOW_OK'
-pi -p --no-tools --model 'commandcode-goat/deepseek/deepseek-v4-flash:high' 'Reply with exactly: DEEPSEEK_HIGH_OK'
-pi -p --no-tools --model 'commandcode-goat/deepseek/deepseek-v4-flash:max' 'Reply with exactly: DEEPSEEK_MAX_OK'
+pi -p --no-tools --model 'commandcode-goat/deepseek/deepseek-v4.1-flash:low' 'Reply with exactly: DEEPSEEK_LOW_OK'
+pi -p --no-tools --model 'commandcode-goat/deepseek/deepseek-v4.1-flash:high' 'Reply with exactly: DEEPSEEK_HIGH_OK'
+pi -p --no-tools --model 'commandcode-goat/deepseek/deepseek-v4.1-flash:max' 'Reply with exactly: DEEPSEEK_MAX_OK'
 pi -p --no-tools --model 'commandcode-goat/z-ai/glm-5.3-flash:high' 'Reply with exactly: GLM_OK'
 pi -p --no-tools --model 'commandcode-goat/Qwen/Qwen3.8-Flash:xhigh' 'Reply with exactly: QWEN_OK'
 pi -p --no-tools --model 'openai-codex/gpt-6-astra:medium' 'Reply with exactly: ASTRA_OK'
 ```
 
-Also exercise one tool-using DeepSeek call. A no-tools smoke cannot verify multi-turn tool-call compatibility.
+Also exercise one multi-turn, tool-using DeepSeek call. A no-tools smoke cannot verify preservation of DeepSeek reasoning state across assistant tool calls and tool results.
 
 ## Subagent routing checks
 
@@ -91,7 +93,7 @@ When changing routing:
 
 1. edit `pstack-models.json` for pstack role selectors;
 2. edit `settings.json` for generic subagent defaults or named overrides;
-3. edit `models.json` only when the custom provider catalog, transport policy, or thinking metadata changes;
+3. edit `models.json` only when the custom provider catalog, transport behavior, or thinking metadata changes;
 4. update `docs/model-policy.md` when the rationale changes;
 5. run the static verifier.
 

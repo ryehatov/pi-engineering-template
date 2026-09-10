@@ -15,7 +15,7 @@ The `pstack` branch keeps engineering policy in the runtime mechanisms that can 
 The executable sources of truth are:
 
 - `settings.json` for Pi and generic subagent routing/capabilities;
-- `models.json` for the Command Code provider, ZDR transport policy, and model metadata;
+- `models.json` for the Command Code provider transport and model metadata;
 - `subagent-config.json` for delegated execution and authority policy;
 - `pstack-models.json` for pstack role routing.
 
@@ -29,7 +29,7 @@ Command Code uses Pi's native OpenAI-compatible provider path. Provide its API k
 export COMMAND_CODE_API_KEY='...'
 ```
 
-The committed provider configuration sends `x-cmd-zdr: 1`, so Command Code requests fail if a ZDR-capable route is unavailable.
+The committed profile does not force Command Code ZDR routing. This keeps models such as DeepSeek and GLM available when a ZDR-capable upstream is unavailable. Data handling therefore follows the active Command Code and upstream-provider terms. Do not treat this profile as a zero-retention boundary.
 
 OpenAI Codex authentication remains independent and uses Pi's normal `openai-codex` path.
 
