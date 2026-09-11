@@ -177,6 +177,7 @@ for (const [action, decision] of Object.entries(sub.authorityPolicy || {})) {
 }
 
 const docker = text("Dockerfile");
+ok(/^ENV TZ=Asia\/Tokyo$/m.test(docker), "Dockerfile: runtime timezone must remain Asia/Tokyo");
 ok(/^ARG BASE_IMAGE=.*@sha256:[0-9a-f]{64}$/m.test(docker), "Dockerfile: base image digest pin missing");
 const versionArgs = [...docker.matchAll(/^ARG ([A-Z0-9_]+_VERSION)=([^\s$]+)$/gm)];
 ok(versionArgs.length > 0, "Dockerfile: no explicit version pins found");

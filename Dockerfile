@@ -4,8 +4,9 @@ FROM ${BASE_IMAGE}
 USER root
 
 RUN apt-get update \
- && apt-get install -y --no-install-recommends \
+ && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
       build-essential \
+      tzdata \
  && rm -rf /var/lib/apt/lists/*
 
 ARG PI_VERSION=0.85.1
@@ -74,6 +75,7 @@ RUN pi install "npm:pi-subagents@${PI_SUBAGENTS_VERSION}" \
 
 ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8
+ENV TZ=Asia/Tokyo
 ENV POWERLINE_NERD_FONTS=1
 ENV PI_SUBAGENT_TASK_DELIVERY=file
 
