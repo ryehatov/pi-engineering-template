@@ -49,6 +49,9 @@ COPY --chown=agent:agent pi-btw.json \
 COPY --chown=agent:agent pi-fff.json \
     /home/agent/.pi/agent/pi-fff.json
 
+COPY --chown=agent:agent sol-pi.json \
+    /home/agent/.pi/agent/sol-pi.json
+
 ARG PI_SUBAGENTS_VERSION=0.66.0
 ARG PI_PSTACK_VERSION=0.5.0
 ARG PONYTAIL_VERSION=4.9.0
@@ -60,6 +63,7 @@ ARG PI_POWERLINE_FOOTER_VERSION=0.17.0
 ARG PI_REWIND_HOOK_VERSION=1.8.6
 ARG PLANNOTATOR_VERSION=0.27.12
 ARG PI_BTW_VERSION=0.58.1
+ARG SOL_PI_COMMIT=2ecee02e116d3a13b2304ccf6c770d7bc4675660
 
 RUN pi install "npm:pi-subagents@${PI_SUBAGENTS_VERSION}" \
  && pi install "npm:@zenspc/pi-pstack@${PI_PSTACK_VERSION}" \
@@ -71,7 +75,8 @@ RUN pi install "npm:pi-subagents@${PI_SUBAGENTS_VERSION}" \
  && pi install "npm:pi-powerline-footer@${PI_POWERLINE_FOOTER_VERSION}" \
  && pi install "npm:pi-rewind-hook@${PI_REWIND_HOOK_VERSION}" \
  && pi install "npm:@plannotator/pi-extension@${PLANNOTATOR_VERSION}" \
- && pi install "npm:@narumitw/pi-btw@${PI_BTW_VERSION}"
+ && pi install "npm:@narumitw/pi-btw@${PI_BTW_VERSION}" \
+ && pi install "git:github.com/NVlabs/SoL-Pi@${SOL_PI_COMMIT}"
 
 ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8
