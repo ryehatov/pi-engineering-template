@@ -39,6 +39,52 @@ The committed provider does not force `x-cmd-zdr`. This avoids `422 cmd_zdr_no_p
 
 SoL-Pi EPR uses the same Command Code credential through the Pi model registry. Its committed reducer route is `commandcode-goat/deepseek/deepseek-v4.1-flash`; SoL-Pi has no separate credential or provider URL.
 
+## Runtime-state persistence
+
+A stopped local Docker Sandbox retains its filesystem. A runtime-state backup is therefore not required merely to stop and resume a sandbox.
+
+Export the allowlisted state before `sbx rm`, `sbx reset`, replacing a sandbox to move to a rebuilt template, or any other operation that intentionally discards the sandbox filesystem. Do not persist the complete `~/.pi/agent` directory.
+
+Use a private directory in the WSL Linux filesystem, preferably outside the repository and not under `/mnt/c`:
+
+```sh
+STATE_ROOT="$HOME/.local/state/pi-engineering-template"
+mkdir -p "$STATE_ROOT"
+chmod 700 "$STATE_ROOT"
+
+node scripts/runtime-state.mjs \
+  backup \
+  pi-pstack \
+  "$STATE_ROOT/pi-pstack-$(date +%Y%m%d-%H%M%S).tgz"
+```
+
+Exit Pi before backup so that no session or credential file is being modified concurrently. The archive can contain OAuth credentials and sensitive session content. `scripts/runtime-state.mjs` sets the archive to mode `0600`; keep the storage directory at mode `0700`.
+
+For replacement:
+
+1. Exit Pi.
+2. Export the runtime state.
+3. Remove the old sandbox.
+4. Build or select the new template.
+5. Create a fresh sandbox.
+6. Restore the runtime state before starting Pi for the first time.
+7. Start Pi and perform qualification checks.
+
+Restore with:
+
+```sh
+node scripts/runtime-state.mjs \
+  restore \
+  pi-pstack \
+  "$STATE_ROOT/<chosen-backup>.tgz"
+```
+
+Restore deliberately refuses to merge with any existing allowlisted runtime-state path in the target sandbox. The portable set is exactly `sessions/`, `auth.json`, `pi-accounts.json`, and `trust.json`; optional files may be absent if Pi has never created them. Template-owned configuration, installed packages, model-catalog caches, and runtime-injected secrets such as `COMMAND_CODE_API_KEY` are excluded.
+
+The source workspace is separate state. Prefer a normal host workspace mount for long-lived development. Git-native Rewind state at `refs/pi-rewind/store` remains in that workspace and is not included in the Pi runtime-state archive. If clone mode is used instead, migrate the private clone separately before deleting the sandbox.
+
+CodexBar remains an external observer on the WSL host. Do not install it in the Pi image or feed its quota observations into automatic account switching.
+
 ## SoL-Pi profile
 
 `sol-pi.json` enables all four mechanisms:
@@ -54,13 +100,13 @@ OCC's internal progress state is only a compaction boundary signal. Continue to 
 
 ## Static verification
 
-Run after changes to Docker, providers, models, subagents, pstack routing, SoL-Pi configuration, or the ownership documents:
+Run after changes to Docker, providers, models, subagents, pstack routing, SoL-Pi configuration, runtime-state policy, or the ownership documents:
 
 ```sh
 node scripts/verify-template.mjs
 ```
 
-The command requires no credentials and no network access. It validates executable configuration rather than natural-language prompt phrases. It validates the default Command Code provider, parent model qualification, subagent fallback selectors, strict model scope, supported thinking levels, and the SoL-Pi all-enabled profile including its EPR route and immutable Git pin.
+The command requires no credentials and no network access. It validates executable configuration rather than natural-language prompt phrases. It validates the default Command Code provider, parent model qualification, subagent fallback selectors, strict model scope, supported thinking levels, SoL-Pi profile, named-account/model separation, and the exact portable-state allowlist.
 
 ## Docker verification
 

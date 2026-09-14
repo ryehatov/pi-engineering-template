@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "agentDir": "/home/agent/.pi/agent",
+  "entries": [
+    "sessions",
+    "auth.json",
+    "pi-accounts.json",
+    "trust.json"
+  ]
+}

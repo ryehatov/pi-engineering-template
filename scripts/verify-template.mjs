@@ -28,6 +28,8 @@ const required = [
   "web-search.json",
   "pi-btw.json",
   "pi-fff.json",
+  "runtime-state.json",
+  "scripts/runtime-state.mjs",
 ];
 for (const file of required) ok(exists(file), `${file}: missing`);
 ok(!exists("AGENTS.md"), "AGENTS.md: template-level global agent prompt must remain absent");
@@ -58,6 +60,7 @@ const sol = json("sol-pi.json");
 const web = json("web-search.json");
 const btw = json("pi-btw.json");
 const fff = json("pi-fff.json");
+const runtimeState = json("runtime-state.json");
 
 ok(typeof settings.defaultProvider === "string" && settings.defaultProvider.length > 0, "settings.json: defaultProvider missing");
 ok(typeof settings.defaultModel === "string" && settings.defaultModel.length > 0, "settings.json: defaultModel missing");
@@ -190,6 +193,19 @@ ok(sub.missions?.enabled === false, "subagent-config.json: missions must remain 
 ok(sub.scheduledRuns?.enabled === false, "subagent-config.json: scheduled runs must remain disabled");
 ok(sub.authorityPolicy?.scheduleCreate === "forbid", "subagent-config.json: schedule creation must remain forbidden");
 for (const [action, decision] of Object.entries(sub.authorityPolicy || {})) ok(["auto", "confirm", "forbid"].includes(decision), `subagent-config.json: invalid authority decision (${action}:${decision})`);
+
+ok(runtimeState.version === 1, "runtime-state.json: unsupported version");
+ok(runtimeState.agentDir === "/home/agent/.pi/agent", "runtime-state.json: agentDir mismatch");
+const expectedRuntimeState = ["sessions", "auth.json", "pi-accounts.json", "trust.json"];
+ok(Array.isArray(runtimeState.entries), "runtime-state.json: entries must be an array");
+if (Array.isArray(runtimeState.entries)) {
+  ok(new Set(runtimeState.entries).size === runtimeState.entries.length, "runtime-state.json: duplicate entries");
+  ok(
+    runtimeState.entries.length === expectedRuntimeState.length &&
+      expectedRuntimeState.every((entry) => runtimeState.entries.includes(entry)),
+    "runtime-state.json: portable-state allowlist mismatch",
+  );
+}
 
 const docker = text("Dockerfile");
 ok(/^ENV TZ=Asia\/Tokyo$/m.test(docker), "Dockerfile: runtime timezone must remain Asia/Tokyo");

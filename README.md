@@ -19,7 +19,8 @@ The executable sources of truth are:
 - `models.json` for the Command Code provider transport and model metadata;
 - `subagent-config.json` for delegated execution and authority policy;
 - `pstack-models.json` for pstack role routing;
-- `sol-pi.json` for SoL-Pi mechanism enablement, EPR reducer routing, and OCC cache economics.
+- `sol-pi.json` for SoL-Pi mechanism enablement, EPR reducer routing, and OCC cache economics;
+- `runtime-state.json` for the exact portable mutable Pi state allowlist.
 
 `docs/model-policy.md` explains the routing rationale. It is descriptive, not an enforcement surface.
 
@@ -36,6 +37,8 @@ The committed profile does not force Command Code ZDR routing. This keeps models
 SoL-Pi EPR uses the existing `commandcode-goat/deepseek/deepseek-v4.1-flash` model-registry route. It does not define a second provider or credential path.
 
 OpenAI Codex continues to use Pi's native `openai-codex` provider. Named Codex subscription identities are managed by `@narumitw/pi-accounts`; account selection changes authentication identity only and does not change model routing.
+
+Portable mutable Pi state is explicitly allowlisted by `runtime-state.json`. Use `scripts/runtime-state.mjs` before replacing or removing a sandbox; do not persist the complete `~/.pi/agent` directory. See `docs/operations.md`.
 
 ## Build and validate
 
@@ -57,4 +60,4 @@ pstack state
 
 After activation, pstack supplies the workflow context. SoL-Pi remains a runtime optimization layer rather than a second engineering workflow. The template does not duplicate Poteto Mode, Ponytail, or SoL-Pi behavior in a global agent prompt.
 
-See `docs/operations.md` for authentication, smoke checks, upgrades, and failure handling. See `docs/pi-design.md` and `docs/pi-spec.md` for ownership boundaries and invariants.
+See `docs/operations.md` for authentication, runtime-state migration, smoke checks, upgrades, and failure handling. See `docs/pi-design.md` and `docs/pi-spec.md` for ownership boundaries and invariants.
