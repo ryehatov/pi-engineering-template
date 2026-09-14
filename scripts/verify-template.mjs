@@ -33,6 +33,27 @@ for (const file of required) ok(exists(file), `${file}: missing`);
 ok(!exists("AGENTS.md"), "AGENTS.md: template-level global agent prompt must remain absent");
 
 const thinkingLevels = new Set(["off", "minimal", "low", "medium", "high", "xhigh", "max"]);
+// Compatibility contract for the pinned pi-pstack release. A package bump must review role-schema drift.
+const verifiedPstackVersion = "0.6.0";
+const verifiedPstackRoles = new Set([
+  "feature, refactoring",
+  "bug-fix",
+  "perf-issue",
+  "hillclimb",
+  "judgment and prose",
+  "hardest tasks",
+  "how explorer",
+  "how explainer",
+  "why investigators",
+  "why synthesizer",
+  "reflect tooling",
+  "reflect judgment, divergent, synthesizer",
+  "arena runners",
+  "arena cross-judge pool",
+  "swarm workers",
+  "architect runners",
+  "interrogate reviewers",
+]);
 const parseSelector = (value) => {
   if (typeof value !== "string" || value.length === 0) return null;
   const split = value.lastIndexOf(":");
@@ -141,6 +162,13 @@ for (const [name, config] of Object.entries(subagents.agentOverrides || {})) {
 ok(pstack.version === 1, "pstack-models.json: unsupported version");
 ok(pstack.skillsEnabled === true, "pstack-models.json: skills must remain enabled");
 ok(pstack.roles && typeof pstack.roles === "object" && !Array.isArray(pstack.roles) && Object.keys(pstack.roles).length > 0, "pstack-models.json: roles missing");
+const configuredPstackRoles = new Set(Object.keys(pstack.roles || {}));
+for (const role of verifiedPstackRoles) {
+  ok(configuredPstackRoles.has(role), `pstack-models.json: missing pi-pstack ${verifiedPstackVersion} role (${role})`);
+}
+for (const role of configuredPstackRoles) {
+  ok(verifiedPstackRoles.has(role), `pstack-models.json: unknown pi-pstack ${verifiedPstackVersion} role (${role})`);
+}
 for (const [role, raw] of Object.entries(pstack.roles || {})) {
   const selectors = Array.isArray(raw) ? raw : [raw];
   ok(selectors.length > 0, `pstack-models.json: empty selector list (${role})`);
@@ -193,6 +221,8 @@ ok(/^ARG BASE_IMAGE=.*@sha256:[0-9a-f]{64}$/m.test(docker), "Dockerfile: base im
 const versionArgs = [...docker.matchAll(/^ARG ([A-Z0-9_]+_VERSION)=([^\s$]+)$/gm)];
 ok(versionArgs.length > 0, "Dockerfile: no explicit version pins found");
 for (const [, name, value] of versionArgs) ok(value.length > 0, `Dockerfile: ${name} version pin missing`);
+const pstackVersion = docker.match(/^ARG PI_PSTACK_VERSION=([^\s$]+)$/m)?.[1];
+ok(pstackVersion === verifiedPstackVersion, `Dockerfile: PI_PSTACK_VERSION must match verified role schema (${verifiedPstackVersion})`);
 ok(/^ARG SOL_PI_COMMIT=[0-9a-f]{40}$/m.test(docker), "Dockerfile: SoL-Pi commit pin missing or mutable");
 for (const needle of [
   "COPY --chown=agent:agent settings.json",

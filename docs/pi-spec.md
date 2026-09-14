@@ -45,7 +45,7 @@ This document defines repository and harness invariants. It does not define a se
 4. A Command Code selector MUST request a thinking level supported by that model's `thinkingLevelMap`.
 5. A model id that itself contains `/` MUST NOT be mistaken for a provider-qualified Pi selector when validating the separate `defaultProvider` and `defaultModel` fields.
 6. DeepSeek V4.1 Flash behind the Command Code proxy MUST declare the model-local DeepSeek thinking and reasoning-history compatibility required by Pi's OpenAI-completions adapter.
-7. The verifier MUST check pstack role coverage independently of the selected model assignments so model-policy changes do not require prompt changes.
+7. The verifier MUST bind the pinned `pi-pstack` package version to its exact supported role set and reject missing or unknown roles independently of the selected model assignments.
 
 ## 6. Delegated execution invariants
 
@@ -85,7 +85,7 @@ The static verifier MUST check at least:
 - correct parent provider/model qualification when a model id contains `/`;
 - Command Code provider URL, API type, credential reference, and absence of forced default ZDR routing;
 - subagent fallback selectors and their model/thinking validity;
-- pstack role coverage and model/thinking selector validity;
+- pinned pi-pstack package-version/schema compatibility, exact role coverage, and model/thinking selector validity;
 - SoL-Pi all-enabled configuration, EPR route, OCC ratio, commit pin, and Docker wiring;
 - source-read-only role capability boundaries;
 - delegation, concurrency, mission, schedule, and authority bounds;
