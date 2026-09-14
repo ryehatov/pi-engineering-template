@@ -69,6 +69,7 @@ const models = json("models.json");
 const sub = json("subagent-config.json");
 const pstack = json("pstack-models.json");
 const sol = json("sol-pi.json");
+const web = json("web-search.json");
 const btw = json("pi-btw.json");
 const fff = json("pi-fff.json");
 
@@ -188,6 +189,14 @@ ok(sol.evidencePreservingReducerProvider === "commandcode-goat", "sol-pi.json: E
 ok(sol.evidencePreservingReducerModel === "deepseek/deepseek-v4.1-flash", "sol-pi.json: EPR reducer model must remain DeepSeek V4.1 Flash");
 ok(sol.cacheWriteReadRatio === 12.5, "sol-pi.json: cacheWriteReadRatio must remain 12.5");
 checkModel(`${sol.evidencePreservingReducerProvider}/${sol.evidencePreservingReducerModel}`, null, "sol-pi.json: EPR reducer");
+
+ok(web.workflow === "none", "web-search.json: workflow must remain none");
+ok(web.searxngBaseUrl === "http://127.0.0.1:8080", "web-search.json: SearXNG endpoint mismatch");
+ok(Array.isArray(web.searchRouting?.providers) && web.searchRouting.providers.join(",") === "openai,searxng", "web-search.json: search routing must prefer current-model OpenAI then SearXNG");
+ok(web.searchRouting?.useCurrentModel === true, "web-search.json: OpenAI routing must use the current model");
+ok(Array.isArray(web.searchRouting?.fallbackOn) && web.searchRouting.fallbackOn.join(",") === "unsupported", "web-search.json: OpenAI search must only fall back when unsupported");
+ok(Array.isArray(web.ssrf?.allowRanges) && web.ssrf.allowRanges.join(",") === "127.0.0.1/32", "web-search.json: SearXNG loopback exception must remain host-only");
+ok(Array.isArray(web.fetchContent?.domainPolicy?.deny) && web.fetchContent.domainPolicy.deny.includes("127.0.0.1"), "web-search.json: fetch_content must deny the SearXNG loopback host");
 
 checkModel(btw.model, btw.thinkingLevel, "pi-btw.json");
 ok(fff.mode === "override", "pi-fff.json: mode must remain override");
