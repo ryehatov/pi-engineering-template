@@ -41,7 +41,7 @@ RUN chmod 600 \
     /home/agent/.pi/agent/pstack/models.json
 
 COPY --chown=agent:agent web-search.json \
-    /home/agent/.pi/web-search.json
+    /home/agent/.pi/agent/web-search.json
 
 COPY --chown=agent:agent pi-btw.json \
     /home/agent/.pi/agent/pi-btw.json
@@ -53,15 +53,15 @@ COPY --chown=agent:agent sol-pi.json \
     /home/agent/.pi/agent/sol-pi.json
 
 ARG PI_SUBAGENTS_VERSION=0.66.0
-ARG PI_PSTACK_VERSION=0.5.0
+ARG PI_PSTACK_VERSION=0.6.0
 ARG PONYTAIL_VERSION=4.9.0
-ARG PI_WEB_ACCESS_VERSION=0.28.0
-ARG PI_LENS_VERSION=4.1.3
+ARG PI_WEB_ACCESS_VERSION=0.29.0
+ARG PI_LENS_VERSION=4.1.6
 ARG PI_FFF_VERSION=0.10.6
 ARG PI_CONTEXT_VIEW_VERSION=0.5.2
-ARG PI_POWERLINE_FOOTER_VERSION=0.17.0
+ARG PI_POWERLINE_FOOTER_VERSION=0.17.1
 ARG PI_REWIND_HOOK_VERSION=1.8.6
-ARG PLANNOTATOR_VERSION=0.27.12
+ARG PLANNOTATOR_VERSION=0.27.14
 ARG PI_BTW_VERSION=0.58.1
 ARG SOL_PI_COMMIT=2ecee02e116d3a13b2304ccf6c770d7bc4675660
 

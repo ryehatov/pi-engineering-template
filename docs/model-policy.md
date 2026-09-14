@@ -19,7 +19,8 @@ The split is task-oriented rather than leaderboard-oriented.
 
 | Function | Current model | Rationale |
 | --- | --- | --- |
-| Coordinate and execute | DeepSeek V4.1 Flash | fast, low-cost parent coordination plus normal implementation, debugging, research, and delegated execution |
+| Coordinate | GPT-6 Astra | low-effort parent orchestration after the task method and plan are established by pstack/Poteto |
+| Execute | DeepSeek V4.1 Flash | fast, low-cost implementation, debugging, research, and delegated execution |
 | Verify engineering work | GLM 5.3 Flash | independent code and plan review that is not correlated with the primary DeepSeek execution path |
 | Judge and synthesize | Qwen 3.8 Flash | intent, prose, synthesis, ambiguity detection, and a second independent review family |
 | Escalate | GPT-6 Astra | bounded `medium`-effort oracle calls and high-stakes panel participation |
@@ -28,7 +29,7 @@ The profile uses Command Code's explicit `deepseek/deepseek-v4.1-flash` model id
 
 `Qwen3.8-Flash` is the deployed model corresponding to Qwen3.8-Flash-Next in this portfolio.
 
-The interactive Pi parent uses DeepSeek at `high`. Pstack uses `max` only for task families that benefit from a deeper execution pass. GPT-6 Astra remains capped at `medium` and is not the normal parent or worker.
+The interactive Pi parent uses GPT-6 Astra at `low`. This keeps orchestration capable but cheap when pstack/Poteto has already made the workflow and verification topology explicit. Normal implementation and delegated execution remain on DeepSeek. Pstack uses `max` only for task families that benefit from a deeper execution pass. GPT-6 Astra oracle and panel routes remain capped at `medium`.
 
 ## Current pstack assignments
 
@@ -38,10 +39,10 @@ The interactive Pi parent uses DeepSeek at `high`. Pstack uses `max` only for ta
 - bug-fix, performance, and hillclimb execution use DeepSeek at `max`;
 - exploration, investigation, and swarm execution use DeepSeek at `high`;
 - tooling reflection and the primary engineering critic use GLM;
-- explanation, judgment, prose, synthesis, and a second critic use Qwen;
+- explanation, judgment, prose, synthesis, and a second independent review family use Qwen;
 - the hardest-task route uses GPT-6 Astra at `medium`;
 - architecture and arena generation include all four families;
-- critic and cross-judge pools exclude DeepSeek when they evaluate DeepSeek-led work, so review diversity is real rather than self-review by the same family.
+- cross-judge and interrogate pools exclude DeepSeek where they evaluate DeepSeek-led work, so review diversity is real rather than self-review by the same family.
 
 The exact thinking level belongs to the selector in `pstack-models.json`, not to this prose.
 

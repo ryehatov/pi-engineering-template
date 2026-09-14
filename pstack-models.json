@@ -9,10 +9,6 @@
     "hardest tasks": "openai-codex/gpt-6-astra:medium",
     "how explorer": "commandcode-goat/deepseek/deepseek-v4.1-flash:high",
     "how explainer": "commandcode-goat/Qwen/Qwen3.8-Flash:medium",
-    "how critics": [
-      "commandcode-goat/z-ai/glm-5.3-flash:max",
-      "commandcode-goat/Qwen/Qwen3.8-Flash:xhigh"
-    ],
     "why investigators": "commandcode-goat/deepseek/deepseek-v4.1-flash:high",
     "why synthesizer": "commandcode-goat/Qwen/Qwen3.8-Flash:xhigh",
     "reflect tooling": "commandcode-goat/z-ai/glm-5.3-flash:high",

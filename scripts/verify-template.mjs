@@ -199,6 +199,8 @@ for (const needle of [
   "COPY --chown=agent:agent models.json",
   "COPY --chown=agent:agent subagent-config.json",
   "COPY --chown=agent:agent pstack-models.json",
+  "COPY --chown=agent:agent web-search.json",
+  "/home/agent/.pi/agent/web-search.json",
   "COPY --chown=agent:agent sol-pi.json",
   "/home/agent/.pi/agent/sol-pi.json",
   "npm:pi-subagents@${PI_SUBAGENTS_VERSION}",
