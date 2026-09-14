@@ -2,24 +2,26 @@
 
 ## Design goal
 
-The template separates enforcement, contextual method, and documentation. A rule lives at the lowest layer that can enforce or supply it correctly.
+The template separates enforcement, contextual method, runtime optimization, and documentation. A rule lives at the lowest layer that can enforce or supply it correctly.
 
 ```text
 operator
   |
   v
-Pi parent
+Pi parent ---------------- native session, model registry, compaction primitives
   |
-  +-- pi-pstack -------- playbooks, Poteto Mode, role selection context
-  +-- Ponytail --------- implementation-minimization context
-  +-- pi-subagents ----- child lifecycle, capabilities, isolation, authority
-  +-- supporting tools - search, diagnostics, web, UI, context inspection
+  +-- SoL-Pi ------------ parent tool/result/context optimization
+  +-- pi-pstack --------- playbooks, Poteto Mode, role selection context
+  +-- Ponytail ---------- implementation-minimization context
+  +-- pi-subagents ------ child lifecycle, capabilities, isolation, authority
+  +-- supporting tools -- search, diagnostics, web, UI, context inspection
   |
   +-- executable configuration
        settings.json
        models.json
        subagent-config.json
        pstack-models.json
+       sol-pi.json
 ```
 
 There is intentionally no template-level `AGENTS.md` between the runtime and these mechanisms.
@@ -28,9 +30,9 @@ There is intentionally no template-level `AGENTS.md` between the runtime and the
 
 A global prompt is appropriate only for instructions that the model must judge globally and that no lower layer can provide. This template no longer has such generic instructions.
 
-Model allowlists, thinking ceilings, tool access, concurrency, scheduling authority, and provider configuration are machine-readable controls. Repeating them in `AGENTS.md` would add prompt tokens without strengthening enforcement and would create a second policy copy that can drift.
+Model allowlists, thinking ceilings, tool access, concurrency, scheduling authority, provider configuration, and SoL-Pi mechanism selection are machine-readable controls. Repeating them in `AGENTS.md` would add prompt tokens without strengthening enforcement and would create a second policy copy that can drift.
 
-Pstack and Ponytail already provide their own runtime guidance. When the operator starts a session by inspecting pstack state and enabling `/poteto-mode`, duplicating those methods in a repository-global prompt is also unnecessary.
+Pstack and Ponytail already provide their own runtime guidance. SoL-Pi operates through extension hooks and tools. When the operator starts a session by inspecting pstack state and enabling `/poteto-mode`, duplicating any of those mechanisms in a repository-global prompt is unnecessary.
 
 Downstream repositories remain free to add project-specific agent instructions for local architecture, domain constraints, compatibility contracts, or other facts that the harness cannot infer.
 
@@ -44,7 +46,9 @@ Downstream repositories remain free to add project-specific agent instructions f
 | Command Code transport | `models.json` |
 | Delegation context, limits, and authority | `subagent-config.json` |
 | Pstack role selectors | `pstack-models.json` |
+| SoL-Pi mechanism enablement, EPR route, OCC ratio | `sol-pi.json` |
 | Pstack method and Poteto Mode | `@zenspc/pi-pstack` runtime |
+| Parent tool/result/context optimization | SoL-Pi runtime |
 | Ponytail implementation guidance | Ponytail runtime |
 | Human rationale | `docs/model-policy.md`, this document |
 | Operator procedures | `docs/operations.md` |
@@ -52,17 +56,32 @@ Downstream repositories remain free to add project-specific agent instructions f
 
 Documentation explains the configuration but does not override it.
 
+## Parent context-efficiency boundary
+
+SoL-Pi is a parent-runtime optimization layer, not a workflow orchestrator.
+
+- **Action Fusion** augments Pi's mutation tools so a requested post-mutation validation can execute in the same tool observation. It does not decide what should be implemented or what validation is sufficient.
+- **ObservationPack** changes how large text observations are replayed into later provider requests while preserving exact recall from session-derived storage. It does not replace artifact verification.
+- **Evidence-Preserving Reducer (EPR)** reduces eligible diagnostic output through a Pi model-registry route while retaining evidence. The committed route is `commandcode-goat/deepseek/deepseek-v4.1-flash`; provider transport and credentials remain owned by `models.json` and Pi.
+- **Online Context Compact (OCC)** decides when to invoke Pi's public compaction primitive. Its internal plan/progress bookkeeping is a compaction boundary signal only; pstack remains authoritative for engineering playbooks, Poteto Mode, and task method.
+
+SoL-Pi may archive observations and reducer artifacts under the Pi session-derived storage root. It does not define a second persistent storage location.
+
+The template enables all four mechanisms because they have been qualified together in the target workflow. Their configuration remains isolated in `sol-pi.json` so they can be reviewed or reverted independently from model routing and delegation policy.
+
 ## Model portfolio
 
 The portfolio is intentionally small and role-oriented. Its current assignments are documented in `docs/model-policy.md`; the executable assignments are only the JSON configuration files.
 
-The verifier therefore checks that every configured role resolves to an explicitly allowed model and that Command Code thinking selectors are supported. It does not require model-routing prose to exist anywhere.
+The verifier therefore checks that every configured role resolves to an explicitly allowed model and that Command Code thinking selectors are supported. It also checks that the EPR reducer resolves to the committed model portfolio. It does not require model-routing prose to exist anywhere.
 
 This allows a future model rebalance to change configuration and rationale without also editing a global prompt.
 
 ## Provider boundary
 
 Command Code is registered directly through Pi's native OpenAI-compatible provider path. Provider URL, adapter, authentication, compatibility, and model metadata live in `models.json`.
+
+EPR reuses that registry entry rather than owning a provider endpoint or credential. `sol-pi.json` selects the reducer provider/model only; changing the underlying transport remains a `models.json` concern.
 
 Provider policy therefore stays in executable configuration instead of a behavioral request to the model.
 
@@ -72,13 +91,16 @@ Provider policy therefore stays in executable configuration instead of a behavio
 
 The parent model may decide whether delegation is useful for the current task, but it does not enforce the resource or authority limits itself. Those limits remain effective even if model behavior is imperfect.
 
+SoL-Pi installation does not weaken this boundary. Whether an individual child sees ambient extensions follows `pi-subagents` child-host and tool-plan behavior; the template does not force SoL-Pi into children by widening capability or changing isolation policy.
+
 ## Verification strategy
 
 Verification is layered by failure class:
 
-1. `scripts/verify-template.mjs` checks static configuration structure and consistency.
+1. `scripts/verify-template.mjs` checks static configuration structure and consistency, including SoL-Pi flags, reducer routing, commit pin, and Docker wiring.
 2. Docker build checks that pinned packages install together and files land at the intended paths.
-3. Live Pi smoke checks authentication, registry resolution, thinking translation, and provider availability.
-4. The developed project supplies its own artifact-specific tests.
+3. Live Pi smoke checks authentication, registry resolution, thinking translation, extension loading, SoL-Pi mechanisms, and provider availability.
+4. A nested pstack smoke checks that Poteto/delegation behavior still composes with the parent optimization layer.
+5. The developed project supplies its own artifact-specific tests.
 
 The static verifier intentionally avoids natural-language assertions such as requiring specific phrases in `AGENTS.md`. It validates executable state instead.

@@ -6,7 +6,8 @@ The `pstack` branch keeps engineering policy in the runtime mechanisms that can 
 
 ## Architecture
 
-- **Pi** is the interactive parent runtime.
+- **Pi** is the interactive parent runtime and owns the native session, model registry, and compaction primitives.
+- **SoL-Pi** optimizes parent-session tool/result/context handling: Action Fusion, ObservationPack, Evidence-Preserving Reducer, and Online Context Compact.
 - **pi-subagents** owns delegated execution, isolation, tool capability, model scope, concurrency, fallback selection, and authority controls.
 - **@zenspc/pi-pstack** supplies engineering playbooks, Poteto Mode, review topology, and role-oriented model selection.
 - **Ponytail** supplies YAGNI-first implementation guidance when active.
@@ -17,7 +18,8 @@ The executable sources of truth are:
 - `settings.json` for Pi and generic subagent routing/capabilities;
 - `models.json` for the Command Code provider transport and model metadata;
 - `subagent-config.json` for delegated execution and authority policy;
-- `pstack-models.json` for pstack role routing.
+- `pstack-models.json` for pstack role routing;
+- `sol-pi.json` for SoL-Pi mechanism enablement, EPR reducer routing, and OCC cache economics.
 
 `docs/model-policy.md` explains the routing rationale. It is descriptive, not an enforcement surface.
 
@@ -30,6 +32,8 @@ export COMMAND_CODE_API_KEY='...'
 ```
 
 The committed profile does not force Command Code ZDR routing. This keeps models such as DeepSeek and GLM available when a ZDR-capable upstream is unavailable. Data handling therefore follows the active Command Code and upstream-provider terms. Do not treat this profile as a zero-retention boundary.
+
+SoL-Pi EPR uses the existing `commandcode-goat/deepseek/deepseek-v4.1-flash` model-registry route. It does not define a second provider or credential path.
 
 OpenAI Codex authentication remains independent and uses Pi's normal `openai-codex` path.
 
@@ -51,6 +55,6 @@ pstack state
 /poteto-mode
 ```
 
-After activation, pstack supplies the workflow context. The template does not duplicate Poteto Mode or Ponytail instructions in a global agent prompt.
+After activation, pstack supplies the workflow context. SoL-Pi remains a runtime optimization layer rather than a second engineering workflow. The template does not duplicate Poteto Mode, Ponytail, or SoL-Pi behavior in a global agent prompt.
 
 See `docs/operations.md` for authentication, smoke checks, upgrades, and failure handling. See `docs/pi-design.md` and `docs/pi-spec.md` for ownership boundaries and invariants.

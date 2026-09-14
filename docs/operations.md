@@ -9,7 +9,7 @@ pstack state
 /poteto-mode
 ```
 
-This is operator state. Once Poteto Mode is active, pstack supplies its workflow context directly; no repository-global prompt is required to restate it.
+This is operator state. Once Poteto Mode is active, pstack supplies its workflow context directly; no repository-global prompt is required to restate it. SoL-Pi is already loaded as a parent runtime optimization layer and does not require a separate workflow activation command.
 
 ## Runtime credentials
 
@@ -29,15 +29,30 @@ export COMMAND_CODE_API_KEY='...'
 
 The committed provider does not force `x-cmd-zdr`. This avoids `422 cmd_zdr_no_providers` failures when DeepSeek, GLM, or another selected model has no ZDR-capable upstream with capacity. This also means the template does not guarantee zero retention. Use only data appropriate for the active Command Code and upstream-provider terms.
 
+SoL-Pi EPR uses the same Command Code credential through the Pi model registry. Its committed reducer route is `commandcode-goat/deepseek/deepseek-v4.1-flash`; SoL-Pi has no separate credential or provider URL.
+
+## SoL-Pi profile
+
+`sol-pi.json` enables all four mechanisms:
+
+- Action Fusion for mutation plus immediate validation in one tool observation;
+- ObservationPack for bounded replay of large text observations with exact recall;
+- Evidence-Preserving Reducer for eligible diagnostic output, using DeepSeek V4.1 Flash through Command Code;
+- Online Context Compact for context-window/economic compaction decisions through Pi's native compaction API.
+
+The profile is user-wide at `~/.pi/agent/sol-pi.json` inside the image. Do not duplicate it in a downstream project's `.pi/sol-pi.json` unless a project intentionally overrides the template profile and is trusted; SoL-Pi replaces rather than merges the two files.
+
+OCC's internal progress state is only a compaction boundary signal. Continue to use pstack/Poteto as the engineering workflow and plan authority.
+
 ## Static verification
 
-Run after changes to Docker, providers, models, subagents, pstack routing, or the ownership documents:
+Run after changes to Docker, providers, models, subagents, pstack routing, SoL-Pi configuration, or the ownership documents:
 
 ```sh
 node scripts/verify-template.mjs
 ```
 
-The command requires no credentials and no network access. It validates executable configuration rather than natural-language prompt phrases. It validates that the default Command Code provider does not force ZDR, parent model qualification, subagent fallback selectors, strict model scope, and supported thinking levels.
+The command requires no credentials and no network access. It validates executable configuration rather than natural-language prompt phrases. It validates the default Command Code provider, parent model qualification, subagent fallback selectors, strict model scope, supported thinking levels, and the SoL-Pi all-enabled profile including its EPR route and immutable Git pin.
 
 ## Docker verification
 
@@ -48,6 +63,20 @@ docker build -t pi-engineering-template:pstack .
 ```
 
 This catches package-version and installation incompatibilities that the static verifier cannot see.
+
+After a Pi or SoL-Pi pin change, also confirm that `pi list --approve` reports the expected SoL-Pi Git source and that `pi --offline --approve` starts without an extension-load error. Upstream SoL-Pi treats a Pi version different from its tested release as a compatibility change, so requalify the mechanisms rather than assuming extension API compatibility.
+
+## SoL-Pi smoke
+
+For a SoL-Pi or Pi upgrade, exercise the mechanisms on disposable files/session data:
+
+1. Action Fusion: run one `edit` or `write` with `then_run` and confirm the mutation and validator result are returned together.
+2. ObservationPack: produce a >10 KiB text observation, advance provider turns until it is packed, and confirm `obs_recall` retrieves the original content.
+3. EPR: run an eligible large diagnostic command and confirm reduction uses the configured `commandcode-goat/deepseek/deepseek-v4.1-flash` route while retaining evidence/receipt data.
+4. OCC: complete a plan boundary in a long-enough disposable session and confirm compaction resumes correctly without corrupting the session/tree state.
+5. Run `pstack state`, enter `/poteto-mode`, and exercise one nested workflow so SoL-Pi, pstack, subagents, and rewind behavior are checked together.
+
+SoL-Pi session archives are operational data. Long-lived sandboxes should account for their storage growth; do not treat the archive as a credential store.
 
 ## Live model smoke
 
@@ -85,6 +114,8 @@ Inspect the resolved runtime mapping after a routing change:
 
 The expected normal path is DeepSeek for scout/researcher/worker, GLM for reviewer, and Astra for oracle.
 
+SoL-Pi does not redefine these child roles. Ambient extension loading for delegated children remains a `pi-subagents` lifecycle/capability decision; do not widen child tools or isolation merely to force SoL-Pi into every child process.
+
 ## Pstack profile changes
 
 `pstack-models.json` is the executable pstack role map. `/setup-pstack` is an interactive generic mapper and is not the normal maintenance path for this committed profile.
@@ -94,8 +125,9 @@ When changing routing:
 1. edit `pstack-models.json` for pstack role selectors;
 2. edit `settings.json` for generic subagent defaults or named overrides;
 3. edit `models.json` only when the custom provider catalog, transport behavior, or thinking metadata changes;
-4. update `docs/model-policy.md` when the rationale changes;
-5. run the static verifier.
+4. edit `sol-pi.json` only when SoL-Pi feature policy, EPR reducer selection, or OCC ratio changes;
+5. update `docs/model-policy.md` when the model-routing rationale changes;
+6. run the static verifier.
 
 The template intentionally has no model-routing copy in `AGENTS.md`.
 
@@ -107,16 +139,20 @@ Configured `fallbackModels` provide a separate bounded startup recovery path for
 
 If a model remains excluded after the provider is healthy, inspect pi-subagents diagnostics and restart the session if required.
 
+EPR is a separate nested model call through the Pi registry. If the configured reducer route is unavailable, diagnose the Command Code route rather than changing subagent fallback policy; the two mechanisms have distinct ownership.
+
 ## Upgrade sequence
 
 Upgrade one core dependency at a time unless upstream requires a coordinated bump.
 
 1. Read the release notes and relevant open issues.
-2. Update the version pin.
+2. Update the immutable version or commit pin.
 3. Run `node scripts/verify-template.mjs`.
 4. Build the Docker image.
-5. Smoke the affected provider/model path.
-6. Exercise one nested pstack workflow if Pi, pi-subagents, or pi-pstack changed.
+5. Smoke the affected provider/model or SoL-Pi mechanism path.
+6. Exercise one nested pstack workflow if Pi, pi-subagents, pi-pstack, or SoL-Pi changed.
 7. Commit the verified unit before starting the next upgrade.
 
 For pi-pstack upgrades, review role names and selector parsing because the verifier checks role coverage and model/thinking consistency against the committed profile.
+
+For SoL-Pi upgrades, inspect its configuration schema and Pi compatibility notes, then rerun the four-mechanism smoke. For Pi upgrades, treat SoL-Pi compatibility as part of the Pi qualification rather than as an independent afterthought.

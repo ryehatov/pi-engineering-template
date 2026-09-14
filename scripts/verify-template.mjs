@@ -24,6 +24,7 @@ const required = [
   "models.json",
   "subagent-config.json",
   "pstack-models.json",
+  "sol-pi.json",
   "web-search.json",
   "pi-btw.json",
   "pi-fff.json",
@@ -46,6 +47,7 @@ const settings = json("settings.json");
 const models = json("models.json");
 const sub = json("subagent-config.json");
 const pstack = json("pstack-models.json");
+const sol = json("sol-pi.json");
 const btw = json("pi-btw.json");
 const fff = json("pi-fff.json");
 
@@ -150,6 +152,15 @@ for (const [role, raw] of Object.entries(pstack.roles || {})) {
   }
 }
 
+ok(sol.version === 1, "sol-pi.json: unsupported version");
+for (const feature of ["actionFusion", "observationPack", "evidencePreservingReducer", "onlineContextCompact"]) {
+  ok(sol[feature] === true, `sol-pi.json: ${feature} must remain enabled`);
+}
+ok(sol.evidencePreservingReducerProvider === "commandcode-goat", "sol-pi.json: EPR reducer provider must remain commandcode-goat");
+ok(sol.evidencePreservingReducerModel === "deepseek/deepseek-v4.1-flash", "sol-pi.json: EPR reducer model must remain DeepSeek V4.1 Flash");
+ok(sol.cacheWriteReadRatio === 12.5, "sol-pi.json: cacheWriteReadRatio must remain 12.5");
+checkModel(`${sol.evidencePreservingReducerProvider}/${sol.evidencePreservingReducerModel}`, null, "sol-pi.json: EPR reducer");
+
 checkModel(btw.model, btw.thinkingLevel, "pi-btw.json");
 ok(fff.mode === "override", "pi-fff.json: mode must remain override");
 
@@ -182,18 +193,22 @@ ok(/^ARG BASE_IMAGE=.*@sha256:[0-9a-f]{64}$/m.test(docker), "Dockerfile: base im
 const versionArgs = [...docker.matchAll(/^ARG ([A-Z0-9_]+_VERSION)=([^\s$]+)$/gm)];
 ok(versionArgs.length > 0, "Dockerfile: no explicit version pins found");
 for (const [, name, value] of versionArgs) ok(value.length > 0, `Dockerfile: ${name} version pin missing`);
+ok(/^ARG SOL_PI_COMMIT=[0-9a-f]{40}$/m.test(docker), "Dockerfile: SoL-Pi commit pin missing or mutable");
 for (const needle of [
   "COPY --chown=agent:agent settings.json",
   "COPY --chown=agent:agent models.json",
   "COPY --chown=agent:agent subagent-config.json",
   "COPY --chown=agent:agent pstack-models.json",
+  "COPY --chown=agent:agent sol-pi.json",
+  "/home/agent/.pi/agent/sol-pi.json",
   "npm:pi-subagents@${PI_SUBAGENTS_VERSION}",
   "npm:@zenspc/pi-pstack@${PI_PSTACK_VERSION}",
+  "git:github.com/NVlabs/SoL-Pi@${SOL_PI_COMMIT}",
 ]) {
   ok(docker.includes(needle), `Dockerfile: required runtime wiring missing (${needle})`);
 }
 ok(!docker.includes("AGENTS.md"), "Dockerfile: template-level AGENTS.md must not be copied");
-for (const source of [docker, text("settings.json"), text("models.json"), text("pstack-models.json"), text("subagent-config.json")]) {
+for (const source of [docker, text("settings.json"), text("models.json"), text("pstack-models.json"), text("subagent-config.json"), text("sol-pi.json")]) {
   for (const legacy of ["opencode-go", "pi-commandcode-provider", "/alpha/generate", "deepseek/deepseek-v4-flash", "deepseek-v4.1-flash-beta"]) {
     ok(!source.includes(legacy), `retired provider/model route remains (${legacy})`);
   }
