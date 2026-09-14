@@ -33,26 +33,12 @@ for (const file of required) ok(exists(file), `${file}: missing`);
 ok(!exists("AGENTS.md"), "AGENTS.md: template-level global agent prompt must remain absent");
 
 const thinkingLevels = new Set(["off", "minimal", "low", "medium", "high", "xhigh", "max"]);
-// Compatibility contract for the pinned pi-pstack release. A package bump must review role-schema drift.
 const verifiedPstackVersion = "0.6.0";
 const verifiedPstackRoles = new Set([
-  "feature, refactoring",
-  "bug-fix",
-  "perf-issue",
-  "hillclimb",
-  "judgment and prose",
-  "hardest tasks",
-  "how explorer",
-  "how explainer",
-  "why investigators",
-  "why synthesizer",
-  "reflect tooling",
-  "reflect judgment, divergent, synthesizer",
-  "arena runners",
-  "arena cross-judge pool",
-  "swarm workers",
-  "architect runners",
-  "interrogate reviewers",
+  "feature, refactoring", "bug-fix", "perf-issue", "hillclimb", "judgment and prose",
+  "hardest tasks", "how explorer", "how explainer", "why investigators", "why synthesizer",
+  "reflect tooling", "reflect judgment, divergent, synthesizer", "arena runners",
+  "arena cross-judge pool", "swarm workers", "architect runners", "interrogate reviewers",
 ]);
 const parseSelector = (value) => {
   if (typeof value !== "string" || value.length === 0) return null;
@@ -113,14 +99,11 @@ for (const [providerName, provider] of Object.entries(providers)) {
     ok(Array.isArray(model.input) && model.input.length > 0, `models.json: input capability missing (${qualified})`);
     ok(Number.isFinite(model.contextWindow) && model.contextWindow > 0, `models.json: invalid contextWindow (${qualified})`);
     ok(Number.isFinite(model.maxTokens) && model.maxTokens > 0, `models.json: invalid maxTokens (${qualified})`);
-
     const map = model.thinkingLevelMap;
     if (map && typeof map === "object") {
-      const active = new Set(
-        Object.entries(map)
-          .filter(([, value]) => typeof value === "string" && value.length > 0)
-          .map(([level]) => level),
-      );
+      const active = new Set(Object.entries(map)
+        .filter(([, value]) => typeof value === "string" && value.length > 0)
+        .map(([level]) => level));
       ok([...active].every((level) => thinkingLevels.has(level)), `models.json: invalid thinkingLevelMap (${qualified})`);
       customThinking.set(qualified, active);
     }
@@ -164,12 +147,8 @@ ok(pstack.version === 1, "pstack-models.json: unsupported version");
 ok(pstack.skillsEnabled === true, "pstack-models.json: skills must remain enabled");
 ok(pstack.roles && typeof pstack.roles === "object" && !Array.isArray(pstack.roles) && Object.keys(pstack.roles).length > 0, "pstack-models.json: roles missing");
 const configuredPstackRoles = new Set(Object.keys(pstack.roles || {}));
-for (const role of verifiedPstackRoles) {
-  ok(configuredPstackRoles.has(role), `pstack-models.json: missing pi-pstack ${verifiedPstackVersion} role (${role})`);
-}
-for (const role of configuredPstackRoles) {
-  ok(verifiedPstackRoles.has(role), `pstack-models.json: unknown pi-pstack ${verifiedPstackVersion} role (${role})`);
-}
+for (const role of verifiedPstackRoles) ok(configuredPstackRoles.has(role), `pstack-models.json: missing pi-pstack ${verifiedPstackVersion} role (${role})`);
+for (const role of configuredPstackRoles) ok(verifiedPstackRoles.has(role), `pstack-models.json: unknown pi-pstack ${verifiedPstackVersion} role (${role})`);
 for (const [role, raw] of Object.entries(pstack.roles || {})) {
   const selectors = Array.isArray(raw) ? raw : [raw];
   ok(selectors.length > 0, `pstack-models.json: empty selector list (${role})`);
@@ -182,9 +161,7 @@ for (const [role, raw] of Object.entries(pstack.roles || {})) {
 }
 
 ok(sol.version === 1, "sol-pi.json: unsupported version");
-for (const feature of ["actionFusion", "observationPack", "evidencePreservingReducer", "onlineContextCompact"]) {
-  ok(sol[feature] === true, `sol-pi.json: ${feature} must remain enabled`);
-}
+for (const feature of ["actionFusion", "observationPack", "evidencePreservingReducer", "onlineContextCompact"]) ok(sol[feature] === true, `sol-pi.json: ${feature} must remain enabled`);
 ok(sol.evidencePreservingReducerProvider === "commandcode-goat", "sol-pi.json: EPR reducer provider must remain commandcode-goat");
 ok(sol.evidencePreservingReducerModel === "deepseek/deepseek-v4.1-flash", "sol-pi.json: EPR reducer model must remain DeepSeek V4.1 Flash");
 ok(sol.cacheWriteReadRatio === 12.5, "sol-pi.json: cacheWriteReadRatio must remain 12.5");
@@ -202,27 +179,17 @@ checkModel(btw.model, btw.thinkingLevel, "pi-btw.json");
 ok(fff.mode === "override", "pi-fff.json: mode must remain override");
 
 for (const [name, value] of [
-  ["maxSubagentDepth", sub.maxSubagentDepth],
-  ["maxSubagentSpawnsPerRun", sub.maxSubagentSpawnsPerRun],
-  ["globalConcurrencyLimit", sub.globalConcurrencyLimit],
-  ["parallel.maxTasks", sub.parallel?.maxTasks],
+  ["maxSubagentDepth", sub.maxSubagentDepth], ["maxSubagentSpawnsPerRun", sub.maxSubagentSpawnsPerRun],
+  ["globalConcurrencyLimit", sub.globalConcurrencyLimit], ["parallel.maxTasks", sub.parallel?.maxTasks],
   ["parallel.concurrency", sub.parallel?.concurrency],
-]) {
-  ok(Number.isInteger(value) && value > 0, `subagent-config.json: ${name} must be a positive integer`);
-}
-if (Number.isInteger(sub.parallel?.concurrency) && Number.isInteger(sub.globalConcurrencyLimit)) {
-  ok(sub.parallel.concurrency <= sub.globalConcurrencyLimit, "subagent-config.json: parallel concurrency exceeds global concurrency");
-}
-if (sub.modelExclusions?.defaultTtlMs !== undefined) {
-  ok(Number.isFinite(sub.modelExclusions.defaultTtlMs) && sub.modelExclusions.defaultTtlMs > 0, "subagent-config.json: exclusion TTL must be positive");
-}
+]) ok(Number.isInteger(value) && value > 0, `subagent-config.json: ${name} must be a positive integer`);
+if (Number.isInteger(sub.parallel?.concurrency) && Number.isInteger(sub.globalConcurrencyLimit)) ok(sub.parallel.concurrency <= sub.globalConcurrencyLimit, "subagent-config.json: parallel concurrency exceeds global concurrency");
+if (sub.modelExclusions?.defaultTtlMs !== undefined) ok(Number.isFinite(sub.modelExclusions.defaultTtlMs) && sub.modelExclusions.defaultTtlMs > 0, "subagent-config.json: exclusion TTL must be positive");
 ok(sub.defaultSubagentContext === "fresh", "subagent-config.json: delegated context must remain fresh");
 ok(sub.missions?.enabled === false, "subagent-config.json: missions must remain disabled");
 ok(sub.scheduledRuns?.enabled === false, "subagent-config.json: scheduled runs must remain disabled");
 ok(sub.authorityPolicy?.scheduleCreate === "forbid", "subagent-config.json: schedule creation must remain forbidden");
-for (const [action, decision] of Object.entries(sub.authorityPolicy || {})) {
-  ok(["auto", "confirm", "forbid"].includes(decision), `subagent-config.json: invalid authority decision (${action}:${decision})`);
-}
+for (const [action, decision] of Object.entries(sub.authorityPolicy || {})) ok(["auto", "confirm", "forbid"].includes(decision), `subagent-config.json: invalid authority decision (${action}:${decision})`);
 
 const docker = text("Dockerfile");
 ok(/^ENV TZ=Asia\/Tokyo$/m.test(docker), "Dockerfile: runtime timezone must remain Asia/Tokyo");
@@ -234,25 +201,20 @@ const pstackVersion = docker.match(/^ARG PI_PSTACK_VERSION=([^\s$]+)$/m)?.[1];
 ok(pstackVersion === verifiedPstackVersion, `Dockerfile: PI_PSTACK_VERSION must match verified role schema (${verifiedPstackVersion})`);
 ok(/^ARG SOL_PI_COMMIT=[0-9a-f]{40}$/m.test(docker), "Dockerfile: SoL-Pi commit pin missing or mutable");
 for (const needle of [
-  "COPY --chown=agent:agent settings.json",
-  "COPY --chown=agent:agent models.json",
-  "COPY --chown=agent:agent subagent-config.json",
-  "COPY --chown=agent:agent pstack-models.json",
-  "COPY --chown=agent:agent web-search.json",
-  "/home/agent/.pi/agent/web-search.json",
-  "COPY --chown=agent:agent sol-pi.json",
-  "/home/agent/.pi/agent/sol-pi.json",
-  "npm:pi-subagents@${PI_SUBAGENTS_VERSION}",
-  "npm:@zenspc/pi-pstack@${PI_PSTACK_VERSION}",
-  "git:github.com/NVlabs/SoL-Pi@${SOL_PI_COMMIT}",
-]) {
-  ok(docker.includes(needle), `Dockerfile: required runtime wiring missing (${needle})`);
-}
+  "COPY --chown=agent:agent settings.json", "COPY --chown=agent:agent models.json",
+  "COPY --chown=agent:agent subagent-config.json", "COPY --chown=agent:agent pstack-models.json",
+  "COPY --chown=agent:agent web-search.json", "/home/agent/.pi/agent/web-search.json",
+  "COPY --chown=agent:agent sol-pi.json", "/home/agent/.pi/agent/sol-pi.json",
+  "npm:@narumitw/pi-accounts@${PI_ACCOUNTS_VERSION}", "npm:pi-subagents@${PI_SUBAGENTS_VERSION}",
+  "npm:@zenspc/pi-pstack@${PI_PSTACK_VERSION}", "git:github.com/NVlabs/SoL-Pi@${SOL_PI_COMMIT}",
+]) ok(docker.includes(needle), `Dockerfile: required runtime wiring missing (${needle})`);
 ok(!docker.includes("AGENTS.md"), "Dockerfile: template-level AGENTS.md must not be copied");
+for (const source of [text("settings.json"), text("models.json"), text("pstack-models.json")]) {
+  ok(!source.includes("openai-codex-account-"), "named Codex accounts must not become provider/model aliases");
+}
 for (const source of [docker, text("settings.json"), text("models.json"), text("pstack-models.json"), text("subagent-config.json"), text("sol-pi.json")]) {
-  for (const legacy of ["opencode-go", "pi-commandcode-provider", "/alpha/generate", "deepseek/deepseek-v4-flash", "deepseek-v4.1-flash-beta"]) {
-    ok(!source.includes(legacy), `retired provider/model route remains (${legacy})`);
-  }
+  for (const legacy of ["opencode-go", "pi-commandcode-provider", "/alpha/generate", "deepseek/deepseek-v4-flash", "deepseek-v4.1-flash-beta"]) ok(!source.includes(legacy), `retired provider/model route remains (${legacy})`);
+  ok(!source.includes("@narumitw/pi-usage"), "pi-usage must not be introduced by this profile");
 }
 
 if (errors.length) {

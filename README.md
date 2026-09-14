@@ -35,7 +35,7 @@ The committed profile does not force Command Code ZDR routing. This keeps models
 
 SoL-Pi EPR uses the existing `commandcode-goat/deepseek/deepseek-v4.1-flash` model-registry route. It does not define a second provider or credential path.
 
-OpenAI Codex authentication remains independent and uses Pi's normal `openai-codex` path.
+OpenAI Codex continues to use Pi's native `openai-codex` provider. Named Codex subscription identities are managed by `@narumitw/pi-accounts`; account selection changes authentication identity only and does not change model routing.
 
 ## Build and validate
 

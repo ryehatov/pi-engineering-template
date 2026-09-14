@@ -52,6 +52,7 @@ COPY --chown=agent:agent pi-fff.json \
 COPY --chown=agent:agent sol-pi.json \
     /home/agent/.pi/agent/sol-pi.json
 
+ARG PI_ACCOUNTS_VERSION=0.52.0
 ARG PI_SUBAGENTS_VERSION=0.66.0
 ARG PI_PSTACK_VERSION=0.6.0
 ARG PONYTAIL_VERSION=4.9.0
@@ -65,7 +66,8 @@ ARG PLANNOTATOR_VERSION=0.27.14
 ARG PI_BTW_VERSION=0.58.1
 ARG SOL_PI_COMMIT=2ecee02e116d3a13b2304ccf6c770d7bc4675660
 
-RUN pi install "npm:pi-subagents@${PI_SUBAGENTS_VERSION}" \
+RUN pi install "npm:@narumitw/pi-accounts@${PI_ACCOUNTS_VERSION}" \
+ && pi install "npm:pi-subagents@${PI_SUBAGENTS_VERSION}" \
  && pi install "npm:@zenspc/pi-pstack@${PI_PSTACK_VERSION}" \
  && pi install "npm:@dietrichgebert/ponytail@${PONYTAIL_VERSION}" \
  && pi install "npm:pi-web-access@${PI_WEB_ACCESS_VERSION}" \

@@ -15,7 +15,15 @@ This is operator state. Once Poteto Mode is active, pstack supplies its workflow
 
 ### OpenAI Codex
 
-Authenticate Pi's `openai-codex` provider using the normal Pi/Codex login flow available in the runtime. This route is used for bounded Astra oracle and escalation calls.
+The committed model route remains `openai-codex/gpt-6-astra`.
+
+Named subscription accounts are managed by `@narumitw/pi-accounts`. Run `/accounts` to log in to and name the two Codex accounts, for example `codex-a` and `codex-b`.
+
+The initial registration of each account uses Pi's normal OAuth login flow. Subsequent account selection does not require a new browser login while the saved OAuth credential remains refreshable.
+
+Use **Set default account** to choose the account inherited by new sessions. Use **Switch ... account** to change only the current session. Account selection changes authentication identity only. It does not change the provider ID, model ID, subagent role routing, or fallback policy.
+
+Do not install or invoke a quota-reset or token-reset-ticket redemption mechanism as part of this profile. In particular, do not install `@narumitw/pi-usage` for this work.
 
 ### Command Code GOAT
 

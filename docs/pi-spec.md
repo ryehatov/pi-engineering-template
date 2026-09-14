@@ -8,9 +8,10 @@ This document defines repository and harness invariants. It does not define a se
 2. SoL-Pi MUST own parent-session tool/result/context optimization: Action Fusion, ObservationPack, Evidence-Preserving Reducer, and Online Context Compact.
 3. `pi-subagents` MUST own delegated execution, isolation, child capabilities, model-scope enforcement, concurrency, fallback selection, and delegated authority policy.
 4. `@zenspc/pi-pstack` MUST own pstack playbooks, Poteto Mode, engineering-method context, and pstack role routing.
-5. SoL-Pi MUST NOT become the authority for pstack workflow semantics, generic role routing, delegated capabilities, or delegated authority.
-6. Extension-specific guidance MUST remain with the extension that provides it when that extension already injects the guidance at runtime.
-7. Repository documentation MAY explain these mechanisms, but documentation MUST NOT become an enforcement dependency.
+5. `@narumitw/pi-accounts` MUST own named OAuth-account storage and per-session account selection for supported native providers. It MUST NOT own model routing, delegated fallback policy, compaction policy, or pstack workflow semantics.
+6. SoL-Pi MUST NOT become the authority for pstack workflow semantics, generic role routing, delegated capabilities, or delegated authority.
+7. Extension-specific guidance MUST remain with the extension that provides it when that extension already injects the guidance at runtime.
+8. Repository documentation MAY explain these mechanisms, but documentation MUST NOT become an enforcement dependency.
 
 ## 2. Prompt boundary
 
@@ -36,6 +37,7 @@ This document defines repository and harness invariants. It does not define a se
 4. The template MUST NOT claim that non-ZDR Command Code traffic has zero retention.
 5. Legacy OpenCode Go and `pi-commandcode-provider` routes MUST NOT be runtime dependencies of this branch.
 6. SoL-Pi EPR MUST resolve through `commandcode-goat/deepseek/deepseek-v4.1-flash` and MUST reuse Pi-managed provider transport and authentication rather than define separate credentials or endpoints.
+7. Named OpenAI Codex accounts MUST remain authentication identities of Pi's native `openai-codex` provider. Account names MUST NOT be encoded as provider IDs or model IDs in the committed model portfolio.
 
 ## 5. Model and role consistency
 
@@ -74,6 +76,7 @@ This document defines repository and harness invariants. It does not define a se
 2. Pi, Bun, npm-installed extensions, and Git-installed SoL-Pi MUST use explicit immutable pins.
 3. Runtime configuration files MUST be copied into their expected Pi locations.
 4. The Docker image MUST NOT copy a template-level `AGENTS.md`.
+5. `@narumitw/pi-usage` MUST NOT be installed by this profile.
 
 ## 9. Verification
 
@@ -90,9 +93,10 @@ The static verifier MUST check at least:
 - source-read-only role capability boundaries;
 - delegation, concurrency, mission, schedule, and authority bounds;
 - pinned base image, Pi, Bun, and extension versions;
-- absence of retired provider and model routes.
+- named Codex account identity not leaking into provider/model aliases;
+- absence of retired provider/model routes and `@narumitw/pi-usage`.
 
-A passing static verifier does not prove live provider availability, model routing, tool-call compatibility, extension lifecycle compatibility, or package-install compatibility. Release qualification SHOULD also include a Docker build, SoL-Pi mechanism smoke tests, and authenticated calls for routes affected by the change.
+A passing static verifier does not prove live provider availability, model routing, tool-call compatibility, extension lifecycle compatibility, account refreshability, or package-install compatibility. Release qualification SHOULD also include a Docker build, SoL-Pi mechanism smoke tests, and authenticated calls for routes affected by the change.
 
 ## 10. Operator activation
 
