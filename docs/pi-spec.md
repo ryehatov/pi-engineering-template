@@ -8,10 +8,9 @@ This document defines repository and harness invariants. It does not define a se
 2. SoL-Pi MUST own parent-session tool/result/context optimization: Action Fusion, ObservationPack, Evidence-Preserving Reducer, and Online Context Compact.
 3. `pi-subagents` MUST own delegated execution, isolation, child capabilities, model-scope enforcement, concurrency, fallback selection, and delegated authority policy.
 4. `@zenspc/pi-pstack` MUST own pstack playbooks, Poteto Mode, engineering-method context, and pstack role routing.
-5. `@narumitw/pi-accounts` MUST own named OAuth-account storage and per-session account selection for supported native providers. It MUST NOT own model routing, delegated fallback policy, compaction policy, or pstack workflow semantics.
-6. SoL-Pi MUST NOT become the authority for pstack workflow semantics, generic role routing, delegated capabilities, or delegated authority.
-7. Extension-specific guidance MUST remain with the extension that provides it when that extension already injects the guidance at runtime.
-8. Repository documentation MAY explain these mechanisms, but documentation MUST NOT become an enforcement dependency.
+5. SoL-Pi MUST NOT become the authority for pstack workflow semantics, generic role routing, delegated capabilities, or delegated authority.
+6. Extension-specific guidance MUST remain with the extension that provides it when that extension already injects the guidance at runtime.
+7. Repository documentation MAY explain these mechanisms, but documentation MUST NOT become an enforcement dependency.
 
 ## 2. Prompt boundary
 
@@ -27,8 +26,7 @@ This document defines repository and harness invariants. It does not define a se
 3. `subagent-config.json` MUST own delegated execution bounds and authority policy.
 4. `pstack-models.json` MUST own pstack role-to-model selectors.
 5. `sol-pi.json` MUST own SoL-Pi mechanism enablement, EPR reducer provider/model selection, and OCC cache-write/read ratio.
-6. `runtime-state.json` MUST define the exact portable mutable Pi state that may be migrated across sandbox replacement.
-7. `scripts/verify-template.mjs` MUST validate structural invariants and consistency across these files without depending on natural-language prompt phrases.
+6. `scripts/verify-template.mjs` MUST validate structural invariants and consistency across these files without depending on natural-language prompt phrases.
 
 ## 4. Provider invariants
 
@@ -38,7 +36,6 @@ This document defines repository and harness invariants. It does not define a se
 4. The template MUST NOT claim that non-ZDR Command Code traffic has zero retention.
 5. Legacy OpenCode Go and `pi-commandcode-provider` routes MUST NOT be runtime dependencies of this branch.
 6. SoL-Pi EPR MUST resolve through `commandcode-goat/deepseek/deepseek-v4.1-flash` and MUST reuse Pi-managed provider transport and authentication rather than define separate credentials or endpoints.
-7. Named OpenAI Codex accounts MUST remain authentication identities of Pi's native `openai-codex` provider. Account names MUST NOT be encoded as provider IDs or model IDs in the committed model portfolio.
 
 ## 5. Model and role consistency
 
@@ -71,25 +68,14 @@ This document defines repository and harness invariants. It does not define a se
 5. `sol-pi.json` MUST be copied to Pi's user-wide agent directory so the template behavior does not depend on downstream project trust.
 6. SoL-Pi MUST use Pi's public extension/model/session interfaces; the template MUST NOT patch or vendor Pi to support it.
 
-## 8. Runtime-state invariants
-
-1. Portable Pi runtime state MUST be allowlisted rather than defined as the complete Pi agent directory.
-2. The portable set MUST contain Pi sessions, Pi native authentication state, `pi-accounts` state, and explicit project trust state.
-3. Template-owned configuration, package installations, model catalogs, and caches MUST NOT be included in the portable state set.
-4. Pi sessions are the persistence boundary for parent conversation history and session-local extension state. Extension data already stored underneath the Pi session tree MUST NOT be copied through a second persistence mechanism.
-5. Runtime-injected provider secrets such as `COMMAND_CODE_API_KEY` MUST NOT be written into the portable state archive by the template.
-6. Source workspaces and Git-native state such as `refs/pi-rewind/store` remain workspace state rather than Pi agent state.
-7. Restore MUST target a fresh sandbox state rather than merge silently with another active Pi state tree.
-
-## 9. Dependency and image invariants
+## 8. Dependency and image invariants
 
 1. The base image MUST be pinned by SHA-256 digest.
 2. Pi, Bun, npm-installed extensions, and Git-installed SoL-Pi MUST use explicit immutable pins.
 3. Runtime configuration files MUST be copied into their expected Pi locations.
 4. The Docker image MUST NOT copy a template-level `AGENTS.md`.
-5. `@narumitw/pi-usage` MUST NOT be installed by this profile.
 
-## 10. Verification
+## 9. Verification
 
 The static verifier MUST check at least:
 
@@ -104,12 +90,10 @@ The static verifier MUST check at least:
 - source-read-only role capability boundaries;
 - delegation, concurrency, mission, schedule, and authority bounds;
 - pinned base image, Pi, Bun, and extension versions;
-- named Codex account identity not leaking into provider/model aliases;
-- exact portable runtime-state allowlist;
-- absence of retired provider/model routes and `@narumitw/pi-usage`.
+- absence of retired provider and model routes.
 
-A passing static verifier does not prove live provider availability, model routing, tool-call compatibility, extension lifecycle compatibility, account refreshability, sandbox transfer behavior, or package-install compatibility. Release qualification SHOULD also include a Docker build, SoL-Pi mechanism smoke tests, authenticated calls for routes affected by the change, and a sandbox replacement restore test.
+A passing static verifier does not prove live provider availability, model routing, tool-call compatibility, extension lifecycle compatibility, or package-install compatibility. Release qualification SHOULD also include a Docker build, SoL-Pi mechanism smoke tests, and authenticated calls for routes affected by the change.
 
-## 11. Operator activation
+## 10. Operator activation
 
 Pstack activation is an operator/session concern, not a repository prompt concern. The normal operating procedure MAY inspect pstack state and enter `/poteto-mode` at Pi startup. Once active, the extension-provided state is authoritative for engineering workflow; SoL-Pi remains the parent runtime optimization layer.

@@ -17,13 +17,41 @@ This is operator state. Once Poteto Mode is active, pstack supplies its workflow
 
 The committed model route remains `openai-codex/gpt-6-astra`.
 
-Named subscription accounts are managed by `@narumitw/pi-accounts`. Run `/accounts` to log in to and name the two Codex accounts, for example `codex-a` and `codex-b`.
+Pi account selection is owned by `@narumitw/pi-accounts`. Run `/accounts` to log in to and name the Codex accounts, for example `codex-a` and `codex-b`. Use **Set default account** for new sessions and **Switch ... account** for the current session. Account selection changes authentication identity only; it does not change the provider, model, role routing, or fallback policy.
 
-The initial registration of each account uses Pi's normal OAuth login flow. Subsequent account selection does not require a new browser login while the saved OAuth credential remains refreshable.
+Do not install `@narumitw/pi-usage` for this profile. Codex usage display belongs to CodexBar, not to the Pi authentication extension.
 
-Use **Set default account** to choose the account inherited by new sessions. Use **Switch ... account** to change only the current session. Account selection changes authentication identity only. It does not change the provider ID, model ID, subagent role routing, or fallback policy.
+#### CodexBar
 
-Do not install or invoke a quota-reset or token-reset-ticket redemption mechanism as part of this profile. In particular, do not install `@narumitw/pi-usage` for this work.
+Do not copy or translate Pi OAuth credentials into CodexBar. `pi-accounts.json` and Codex `auth.json` have different owners and update rules.
+
+Give CodexBar its own native Codex profile homes. Authenticate each profile with the Codex CLI:
+
+```sh
+mkdir -p "$HOME/.codex-profiles/codex-a" "$HOME/.codex-profiles/codex-b"
+CODEX_HOME="$HOME/.codex-profiles/codex-a" codex login
+CODEX_HOME="$HOME/.codex-profiles/codex-b" codex login
+```
+
+Then merge the profile paths into the existing Codex provider entry in the CodexBar config:
+
+```json
+{
+  "id": "codex",
+  "codexProfileHomePaths": [
+    "~/.codex-profiles/codex-a",
+    "~/.codex-profiles/codex-b"
+  ]
+}
+```
+
+CodexBar reads each profile's native `auth.json` and scopes its Codex fetches with that profile's `CODEX_HOME`. Pi continues to refresh only `pi-accounts.json`; Codex CLI continues to refresh only its profile homes. No token synchronization or compatibility adapter is required.
+
+Leave CodexBar's **External Codex OAuth sources** setting out of this integration. That setting does not make `pi-accounts.json` a supported credential source.
+
+CodexBar already supports Pi session logs. If the host must inspect sessions written inside a Docker Sandbox, mount a host session directory into the sandbox and set `PI_CODING_AGENT_SESSION_DIR` for Pi. Run CodexBar with the same session directory in its own environment. This shares session data only; it does not share authentication state.
+
+Pi's named-account store remains sandbox-local. Reusing the same sandbox preserves it across stop/start. Removing the sandbox discards that local state. The template does not add a backup, token-copy, or restore layer around it.
 
 ### Command Code GOAT
 
@@ -38,52 +66,6 @@ export COMMAND_CODE_API_KEY='...'
 The committed provider does not force `x-cmd-zdr`. This avoids `422 cmd_zdr_no_providers` failures when DeepSeek, GLM, or another selected model has no ZDR-capable upstream with capacity. This also means the template does not guarantee zero retention. Use only data appropriate for the active Command Code and upstream-provider terms.
 
 SoL-Pi EPR uses the same Command Code credential through the Pi model registry. Its committed reducer route is `commandcode-goat/deepseek/deepseek-v4.1-flash`; SoL-Pi has no separate credential or provider URL.
-
-## Runtime-state persistence
-
-A stopped local Docker Sandbox retains its filesystem. A runtime-state backup is therefore not required merely to stop and resume a sandbox.
-
-Export the allowlisted state before `sbx rm`, `sbx reset`, replacing a sandbox to move to a rebuilt template, or any other operation that intentionally discards the sandbox filesystem. Do not persist the complete `~/.pi/agent` directory.
-
-Use a private directory in the WSL Linux filesystem, preferably outside the repository and not under `/mnt/c`:
-
-```sh
-STATE_ROOT="$HOME/.local/state/pi-engineering-template"
-mkdir -p "$STATE_ROOT"
-chmod 700 "$STATE_ROOT"
-
-node scripts/runtime-state.mjs \
-  backup \
-  pi-pstack \
-  "$STATE_ROOT/pi-pstack-$(date +%Y%m%d-%H%M%S).tgz"
-```
-
-Exit Pi before backup so that no session or credential file is being modified concurrently. The archive can contain OAuth credentials and sensitive session content. `scripts/runtime-state.mjs` sets the archive to mode `0600`; keep the storage directory at mode `0700`.
-
-For replacement:
-
-1. Exit Pi.
-2. Export the runtime state.
-3. Remove the old sandbox.
-4. Build or select the new template.
-5. Create a fresh sandbox.
-6. Restore the runtime state before starting Pi for the first time.
-7. Start Pi and perform qualification checks.
-
-Restore with:
-
-```sh
-node scripts/runtime-state.mjs \
-  restore \
-  pi-pstack \
-  "$STATE_ROOT/<chosen-backup>.tgz"
-```
-
-Restore deliberately refuses to merge with any existing allowlisted runtime-state path in the target sandbox. The portable set is exactly `sessions/`, `auth.json`, `pi-accounts.json`, and `trust.json`; optional files may be absent if Pi has never created them. Template-owned configuration, installed packages, model-catalog caches, and runtime-injected secrets such as `COMMAND_CODE_API_KEY` are excluded.
-
-The source workspace is separate state. Prefer a normal host workspace mount for long-lived development. Git-native Rewind state at `refs/pi-rewind/store` remains in that workspace and is not included in the Pi runtime-state archive. If clone mode is used instead, migrate the private clone separately before deleting the sandbox.
-
-CodexBar remains an external observer on the WSL host. Do not install it in the Pi image or feed its quota observations into automatic account switching.
 
 ## SoL-Pi profile
 
@@ -100,13 +82,13 @@ OCC's internal progress state is only a compaction boundary signal. Continue to 
 
 ## Static verification
 
-Run after changes to Docker, providers, models, subagents, pstack routing, SoL-Pi configuration, runtime-state policy, or the ownership documents:
+Run after changes to Docker, providers, models, subagents, pstack routing, SoL-Pi configuration, or the ownership documents:
 
 ```sh
 node scripts/verify-template.mjs
 ```
 
-The command requires no credentials and no network access. It validates executable configuration rather than natural-language prompt phrases. It validates the default Command Code provider, parent model qualification, subagent fallback selectors, strict model scope, supported thinking levels, SoL-Pi profile, named-account/model separation, and the exact portable-state allowlist.
+The command requires no credentials and no network access. It validates executable configuration rather than natural-language prompt phrases. It validates the default Command Code provider, parent model qualification, subagent fallback selectors, strict model scope, supported thinking levels, and the SoL-Pi all-enabled profile including its EPR route and immutable Git pin.
 
 ## Docker verification
 
