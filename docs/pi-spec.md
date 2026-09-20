@@ -6,7 +6,7 @@ This document defines repository and harness invariants. It does not define a se
 
 1. Pi MUST remain the interactive parent runtime and own the native session, model registry, and compaction primitives.
 2. SoL-Pi MUST own parent-session tool/result/context optimization: Action Fusion, ObservationPack, Evidence-Preserving Reducer, and Online Context Compact.
-3. `pi-subagents` MUST own delegated execution, isolation, child capabilities, model-scope enforcement, concurrency, fallback selection, and delegated authority policy.
+3. `pi-subagents` MUST own delegated execution, isolation, child capabilities, model-scope enforcement, concurrency, and delegated authority policy.
 4. `@zenspc/pi-pstack` MUST own pstack playbooks, Poteto Mode, engineering-method context, and pstack role routing.
 5. SoL-Pi MUST NOT become the authority for pstack workflow semantics, generic role routing, delegated capabilities, or delegated authority.
 6. Extension-specific guidance MUST remain with the extension that provides it when that extension already injects the guidance at runtime.
@@ -41,7 +41,7 @@ This document defines repository and harness invariants. It does not define a se
 
 1. `subagents.modelScope` MUST be enabled and strict.
 2. The scope MUST use explicit provider-qualified model IDs for the committed portfolio; wildcard expansion is not permitted in this profile.
-3. The Pi parent, generic subagent defaults, named subagent overrides, subagent fallback selectors, pstack selectors, side-question model configuration, and SoL-Pi EPR reducer MUST resolve within the committed model portfolio.
+3. The Pi parent, generic subagent defaults, named subagent overrides, pstack selectors, side-question model configuration, and SoL-Pi EPR reducer MUST resolve within the committed model portfolio.
 4. A Command Code selector MUST request a thinking level supported by that model's `thinkingLevelMap`.
 5. A model id that itself contains `/` MUST NOT be mistaken for a provider-qualified Pi selector when validating the separate `defaultProvider` and `defaultModel` fields.
 6. DeepSeek V4.1 Flash behind the Command Code proxy MUST declare the model-local DeepSeek thinking and reasoning-history compatibility required by Pi's OpenAI-completions adapter.
@@ -56,7 +56,7 @@ This document defines repository and harness invariants. It does not define a se
 5. Roles configured as source-read-only MUST NOT receive source-mutation tools.
 6. `defaultProjectTrust` MUST remain `never`.
 7. Docker Sandbox remains the outer process and filesystem isolation boundary.
-8. Availability fallbacks MUST remain within strict model scope and MUST NOT be treated as a semantic replacement for the oracle tier.
+8. Generic subagent availability recovery MUST require a later explicit launch rather than same-launch automatic model switching, and any rerouted model MUST remain within strict model scope.
 9. The template MUST NOT weaken child capability or isolation policy merely to force ambient SoL-Pi loading into delegated children.
 
 ## 7. SoL-Pi invariants
@@ -84,7 +84,7 @@ The static verifier MUST check at least:
 - strict explicit model scope and model-reference consistency;
 - correct parent provider/model qualification when a model id contains `/`;
 - Command Code provider URL, API type, credential reference, and absence of forced default ZDR routing;
-- subagent fallback selectors and their model/thinking validity;
+- current pi-subagents configuration semantics, including absence of removed fallback and exclusion settings;
 - pinned pi-pstack package-version/schema compatibility, exact role coverage, and model/thinking selector validity;
 - SoL-Pi all-enabled configuration, EPR route, OCC ratio, commit pin, and Docker wiring;
 - source-read-only role capability boundaries;

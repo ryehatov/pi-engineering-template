@@ -50,17 +50,17 @@ The exact thinking level belongs to the selector in `pstack-models.json`, not to
 
 `settings.json` is authoritative for generic subagent defaults and named overrides.
 
-- `scout`: DeepSeek `low` for local reconnaissance; GLM `low` is the startup fallback.
-- `researcher`: DeepSeek `high` for evidence collection; GLM `high` is the startup fallback.
-- `worker`: DeepSeek `high` as the single normal writer; GLM `high` is the startup fallback.
-- `reviewer`: GLM `high` for independent verification; Qwen `xhigh` is the startup fallback.
-- `oracle`: GPT-6 Astra `medium` with no semantic downgrade fallback.
+- `scout`: DeepSeek `low` for local reconnaissance.
+- `researcher`: DeepSeek `high` for evidence collection.
+- `worker`: DeepSeek `high` as the single normal writer.
+- `reviewer`: GLM `high` for independent verification.
+- `oracle`: GPT-6 Astra `medium` for bounded capability escalation.
 - `poteto-agent`: DeepSeek `high` for delegated pstack execution.
 - `comment-sicko`: Qwen `medium` for comment and prose judgment.
 
-Pi-subagents fallback models are only availability recovery. Retryable provider/model failures can select a fallback before tool activity. The normal writer is not replayed on another model after it has already changed files.
+Pi-subagents 0.70.0 no longer supports same-launch `fallbackModels` or persistent model exclusions. Each generic role therefore has one configured model. Availability recovery requires a later explicit launch or a higher-level pstack workflow decision; completed or partially executing writer work is not replayed automatically on another model.
 
-The oracle is a fresh capability escalation that protects decision consistency. It is not a default executor and has no weaker fallback that could silently change the meaning of an oracle call.
+The oracle is a fresh capability escalation that protects decision consistency. It is not a default executor and has no weaker alternate model configured that could silently change the meaning of an oracle call.
 
 Read-only capability is enforced by tool configuration, not by asking those models to avoid writes.
 

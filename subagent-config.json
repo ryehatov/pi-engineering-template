@@ -10,9 +10,6 @@
     "maxTasks": 8,
     "concurrency": 4
   },
-  "modelExclusions": {
-    "defaultTtlMs": 300000
-  },
   "missions": {
     "enabled": false
   },

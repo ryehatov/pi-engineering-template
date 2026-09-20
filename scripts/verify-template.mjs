@@ -35,6 +35,7 @@ ok(!exists("AGENTS.md"), "AGENTS.md: template-level global agent prompt must rem
 const thinkingLevels = new Set(["off", "minimal", "low", "medium", "high", "xhigh", "max"]);
 // Compatibility contract for the pinned pi-pstack release. A package bump must review role-schema drift.
 const verifiedPstackVersion = "0.6.0";
+const verifiedSubagentsVersion = "0.70.0";
 const verifiedPstackRoles = new Set([
   "feature, refactoring",
   "bug-fix",
@@ -148,16 +149,10 @@ ok(thinkingLevels.has(subagents.maxThinking), "settings.json: invalid subagent m
 for (const [name, config] of Object.entries(subagents.agentOverrides || {})) {
   if (!config || config.disabled === true) continue;
   if (config.model) checkModel(config.model, config.thinking ?? subagents.defaultThinking, `settings.json: agentOverrides.${name}`);
-  if (config.fallbackModels !== undefined) {
-    ok(Array.isArray(config.fallbackModels), `settings.json: agentOverrides.${name}.fallbackModels must be an array`);
-    if (Array.isArray(config.fallbackModels)) {
-      for (const rawSelector of config.fallbackModels) {
-        const parsed = parseSelector(rawSelector);
-        ok(parsed !== null, `settings.json: agentOverrides.${name}.fallbackModels contains an invalid selector`);
-        if (parsed) checkModel(parsed.model, parsed.thinking, `settings.json: agentOverrides.${name}.fallbackModels`);
-      }
-    }
-  }
+  ok(
+    config.fallbackModels === undefined,
+    `settings.json: agentOverrides.${name}.fallbackModels was removed by pi-subagents 0.68.0+`,
+  );
 }
 
 ok(pstack.version === 1, "pstack-models.json: unsupported version");
@@ -213,9 +208,10 @@ for (const [name, value] of [
 if (Number.isInteger(sub.parallel?.concurrency) && Number.isInteger(sub.globalConcurrencyLimit)) {
   ok(sub.parallel.concurrency <= sub.globalConcurrencyLimit, "subagent-config.json: parallel concurrency exceeds global concurrency");
 }
-if (sub.modelExclusions?.defaultTtlMs !== undefined) {
-  ok(Number.isFinite(sub.modelExclusions.defaultTtlMs) && sub.modelExclusions.defaultTtlMs > 0, "subagent-config.json: exclusion TTL must be positive");
-}
+ok(
+  sub.modelExclusions === undefined,
+  "subagent-config.json: modelExclusions was removed by pi-subagents 0.68.0+",
+);
 ok(sub.defaultSubagentContext === "fresh", "subagent-config.json: delegated context must remain fresh");
 ok(sub.missions?.enabled === false, "subagent-config.json: missions must remain disabled");
 ok(sub.scheduledRuns?.enabled === false, "subagent-config.json: scheduled runs must remain disabled");
@@ -232,6 +228,11 @@ ok(versionArgs.length > 0, "Dockerfile: no explicit version pins found");
 for (const [, name, value] of versionArgs) ok(value.length > 0, `Dockerfile: ${name} version pin missing`);
 const pstackVersion = docker.match(/^ARG PI_PSTACK_VERSION=([^\s$]+)$/m)?.[1];
 ok(pstackVersion === verifiedPstackVersion, `Dockerfile: PI_PSTACK_VERSION must match verified role schema (${verifiedPstackVersion})`);
+const subagentsVersion = docker.match(/^ARG PI_SUBAGENTS_VERSION=([^\s$]+)$/m)?.[1];
+ok(
+  subagentsVersion === verifiedSubagentsVersion,
+  `Dockerfile: PI_SUBAGENTS_VERSION must match verified config schema (${verifiedSubagentsVersion})`,
+);
 ok(/^ARG SOL_PI_COMMIT=[0-9a-f]{40}$/m.test(docker), "Dockerfile: SoL-Pi commit pin missing or mutable");
 for (const needle of [
   "COPY --chown=agent:agent settings.json",

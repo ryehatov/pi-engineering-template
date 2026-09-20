@@ -22,9 +22,6 @@
       "scout": {
         "model": "commandcode-goat/deepseek/deepseek-v4.1-flash",
         "thinking": "low",
-        "fallbackModels": [
-          "commandcode-goat/z-ai/glm-5.3-flash:low"
-        ],
         "tools": [
           "read",
           "grep",
@@ -41,25 +38,16 @@
       },
       "researcher": {
         "model": "commandcode-goat/deepseek/deepseek-v4.1-flash",
-        "thinking": "high",
-        "fallbackModels": [
-          "commandcode-goat/z-ai/glm-5.3-flash:high"
-        ]
+        "thinking": "high"
       },
       "worker": {
         "model": "commandcode-goat/deepseek/deepseek-v4.1-flash",
         "thinking": "high",
-        "fallbackModels": [
-          "commandcode-goat/z-ai/glm-5.3-flash:high"
-        ],
         "tools": "inherit"
       },
       "reviewer": {
         "model": "commandcode-goat/z-ai/glm-5.3-flash",
         "thinking": "high",
-        "fallbackModels": [
-          "commandcode-goat/Qwen/Qwen3.8-Flash:xhigh"
-        ],
         "tools": [
           "read",
           "grep",

@@ -8,7 +8,7 @@ The `pstack` branch keeps engineering policy in the runtime mechanisms that can 
 
 - **Pi** is the interactive parent runtime and owns the native session, model registry, and compaction primitives.
 - **SoL-Pi** optimizes parent-session tool/result/context handling: Action Fusion, ObservationPack, Evidence-Preserving Reducer, and Online Context Compact.
-- **pi-subagents** owns delegated execution, isolation, tool capability, model scope, concurrency, fallback selection, and authority controls.
+- **pi-subagents** owns delegated execution, isolation, tool capability, model scope, concurrency, and authority controls.
 - **@zenspc/pi-pstack** supplies engineering playbooks, Poteto Mode, review topology, and role-oriented model selection.
 - **Ponytail** supplies YAGNI-first implementation guidance when active.
 - Supporting extensions provide capabilities such as structural search, diagnostics, web access, context inspection, and UI.

@@ -17,7 +17,7 @@ This is operator state. Once Poteto Mode is active, pstack supplies its workflow
 
 The committed model route remains `openai-codex/gpt-6-astra`.
 
-Pi account selection is owned by `@narumitw/pi-accounts`. Run `/accounts` to log in to and name the Codex accounts, for example `codex-a` and `codex-b`. Use **Set default account** for new sessions and **Switch ... account** for the current session. Account selection changes authentication identity only; it does not change the provider, model, role routing, or fallback policy.
+Pi account selection is owned by `@narumitw/pi-accounts`. Run `/accounts` to log in to and name the Codex accounts, for example `codex-a` and `codex-b`. Use **Set default account** for new sessions and **Switch ... account** for the current session. Account selection changes authentication identity only; it does not change the provider, model, role routing, model scope, or delegation policy.
 
 Do not install `@narumitw/pi-usage` for this profile. Codex usage display belongs to CodexBar, not to the Pi authentication extension.
 
@@ -88,7 +88,7 @@ Run after changes to Docker, providers, models, subagents, pstack routing, SoL-P
 node scripts/verify-template.mjs
 ```
 
-The command requires no credentials and no network access. It validates executable configuration rather than natural-language prompt phrases. It validates the default Command Code provider, parent model qualification, subagent fallback selectors, strict model scope, supported thinking levels, and the SoL-Pi all-enabled profile including its EPR route and immutable Git pin.
+The command requires no credentials and no network access. It validates executable configuration rather than natural-language prompt phrases. It validates the default Command Code provider, parent model qualification, strict model scope, supported thinking levels, current pi-subagents configuration semantics, and the SoL-Pi all-enabled profile including its EPR route and immutable Git pin.
 
 ## Docker verification
 
@@ -137,7 +137,7 @@ Also exercise one multi-turn, tool-using DeepSeek call. A no-tools smoke cannot 
 
 ## Subagent routing checks
 
-`pi-subagents` 0.66.0 supports role-level model/thinking overrides and `fallbackModels`. The committed profile uses fallbacks only for startup availability recovery. A normal retryable failure can move to the next candidate before tool activity. After tool activity, the task is not generally replayed on a second model, which preserves single-writer semantics.
+`pi-subagents` 0.70.0 supports role-level model/thinking overrides but no longer supports `fallbackModels` or persistent model exclusions. The committed profile assigns one model per generic role. Availability recovery requires a later explicit launch or a pstack-level workflow decision, so writer execution is not automatically replayed on another model.
 
 Inspect the resolved runtime mapping after a routing change:
 
@@ -167,15 +167,13 @@ When changing routing:
 
 The template intentionally has no model-routing copy in `AGENTS.md`.
 
-## Provider failures and exclusions
+## Provider failures
 
-Pi-subagents may temporarily exclude a failing model. This profile uses a short exclusion TTL so a transient provider or rate-limit failure does not remove a role for an extended period.
+Pi-subagents 0.70.0 does not use persistent model exclusions or same-launch `fallbackModels`. A provider or model failure should fail the launch clearly. Retry with a later explicit launch only after deciding whether rerouting preserves task semantics.
 
-Configured `fallbackModels` provide a separate bounded startup recovery path for selected roles. Do not widen strict `modelScope` as a recovery mechanism.
+Keep strict `modelScope` as the portfolio boundary; do not widen it as an availability workaround. If launches still fail after the provider is healthy, inspect pi-subagents diagnostics and provider errors before changing routing.
 
-If a model remains excluded after the provider is healthy, inspect pi-subagents diagnostics and restart the session if required.
-
-EPR is a separate nested model call through the Pi registry. If the configured reducer route is unavailable, diagnose the Command Code route rather than changing subagent fallback policy; the two mechanisms have distinct ownership.
+EPR is a separate nested model call through the Pi registry. If the configured reducer route is unavailable, diagnose the Command Code route rather than changing generic subagent routing; the two mechanisms have distinct ownership.
 
 ## Upgrade sequence
 
