@@ -177,13 +177,13 @@ for (const [role, raw] of Object.entries(pstack.roles || {})) {
 }
 
 ok(sol.version === 1, "sol-pi.json: unsupported version");
-for (const feature of ["actionFusion", "observationPack", "evidencePreservingReducer", "onlineContextCompact"]) {
-  ok(sol[feature] === true, `sol-pi.json: ${feature} must remain enabled`);
-}
-ok(sol.evidencePreservingReducerProvider === "commandcode-goat", "sol-pi.json: EPR reducer provider must remain commandcode-goat");
-ok(sol.evidencePreservingReducerModel === "deepseek/deepseek-v4.1-flash", "sol-pi.json: EPR reducer model must remain DeepSeek V4.1 Flash");
+ok(sol.actionFusion === true, "sol-pi.json: actionFusion must remain enabled");
+ok(sol.observationPack === true, "sol-pi.json: observationPack must remain enabled");
+ok(sol.evidencePreservingReducer === false, "sol-pi.json: evidencePreservingReducer must remain disabled");
+ok(sol.onlineContextCompact === false, "sol-pi.json: onlineContextCompact must remain disabled");
+ok(sol.evidencePreservingReducerProvider === undefined, "sol-pi.json: EPR reducer provider must remain unset while EPR is disabled");
+ok(sol.evidencePreservingReducerModel === undefined, "sol-pi.json: EPR reducer model must remain unset while EPR is disabled");
 ok(sol.cacheWriteReadRatio === 12.5, "sol-pi.json: cacheWriteReadRatio must remain 12.5");
-checkModel(`${sol.evidencePreservingReducerProvider}/${sol.evidencePreservingReducerModel}`, null, "sol-pi.json: EPR reducer");
 
 ok(web.workflow === "none", "web-search.json: workflow must remain none");
 ok(web.searxngBaseUrl === "http://127.0.0.1:8080", "web-search.json: SearXNG endpoint mismatch");

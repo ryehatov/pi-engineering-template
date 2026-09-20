@@ -2,9 +2,7 @@
   "version": 1,
   "actionFusion": true,
   "observationPack": true,
-  "evidencePreservingReducer": true,
-  "evidencePreservingReducerProvider": "commandcode-goat",
-  "evidencePreservingReducerModel": "deepseek/deepseek-v4.1-flash",
-  "onlineContextCompact": true,
+  "evidencePreservingReducer": false,
+  "onlineContextCompact": false,
   "cacheWriteReadRatio": 12.5
 }

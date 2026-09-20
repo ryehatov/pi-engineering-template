@@ -19,7 +19,7 @@ The executable sources of truth are:
 - `models.json` for the Command Code provider transport and model metadata;
 - `subagent-config.json` for delegated execution and authority policy;
 - `pstack-models.json` for pstack role routing;
-- `sol-pi.json` for SoL-Pi mechanism enablement, EPR reducer routing, and OCC cache economics.
+- `sol-pi.json` for SoL-Pi mechanism enablement and cache economics.
 
 `docs/model-policy.md` explains the routing rationale. It is descriptive, not an enforcement surface.
 
@@ -33,7 +33,7 @@ export COMMAND_CODE_API_KEY='...'
 
 The committed profile does not force Command Code ZDR routing. This keeps models such as DeepSeek and GLM available when a ZDR-capable upstream is unavailable. Data handling therefore follows the active Command Code and upstream-provider terms. Do not treat this profile as a zero-retention boundary.
 
-SoL-Pi EPR uses the existing `commandcode-goat/deepseek/deepseek-v4.1-flash` model-registry route. It does not define a second provider or credential path.
+SoL-Pi EPR and Online Context Compact are disabled in the committed profile.
 
 OpenAI Codex uses Pi's native `openai-codex` provider. `@narumitw/pi-accounts` owns named Pi account selection. CodexBar authentication is separate and uses native Codex profile homes; the template does not copy or synchronize OAuth tokens between Pi and CodexBar. See `docs/operations.md`.
 

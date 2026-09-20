@@ -65,20 +65,11 @@ export COMMAND_CODE_API_KEY='...'
 
 The committed provider does not force `x-cmd-zdr`. This avoids `422 cmd_zdr_no_providers` failures when DeepSeek, GLM, or another selected model has no ZDR-capable upstream with capacity. This also means the template does not guarantee zero retention. Use only data appropriate for the active Command Code and upstream-provider terms.
 
-SoL-Pi EPR uses the same Command Code credential through the Pi model registry. Its committed reducer route is `commandcode-goat/deepseek/deepseek-v4.1-flash`; SoL-Pi has no separate credential or provider URL.
-
 ## SoL-Pi profile
 
-`sol-pi.json` enables all four mechanisms:
-
-- Action Fusion for mutation plus immediate validation in one tool observation;
-- ObservationPack for bounded replay of large text observations with exact recall;
-- Evidence-Preserving Reducer for eligible diagnostic output, using DeepSeek V4.1 Flash through Command Code;
-- Online Context Compact for context-window/economic compaction decisions through Pi's native compaction API.
+`sol-pi.json` enables Action Fusion and ObservationPack. Evidence-Preserving Reducer and Online Context Compact are disabled.
 
 The profile is user-wide at `~/.pi/agent/sol-pi.json` inside the image. Do not duplicate it in a downstream project's `.pi/sol-pi.json` unless a project intentionally overrides the template profile and is trusted; SoL-Pi replaces rather than merges the two files.
-
-OCC's internal progress state is only a compaction boundary signal. Continue to use pstack/Poteto as the engineering workflow and plan authority.
 
 ## Static verification
 
@@ -88,7 +79,7 @@ Run after changes to Docker, providers, models, subagents, pstack routing, SoL-P
 node scripts/verify-template.mjs
 ```
 
-The command requires no credentials and no network access. It validates executable configuration rather than natural-language prompt phrases. It validates the default Command Code provider, parent model qualification, strict model scope, supported thinking levels, current pi-subagents configuration semantics, and the SoL-Pi all-enabled profile including its EPR route and immutable Git pin.
+The command requires no credentials and no network access. It validates executable configuration rather than natural-language prompt phrases. It validates the default Command Code provider, parent model qualification, strict model scope, supported thinking levels, current pi-subagents configuration semantics, and the committed SoL-Pi mechanism flags and immutable Git pin.
 
 ## Docker verification
 
@@ -104,13 +95,11 @@ After a Pi or SoL-Pi pin change, also confirm that `pi list --approve` reports t
 
 ## SoL-Pi smoke
 
-For a SoL-Pi or Pi upgrade, exercise the mechanisms on disposable files/session data:
+For a SoL-Pi or Pi upgrade, exercise the enabled mechanisms on disposable files/session data:
 
 1. Action Fusion: run one `edit` or `write` with `then_run` and confirm the mutation and validator result are returned together.
 2. ObservationPack: produce a >10 KiB text observation, advance provider turns until it is packed, and confirm `obs_recall` retrieves the original content.
-3. EPR: run an eligible large diagnostic command and confirm reduction uses the configured `commandcode-goat/deepseek/deepseek-v4.1-flash` route while retaining evidence/receipt data.
-4. OCC: complete a plan boundary in a long-enough disposable session and confirm compaction resumes correctly without corrupting the session/tree state.
-5. Run `pstack state`, enter `/poteto-mode`, and exercise one nested workflow so SoL-Pi, pstack, subagents, and rewind behavior are checked together.
+3. Run `pstack state`, enter `/poteto-mode`, and exercise one nested workflow so SoL-Pi, pstack, subagents, and rewind behavior are checked together.
 
 SoL-Pi session archives are operational data. Long-lived sandboxes should account for their storage growth; do not treat the archive as a credential store.
 
@@ -161,7 +150,7 @@ When changing routing:
 1. edit `pstack-models.json` for pstack role selectors;
 2. edit `settings.json` for generic subagent defaults or named overrides;
 3. edit `models.json` only when the custom provider catalog, transport behavior, or thinking metadata changes;
-4. edit `sol-pi.json` only when SoL-Pi feature policy, EPR reducer selection, or OCC ratio changes;
+4. edit `sol-pi.json` only when SoL-Pi feature policy or cache ratio changes;
 5. update `docs/model-policy.md` when the model-routing rationale changes;
 6. run the static verifier.
 
@@ -173,8 +162,6 @@ Pi-subagents 0.70.0 does not use persistent model exclusions or same-launch `fal
 
 Keep strict `modelScope` as the portfolio boundary; do not widen it as an availability workaround. If launches still fail after the provider is healthy, inspect pi-subagents diagnostics and provider errors before changing routing.
 
-EPR is a separate nested model call through the Pi registry. If the configured reducer route is unavailable, diagnose the Command Code route rather than changing generic subagent routing; the two mechanisms have distinct ownership.
-
 ## Upgrade sequence
 
 Upgrade one core dependency at a time unless upstream requires a coordinated bump.
@@ -183,10 +170,10 @@ Upgrade one core dependency at a time unless upstream requires a coordinated bum
 2. Update the immutable version or commit pin.
 3. Run `node scripts/verify-template.mjs`.
 4. Build the Docker image.
-5. Smoke the affected provider/model or SoL-Pi mechanism path.
+5. Smoke the affected provider/model or enabled SoL-Pi mechanism path.
 6. Exercise one nested pstack workflow if Pi, pi-subagents, pi-pstack, or SoL-Pi changed.
 7. Commit the verified unit before starting the next upgrade.
 
 For pi-pstack upgrades, review role names and selector parsing because the verifier checks role coverage and model/thinking consistency against the committed profile.
 
-For SoL-Pi upgrades, inspect its configuration schema and Pi compatibility notes, then rerun the four-mechanism smoke. For Pi upgrades, treat SoL-Pi compatibility as part of the Pi qualification rather than as an independent afterthought.
+For SoL-Pi upgrades, inspect its configuration schema and Pi compatibility notes, then rerun smoke tests for the enabled mechanisms. For Pi upgrades, treat SoL-Pi compatibility as part of the Pi qualification rather than as an independent afterthought.

@@ -25,7 +25,7 @@ This document defines repository and harness invariants. It does not define a se
 2. `models.json` MUST own custom provider transport and model metadata.
 3. `subagent-config.json` MUST own delegated execution bounds and authority policy.
 4. `pstack-models.json` MUST own pstack role-to-model selectors.
-5. `sol-pi.json` MUST own SoL-Pi mechanism enablement, EPR reducer provider/model selection, and OCC cache-write/read ratio.
+5. `sol-pi.json` MUST own SoL-Pi mechanism enablement and cache-write/read ratio.
 6. `scripts/verify-template.mjs` MUST validate structural invariants and consistency across these files without depending on natural-language prompt phrases.
 
 ## 4. Provider invariants
@@ -35,13 +35,12 @@ This document defines repository and harness invariants. It does not define a se
 3. The default Command Code provider MUST NOT force `x-cmd-zdr`; runtime availability of the selected model takes precedence over zero-retention enforcement in this profile.
 4. The template MUST NOT claim that non-ZDR Command Code traffic has zero retention.
 5. Legacy OpenCode Go and `pi-commandcode-provider` routes MUST NOT be runtime dependencies of this branch.
-6. SoL-Pi EPR MUST resolve through `commandcode-goat/deepseek/deepseek-v4.1-flash` and MUST reuse Pi-managed provider transport and authentication rather than define separate credentials or endpoints.
 
 ## 5. Model and role consistency
 
 1. `subagents.modelScope` MUST be enabled and strict.
 2. The scope MUST use explicit provider-qualified model IDs for the committed portfolio; wildcard expansion is not permitted in this profile.
-3. The Pi parent, generic subagent defaults, named subagent overrides, pstack selectors, side-question model configuration, and SoL-Pi EPR reducer MUST resolve within the committed model portfolio.
+3. The Pi parent, generic subagent defaults, named subagent overrides, pstack selectors, and side-question model configuration MUST resolve within the committed model portfolio.
 4. A Command Code selector MUST request a thinking level supported by that model's `thinkingLevelMap`.
 5. A model id that itself contains `/` MUST NOT be mistaken for a provider-qualified Pi selector when validating the separate `defaultProvider` and `defaultModel` fields.
 6. DeepSeek V4.1 Flash behind the Command Code proxy MUST declare the model-local DeepSeek thinking and reasoning-history compatibility required by Pi's OpenAI-completions adapter.
@@ -61,9 +60,9 @@ This document defines repository and harness invariants. It does not define a se
 
 ## 7. SoL-Pi invariants
 
-1. Action Fusion, ObservationPack, Evidence-Preserving Reducer, and Online Context Compact MUST all be enabled in the committed profile.
-2. EPR reducer provider MUST be `commandcode-goat` and reducer model MUST be `deepseek/deepseek-v4.1-flash`.
-3. OCC `cacheWriteReadRatio` MUST be `12.5` until the template deliberately adopts a different cache-economics policy.
+1. Action Fusion and ObservationPack MUST be enabled in the committed profile.
+2. Evidence-Preserving Reducer and Online Context Compact MUST be disabled in the committed profile.
+3. `cacheWriteReadRatio` MUST remain `12.5`.
 4. SoL-Pi MUST be installed from an explicit 40-hex Git commit pin.
 5. `sol-pi.json` MUST be copied to Pi's user-wide agent directory so the template behavior does not depend on downstream project trust.
 6. SoL-Pi MUST use Pi's public extension/model/session interfaces; the template MUST NOT patch or vendor Pi to support it.
@@ -86,13 +85,13 @@ The static verifier MUST check at least:
 - Command Code provider URL, API type, credential reference, and absence of forced default ZDR routing;
 - current pi-subagents configuration semantics, including absence of removed fallback and exclusion settings;
 - pinned pi-pstack package-version/schema compatibility, exact role coverage, and model/thinking selector validity;
-- SoL-Pi all-enabled configuration, EPR route, OCC ratio, commit pin, and Docker wiring;
+- SoL-Pi mechanism flags, cache ratio, commit pin, and Docker wiring;
 - source-read-only role capability boundaries;
 - delegation, concurrency, mission, schedule, and authority bounds;
 - pinned base image, Pi, Bun, and extension versions;
 - absence of retired provider and model routes.
 
-A passing static verifier does not prove live provider availability, model routing, tool-call compatibility, extension lifecycle compatibility, or package-install compatibility. Release qualification SHOULD also include a Docker build, SoL-Pi mechanism smoke tests, and authenticated calls for routes affected by the change.
+A passing static verifier does not prove live provider availability, model routing, tool-call compatibility, extension lifecycle compatibility, or package-install compatibility. Release qualification SHOULD also include a Docker build, smoke tests for the enabled SoL-Pi mechanisms, and authenticated calls for routes affected by the change.
 
 ## 10. Operator activation
 

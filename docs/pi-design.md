@@ -46,7 +46,7 @@ Downstream repositories remain free to add project-specific agent instructions f
 | Command Code transport | `models.json` |
 | Delegation context, limits, and authority | `subagent-config.json` |
 | Pstack role selectors | `pstack-models.json` |
-| SoL-Pi mechanism enablement, EPR route, OCC ratio | `sol-pi.json` |
+| SoL-Pi mechanism enablement and cache ratio | `sol-pi.json` |
 | Pstack method and Poteto Mode | `@zenspc/pi-pstack` runtime |
 | Parent tool/result/context optimization | SoL-Pi runtime |
 | Ponytail implementation guidance | Ponytail runtime |
@@ -62,26 +62,24 @@ SoL-Pi is a parent-runtime optimization layer, not a workflow orchestrator.
 
 - **Action Fusion** augments Pi's mutation tools so a requested post-mutation validation can execute in the same tool observation. It does not decide what should be implemented or what validation is sufficient.
 - **ObservationPack** changes how large text observations are replayed into later provider requests while preserving exact recall from session-derived storage. It does not replace artifact verification.
-- **Evidence-Preserving Reducer (EPR)** reduces eligible diagnostic output through a Pi model-registry route while retaining evidence. The committed route is `commandcode-goat/deepseek/deepseek-v4.1-flash`; provider transport and credentials remain owned by `models.json` and Pi.
-- **Online Context Compact (OCC)** decides when to invoke Pi's public compaction primitive. Its internal plan/progress bookkeeping is a compaction boundary signal only; pstack remains authoritative for engineering playbooks, Poteto Mode, and task method.
+- **Evidence-Preserving Reducer (EPR)** is disabled in the committed profile.
+- **Online Context Compact (OCC)** is disabled in the committed profile.
 
-SoL-Pi may archive observations and reducer artifacts under the Pi session-derived storage root. It does not define a second persistent storage location.
+SoL-Pi may archive observations under the Pi session-derived storage root. It does not define a second persistent storage location.
 
-The template enables all four mechanisms because they have been qualified together in the target workflow. Their configuration remains isolated in `sol-pi.json` so they can be reviewed or reverted independently from model routing and delegation policy.
+The template enables Action Fusion and ObservationPack, while EPR and OCC remain disabled. Their configuration remains isolated in `sol-pi.json` so it can be reviewed or reverted independently from model routing and delegation policy.
 
 ## Model portfolio
 
 The portfolio is intentionally small and role-oriented. Its current assignments are documented in `docs/model-policy.md`; the executable assignments are only the JSON configuration files.
 
-The verifier therefore checks that every configured role resolves to an explicitly allowed model and that Command Code thinking selectors are supported. It also checks that the EPR reducer resolves to the committed model portfolio. It does not require model-routing prose to exist anywhere.
+The verifier therefore checks that every configured role resolves to an explicitly allowed model and that Command Code thinking selectors are supported. It does not require model-routing prose to exist anywhere.
 
 This allows a future model rebalance to change configuration and rationale without also editing a global prompt.
 
 ## Provider boundary
 
 Command Code is registered directly through Pi's native OpenAI-compatible provider path. Provider URL, adapter, authentication, compatibility, and model metadata live in `models.json`.
-
-EPR reuses that registry entry rather than owning a provider endpoint or credential. `sol-pi.json` selects the reducer provider/model only; changing the underlying transport remains a `models.json` concern.
 
 Provider policy therefore stays in executable configuration instead of a behavioral request to the model.
 
@@ -97,7 +95,7 @@ SoL-Pi installation does not weaken this boundary. Whether an individual child s
 
 Verification is layered by failure class:
 
-1. `scripts/verify-template.mjs` checks static configuration structure and consistency, including SoL-Pi flags, reducer routing, commit pin, and Docker wiring.
+1. `scripts/verify-template.mjs` checks static configuration structure and consistency, including SoL-Pi flags, cache ratio, commit pin, and Docker wiring.
 2. Docker build checks that pinned packages install together and files land at the intended paths.
 3. Live Pi smoke checks authentication, registry resolution, thinking translation, extension loading, SoL-Pi mechanisms, and provider availability.
 4. A nested pstack smoke checks that Poteto/delegation behavior still composes with the parent optimization layer.
