@@ -91,11 +91,23 @@ The parent model may decide whether delegation is useful for the current task, b
 
 SoL-Pi installation does not weaken this boundary. Whether an individual child sees ambient extensions follows `pi-subagents` child-host and tool-plan behavior; the template does not force SoL-Pi into children by widening capability or changing isolation policy.
 
+## Delegated tool surface
+
+Tool ownership follows the same separation as model ownership. `pi-subagents` package roles keep their package-defined tools unless this template has a reason to impose a narrower capability ceiling. `researcher` therefore has no local `tools` override, while `worker` and `poteto-agent` use `tools: "inherit"`. This lets package-required research tools and ambient extension tools evolve without a second stale copy in the template.
+
+`scout`, `reviewer`, and `oracle` use explicit allowlists because their analysis capability is intentionally narrower. Those allowlists are a Pi capability ceiling, not a prompt convention. The verifier binds them to the audited tool set. `reviewer` retains the current `watchdog_diff` and native `contact_supervisor` surfaces; `scout` retains `contact_supervisor`.
+
+Pi-Lens 4.2.1 folds the old standalone `lsp_diagnostics` tool into `lens_diagnostics` with `source=lsp`. The explicit analysis roles use the current read-oriented surfaces `project_report`, `module_report`, `read_symbol`, `read_enclosing`, `symbol_search`, and `ast_grep_search`. `ast_grep_search` is situational, so `pi_lens_activate_tools` is allowlisted as its loader. Pi filters the registered tool registry through the role allowlist, so the loader cannot add a tool that is outside that ceiling.
+
+The explicit analysis roles do not receive `ast_grep_replace` or `lens_diagnostic_mark`. They also do not receive `lsp_navigation`: that single tool includes read operations such as definition and references, but also mutation-capable operations such as rename, code actions, and command execution. Granting the whole tool would be a wider capability than the roles need. Writers that inherit the ambient tool set can use those surfaces when appropriate.
+
+FFF runs in `override` mode. Its current `multi_grep` implementation is therefore included in the explicit analysis allowlists alongside the overridden `grep` and `find` names.
+
 ## Verification strategy
 
 Verification is layered by failure class:
 
-1. `scripts/verify-template.mjs` checks static configuration structure and consistency, including SoL-Pi flags, cache ratio, commit pin, and Docker wiring.
+1. `scripts/verify-template.mjs` checks static configuration structure and consistency, including the audited package matrix, explicit subagent tool contracts, SoL-Pi flags, cache ratio, commit pin, and Docker wiring.
 2. Docker build checks that pinned packages install together and files land at the intended paths.
 3. Live Pi smoke checks authentication, registry resolution, thinking translation, extension loading, SoL-Pi mechanisms, and provider availability.
 4. A nested pstack smoke checks that Poteto/delegation behavior still composes with the parent optimization layer.

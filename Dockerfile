@@ -9,7 +9,7 @@ RUN apt-get update \
       tzdata \
  && rm -rf /var/lib/apt/lists/*
 
-ARG PI_VERSION=0.86.0
+ARG PI_VERSION=0.86.1
 ARG BUN_VERSION=1.4.2
 
 RUN npm install -g --ignore-scripts \
@@ -53,13 +53,14 @@ COPY --chown=agent:agent sol-pi.json \
     /home/agent/.pi/agent/sol-pi.json
 
 ARG PI_ACCOUNTS_VERSION=0.52.0
+# 0.70.1 is held back: its watchdog imports Pi SDK exports that stable Pi 0.86.1 does not provide (nicobailon/pi-subagents#2377).
 ARG PI_SUBAGENTS_VERSION=0.70.0
 ARG PI_PSTACK_VERSION=0.6.0
 ARG PONYTAIL_VERSION=4.10.0
 ARG PI_WEB_ACCESS_VERSION=0.30.0
 ARG PI_LENS_VERSION=4.2.1
-ARG PI_FFF_VERSION=0.10.6
-ARG PI_CONTEXT_VIEW_VERSION=0.5.2
+ARG PI_FFF_VERSION=0.11.0
+ARG PI_CONTEXT_VIEW_VERSION=0.6.0
 ARG PI_POWERLINE_FOOTER_VERSION=0.17.1
 ARG PI_REWIND_HOOK_VERSION=1.8.6
 ARG PLANNOTATOR_VERSION=0.27.16

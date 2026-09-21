@@ -60,9 +60,11 @@ The exact thinking level belongs to the selector in `pstack-models.json`, not to
 
 Pi-subagents 0.70.0 no longer supports same-launch `fallbackModels` or persistent model exclusions. Each generic role therefore has one configured model. Availability recovery requires a later explicit launch or a higher-level pstack workflow decision; completed or partially executing writer work is not replayed automatically on another model.
 
+The 0.70.0 pin is deliberate. Pi-subagents 0.70.1 is newer, but its watchdog path has an open compatibility regression with stable Pi 0.86.1 (`nicobailon/pi-subagents#2377`). Keep 0.70.0 until that path is fixed upstream or a later release passes the Docker and delegated-review smoke.
+
 The oracle is a fresh capability escalation that protects decision consistency. It is not a default executor and has no weaker alternate model configured that could silently change the meaning of an oracle call.
 
-Read-only capability is enforced by tool configuration, not by asking those models to avoid writes.
+Tool capability is enforced by configuration, not by asking models to avoid unavailable operations. `researcher` intentionally has no local tool override, so the package-owned research surface, including `source_check`, is not shadowed. `worker` and `poteto-agent` inherit ambient tools. The narrower `scout`, `reviewer`, and `oracle` allowlists are version-checked by the static verifier. Their Pi-Lens diagnostics entry is `lens_diagnostics`; the retired `lsp_diagnostics` name is not configured. They also receive the current FFF `multi_grep`, Pi-Lens `project_report`, and dynamically loaded read-only structural search without receiving mutation-capable Pi-Lens tools.
 
 ## Command Code transport and privacy
 

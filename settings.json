@@ -28,12 +28,16 @@
           "find",
           "ls",
           "bash",
+          "multi_grep",
           "lens_diagnostics",
-          "lsp_diagnostics",
           "module_report",
+          "project_report",
           "read_symbol",
           "read_enclosing",
-          "symbol_search"
+          "symbol_search",
+          "pi_lens_activate_tools",
+          "ast_grep_search",
+          "contact_supervisor"
         ]
       },
       "researcher": {
@@ -53,12 +57,17 @@
           "grep",
           "find",
           "ls",
+          "multi_grep",
+          "watchdog_diff",
           "lens_diagnostics",
-          "lsp_diagnostics",
           "module_report",
+          "project_report",
           "read_symbol",
           "read_enclosing",
-          "symbol_search"
+          "symbol_search",
+          "pi_lens_activate_tools",
+          "ast_grep_search",
+          "contact_supervisor"
         ]
       },
       "oracle": {
@@ -70,12 +79,15 @@
           "find",
           "ls",
           "bash",
+          "multi_grep",
           "lens_diagnostics",
-          "lsp_diagnostics",
           "module_report",
+          "project_report",
           "read_symbol",
           "read_enclosing",
-          "symbol_search"
+          "symbol_search",
+          "pi_lens_activate_tools",
+          "ast_grep_search"
         ]
       },
       "poteto-agent": {

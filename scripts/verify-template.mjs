@@ -33,9 +33,45 @@ for (const file of required) ok(exists(file), `${file}: missing`);
 ok(!exists("AGENTS.md"), "AGENTS.md: template-level global agent prompt must remain absent");
 
 const thinkingLevels = new Set(["off", "minimal", "low", "medium", "high", "xhigh", "max"]);
-// Compatibility contract for the pinned pi-pstack release. A package bump must review role-schema drift.
-const verifiedPstackVersion = "0.6.0";
-const verifiedSubagentsVersion = "0.70.0";
+// Compatibility contract for the audited Pi package set. Bumps require an upstream contract review.
+// pi-subagents intentionally remains on 0.70.0: 0.70.1 is incompatible with stable Pi 0.86.1 in its watchdog path (nicobailon/pi-subagents#2377).
+const verifiedPiPackageVersions = new Map([
+  ["PI_VERSION", "0.86.1"],
+  ["PI_ACCOUNTS_VERSION", "0.52.0"],
+  ["PI_SUBAGENTS_VERSION", "0.70.0"],
+  ["PI_PSTACK_VERSION", "0.6.0"],
+  ["PONYTAIL_VERSION", "4.10.0"],
+  ["PI_WEB_ACCESS_VERSION", "0.30.0"],
+  ["PI_LENS_VERSION", "4.2.1"],
+  ["PI_FFF_VERSION", "0.11.0"],
+  ["PI_CONTEXT_VIEW_VERSION", "0.6.0"],
+  ["PI_POWERLINE_FOOTER_VERSION", "0.17.1"],
+  ["PI_REWIND_HOOK_VERSION", "1.8.6"],
+  ["PLANNOTATOR_VERSION", "0.27.16"],
+  ["PI_BTW_VERSION", "0.60.0"],
+]);
+const verifiedPstackVersion = verifiedPiPackageVersions.get("PI_PSTACK_VERSION");
+const verifiedAgentTools = {
+  scout: [
+    "read", "grep", "find", "ls", "bash", "multi_grep",
+    "lens_diagnostics", "module_report", "project_report",
+    "read_symbol", "read_enclosing", "symbol_search",
+    "pi_lens_activate_tools", "ast_grep_search", "contact_supervisor",
+  ],
+  reviewer: [
+    "read", "grep", "find", "ls", "multi_grep", "watchdog_diff",
+    "lens_diagnostics", "module_report", "project_report",
+    "read_symbol", "read_enclosing", "symbol_search",
+    "pi_lens_activate_tools", "ast_grep_search", "contact_supervisor",
+  ],
+  oracle: [
+    "read", "grep", "find", "ls", "bash", "multi_grep",
+    "lens_diagnostics", "module_report", "project_report",
+    "read_symbol", "read_enclosing", "symbol_search",
+    "pi_lens_activate_tools", "ast_grep_search",
+  ],
+};
+const retiredSubagentTools = new Set(["lsp_diagnostics"]);
 const verifiedPstackRoles = new Set([
   "feature, refactoring",
   "bug-fix",
@@ -155,6 +191,26 @@ for (const [name, config] of Object.entries(subagents.agentOverrides || {})) {
   );
 }
 
+const agentOverrides = subagents.agentOverrides || {};
+for (const [name, expectedTools] of Object.entries(verifiedAgentTools)) {
+  const actualTools = agentOverrides[name]?.tools;
+  ok(Array.isArray(actualTools), `settings.json: agentOverrides.${name}.tools must be an explicit array`);
+  if (!Array.isArray(actualTools)) continue;
+  const actualSet = new Set(actualTools);
+  ok(actualSet.size === actualTools.length, `settings.json: agentOverrides.${name}.tools contains duplicates`);
+  for (const tool of actualTools) {
+    ok(!retiredSubagentTools.has(tool), `settings.json: agentOverrides.${name} references retired tool (${tool})`);
+  }
+  ok(
+    actualSet.size === expectedTools.length && expectedTools.every((tool) => actualSet.has(tool)),
+    `settings.json: agentOverrides.${name}.tools drifted from the audited capability contract`,
+  );
+}
+// Keep package-owned tool surfaces package-owned where no tighter capability ceiling is needed.
+ok(agentOverrides.researcher?.tools === undefined, "settings.json: researcher must inherit the pi-subagents research tool surface");
+ok(agentOverrides.worker?.tools === "inherit", "settings.json: worker tools must remain inherit");
+ok(agentOverrides["poteto-agent"]?.tools === "inherit", "settings.json: poteto-agent tools must remain inherit");
+
 ok(pstack.version === 1, "pstack-models.json: unsupported version");
 ok(pstack.skillsEnabled === true, "pstack-models.json: skills must remain enabled");
 ok(pstack.roles && typeof pstack.roles === "object" && !Array.isArray(pstack.roles) && Object.keys(pstack.roles).length > 0, "pstack-models.json: roles missing");
@@ -225,14 +281,11 @@ ok(/^ENV TZ=Asia\/Tokyo$/m.test(docker), "Dockerfile: runtime timezone must rema
 ok(/^ARG BASE_IMAGE=.*@sha256:[0-9a-f]{64}$/m.test(docker), "Dockerfile: base image digest pin missing");
 const versionArgs = [...docker.matchAll(/^ARG ([A-Z0-9_]+_VERSION)=([^\s$]+)$/gm)];
 ok(versionArgs.length > 0, "Dockerfile: no explicit version pins found");
+const versionPins = new Map(versionArgs.map(([, name, value]) => [name, value]));
 for (const [, name, value] of versionArgs) ok(value.length > 0, `Dockerfile: ${name} version pin missing`);
-const pstackVersion = docker.match(/^ARG PI_PSTACK_VERSION=([^\s$]+)$/m)?.[1];
-ok(pstackVersion === verifiedPstackVersion, `Dockerfile: PI_PSTACK_VERSION must match verified role schema (${verifiedPstackVersion})`);
-const subagentsVersion = docker.match(/^ARG PI_SUBAGENTS_VERSION=([^\s$]+)$/m)?.[1];
-ok(
-  subagentsVersion === verifiedSubagentsVersion,
-  `Dockerfile: PI_SUBAGENTS_VERSION must match verified config schema (${verifiedSubagentsVersion})`,
-);
+for (const [name, expected] of verifiedPiPackageVersions) {
+  ok(versionPins.get(name) === expected, `Dockerfile: ${name} must match audited version (${expected})`);
+}
 ok(/^ARG SOL_PI_COMMIT=[0-9a-f]{40}$/m.test(docker), "Dockerfile: SoL-Pi commit pin missing or mutable");
 for (const needle of [
   "COPY --chown=agent:agent settings.json",

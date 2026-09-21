@@ -79,7 +79,7 @@ Run after changes to Docker, providers, models, subagents, pstack routing, SoL-P
 node scripts/verify-template.mjs
 ```
 
-The command requires no credentials and no network access. It validates executable configuration rather than natural-language prompt phrases. It validates the default Command Code provider, parent model qualification, strict model scope, supported thinking levels, current pi-subagents configuration semantics, and the committed SoL-Pi mechanism flags and immutable Git pin.
+The command requires no credentials and no network access. It validates executable configuration rather than natural-language prompt phrases. It validates the default Command Code provider, parent model qualification, strict model scope, supported thinking levels, the audited Pi/extension version matrix, current pi-subagents configuration semantics, explicit subagent tool contracts, and the committed SoL-Pi mechanism flags and immutable Git pin.
 
 ## Docker verification
 
@@ -128,6 +128,8 @@ Also exercise one multi-turn, tool-using DeepSeek call. A no-tools smoke cannot 
 
 `pi-subagents` 0.70.0 supports role-level model/thinking overrides but no longer supports `fallbackModels` or persistent model exclusions. The committed profile assigns one model per generic role. Availability recovery requires a later explicit launch or a pstack-level workflow decision, so writer execution is not automatically replayed on another model.
 
+The 0.70.0 package pin is an intentional compatibility hold. Do not bump to 0.70.1 while `nicobailon/pi-subagents#2377` remains applicable to stable Pi 0.86.1: the reported watchdog path imports Pi SDK exports that stable 0.86.1 does not provide. Re-evaluate the pin when upstream publishes a fix and then run the delegated-review smoke below.
+
 Inspect the resolved runtime mapping after a routing change:
 
 ```text
@@ -140,6 +142,18 @@ Inspect the resolved runtime mapping after a routing change:
 The expected normal path is DeepSeek for scout/researcher/worker, GLM for reviewer, and Astra for oracle.
 
 SoL-Pi does not redefine these child roles. Ambient extension loading for delegated children remains a `pi-subagents` lifecycle/capability decision; do not widen child tools or isolation merely to force SoL-Pi into every child process.
+
+### Subagent tool smoke
+
+After a Pi, pi-subagents, Pi-Lens, FFF, or tool-policy change, exercise the tool registration boundary rather than checking only model routing:
+
+1. Launch `scout` and confirm `lens_diagnostics` is available. Exercise LSP diagnostics through `lens_diagnostics` with `source=lsp`; `lsp_diagnostics` must not be required or exposed by the template.
+2. In the same bounded analysis path, confirm `project_report` and FFF `multi_grep` are callable. Activate `ast_grep_search` through `pi_lens_activate_tools`, then call `ast_grep_search` on the following turn.
+3. Launch `reviewer` on a disposable diff and confirm `watchdog_diff` is registered. If supervisor coordination is needed, confirm `contact_supervisor` is present.
+4. Launch `researcher` through the normal background path and confirm the package-owned web tool set includes `source_check`; do not add a local researcher tool list merely to make this test pass.
+5. Launch a writer only when mutation is intended and confirm the inherited ambient tool surface still contains the mutation-capable Pi-Lens tools.
+
+A failure before the first model turn that reports an unavailable explicit tool is a registration/configuration defect. Fix the tool name or provider loading; do not add a compatibility alias to the role allowlist.
 
 ## Pstack profile changes
 
@@ -158,7 +172,7 @@ The template intentionally has no model-routing copy in `AGENTS.md`.
 
 ## Provider failures
 
-Pi-subagents 0.70.0 does not use persistent model exclusions or same-launch `fallbackModels`. A provider or model failure should fail the launch clearly. Retry with a later explicit launch only after deciding whether rerouting preserves task semantics.
+Pi-subagents 0.70.0 does not use persistent model exclusions or same-launch `fallbackModels`. A provider or model failure should fail the launch clearly. Retry with a later explicit launch only after deciding whether rerouting preserves task semantics. The 0.70.0 compatibility hold is unrelated to provider failover and must not be removed as an availability workaround.
 
 Keep strict `modelScope` as the portfolio boundary; do not widen it as an availability workaround. If launches still fail after the provider is healthy, inspect pi-subagents diagnostics and provider errors before changing routing.
 
@@ -167,7 +181,7 @@ Keep strict `modelScope` as the portfolio boundary; do not widen it as an availa
 Upgrade one core dependency at a time unless upstream requires a coordinated bump.
 
 1. Read the release notes and relevant open issues.
-2. Update the immutable version or commit pin.
+2. If the newest release has a known compatibility regression on a configured path, retain the last qualified pin and document the hold. Otherwise update the immutable version or commit pin.
 3. Run `node scripts/verify-template.mjs`.
 4. Build the Docker image.
 5. Smoke the affected provider/model or enabled SoL-Pi mechanism path.

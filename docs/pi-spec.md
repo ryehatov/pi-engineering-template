@@ -57,6 +57,11 @@ This document defines repository and harness invariants. It does not define a se
 7. Docker Sandbox remains the outer process and filesystem isolation boundary.
 8. Generic subagent availability recovery MUST require a later explicit launch rather than same-launch automatic model switching, and any rerouted model MUST remain within strict model scope.
 9. The template MUST NOT weaken child capability or isolation policy merely to force ambient SoL-Pi loading into delegated children.
+10. Every explicit named-tool allowlist MUST use tool names registered by the pinned Pi and extension set; retired aliases MUST NOT remain in executable configuration.
+11. `lens_diagnostics` MUST be the Pi-Lens diagnostics surface for both session and LSP diagnostics; the retired standalone `lsp_diagnostics` name MUST NOT be configured.
+12. Bounded analysis roles MAY use `pi_lens_activate_tools` only with situational Pi-Lens tools that are also present in that role's Pi tool allowlist. Dynamic activation MUST NOT widen the Pi allowlist.
+13. The bounded analysis profile MUST NOT grant mutation-capable Pi-Lens surfaces such as `ast_grep_replace`, `lens_diagnostic_mark`, or the mixed read/write `lsp_navigation` tool merely to obtain their read-only operations.
+14. Roles that intentionally accept the package-owned `pi-subagents` tool surface SHOULD omit a local tool override so new required package tools are not shadowed.
 
 ## 7. SoL-Pi invariants
 
@@ -73,6 +78,7 @@ This document defines repository and harness invariants. It does not define a se
 2. Pi, Bun, npm-installed extensions, and Git-installed SoL-Pi MUST use explicit immutable pins.
 3. Runtime configuration files MUST be copied into their expected Pi locations.
 4. The Docker image MUST NOT copy a template-level `AGENTS.md`.
+5. Package pins MUST be qualified as a compatible set. A newer release MUST NOT replace a qualified pin when a known upstream compatibility regression affects the configured runtime path.
 
 ## 9. Verification
 
@@ -84,11 +90,12 @@ The static verifier MUST check at least:
 - correct parent provider/model qualification when a model id contains `/`;
 - Command Code provider URL, API type, credential reference, and absence of forced default ZDR routing;
 - current pi-subagents configuration semantics, including absence of removed fallback and exclusion settings;
+- explicit subagent tool-capability contracts, retired tool names, and package-owned versus inherited tool surfaces;
 - pinned pi-pstack package-version/schema compatibility, exact role coverage, and model/thinking selector validity;
 - SoL-Pi mechanism flags, cache ratio, commit pin, and Docker wiring;
 - source-read-only role capability boundaries;
 - delegation, concurrency, mission, schedule, and authority bounds;
-- pinned base image, Pi, Bun, and extension versions;
+- pinned base image plus the audited Pi and extension version matrix;
 - absence of retired provider and model routes.
 
 A passing static verifier does not prove live provider availability, model routing, tool-call compatibility, extension lifecycle compatibility, or package-install compatibility. Release qualification SHOULD also include a Docker build, smoke tests for the enabled SoL-Pi mechanisms, and authenticated calls for routes affected by the change.
