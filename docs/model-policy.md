@@ -58,9 +58,9 @@ The exact thinking level belongs to the selector in `pstack-models.json`, not to
 - `poteto-agent`: DeepSeek `high` for delegated pstack execution.
 - `comment-sicko`: Qwen `medium` for comment and prose judgment.
 
-Pi-subagents 0.70.0 no longer supports same-launch `fallbackModels` or persistent model exclusions. Each generic role therefore has one configured model. Availability recovery requires a later explicit launch or a higher-level pstack workflow decision; completed or partially executing writer work is not replayed automatically on another model.
+Pi-subagents 0.70.1 no longer supports same-launch `fallbackModels` or persistent model exclusions. Each generic role therefore has one configured model. Availability recovery requires a later explicit launch or a higher-level pstack workflow decision; completed or partially executing writer work is not replayed automatically on another model. Version 0.70.1 also applies configured model, provider, and thinking preferences to runtime-registered agents, so pstack-owned agents honor the committed overrides.
 
-The 0.70.0 pin is deliberate. Pi-subagents 0.70.1 is newer, but its watchdog path has an open compatibility regression with stable Pi 0.86.1 (`nicobailon/pi-subagents#2377`). Keep 0.70.0 until that path is fixed upstream or a later release passes the Docker and delegated-review smoke.
+The 0.70.1 pin is coupled to Pi 0.87.0. Its watchdog imports `createInitialSystemMessage` and `toToolDeclaration` from `@earendil-works/pi-ai`; Pi 0.86.1 does not export them (`nicobailon/pi-subagents#2377`), while Pi 0.87.0 does. Do not downgrade Pi independently. Re-run the Docker and delegated-review smoke after either pin changes.
 
 The oracle is a fresh capability escalation that protects decision consistency. It is not a default executor and has no weaker alternate model configured that could silently change the meaning of an oracle call.
 

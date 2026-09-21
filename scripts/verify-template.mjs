@@ -34,11 +34,11 @@ ok(!exists("AGENTS.md"), "AGENTS.md: template-level global agent prompt must rem
 
 const thinkingLevels = new Set(["off", "minimal", "low", "medium", "high", "xhigh", "max"]);
 // Compatibility contract for the audited Pi package set. Bumps require an upstream contract review.
-// pi-subagents intentionally remains on 0.70.0: 0.70.1 is incompatible with stable Pi 0.86.1 in its watchdog path (nicobailon/pi-subagents#2377).
+// pi-subagents 0.70.1 uses Pi transcript helpers exported by Pi 0.87.0; the audited pins are coupled.
 const verifiedPiPackageVersions = new Map([
-  ["PI_VERSION", "0.86.1"],
+  ["PI_VERSION", "0.87.0"],
   ["PI_ACCOUNTS_VERSION", "0.52.0"],
-  ["PI_SUBAGENTS_VERSION", "0.70.0"],
+  ["PI_SUBAGENTS_VERSION", "0.70.1"],
   ["PI_PSTACK_VERSION", "0.6.0"],
   ["PONYTAIL_VERSION", "4.10.0"],
   ["PI_WEB_ACCESS_VERSION", "0.30.0"],
@@ -268,6 +268,10 @@ ok(
   sub.modelExclusions === undefined,
   "subagent-config.json: modelExclusions was removed by pi-subagents 0.68.0+",
 );
+ok(
+  sub.completionGuard === undefined,
+  "subagent-config.json: completionGuard was removed by pi-subagents 0.70.1",
+);
 ok(sub.defaultSubagentContext === "fresh", "subagent-config.json: delegated context must remain fresh");
 ok(sub.missions?.enabled === false, "subagent-config.json: missions must remain disabled");
 ok(sub.scheduledRuns?.enabled === false, "subagent-config.json: scheduled runs must remain disabled");
@@ -303,6 +307,7 @@ for (const needle of [
   ok(docker.includes(needle), `Dockerfile: required runtime wiring missing (${needle})`);
 }
 ok(!docker.includes("AGENTS.md"), "Dockerfile: template-level AGENTS.md must not be copied");
+ok(!docker.includes("PI_SUBAGENTS_LLM_INTENT_ARBITER"), "Dockerfile: removed pi-subagents LLM intent arbiter must not be configured");
 for (const source of [docker, text("settings.json"), text("models.json"), text("pstack-models.json"), text("subagent-config.json"), text("sol-pi.json")]) {
   for (const legacy of ["opencode-go", "pi-commandcode-provider", "/alpha/generate", "deepseek/deepseek-v4-flash", "deepseek-v4.1-flash-beta"]) {
     ok(!source.includes(legacy), `retired provider/model route remains (${legacy})`);

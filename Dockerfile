@@ -9,7 +9,7 @@ RUN apt-get update \
       tzdata \
  && rm -rf /var/lib/apt/lists/*
 
-ARG PI_VERSION=0.86.1
+ARG PI_VERSION=0.87.0
 ARG BUN_VERSION=1.4.2
 
 RUN npm install -g --ignore-scripts \
@@ -53,8 +53,8 @@ COPY --chown=agent:agent sol-pi.json \
     /home/agent/.pi/agent/sol-pi.json
 
 ARG PI_ACCOUNTS_VERSION=0.52.0
-# 0.70.1 is held back: its watchdog imports Pi SDK exports that stable Pi 0.86.1 does not provide (nicobailon/pi-subagents#2377).
-ARG PI_SUBAGENTS_VERSION=0.70.0
+# pi-subagents 0.70.1 uses Pi transcript helpers exported by Pi 0.87.0; keep these pins coupled.
+ARG PI_SUBAGENTS_VERSION=0.70.1
 ARG PI_PSTACK_VERSION=0.6.0
 ARG PONYTAIL_VERSION=4.10.0
 ARG PI_WEB_ACCESS_VERSION=0.30.0

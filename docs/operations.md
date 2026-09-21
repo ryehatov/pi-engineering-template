@@ -126,9 +126,9 @@ Also exercise one multi-turn, tool-using DeepSeek call. A no-tools smoke cannot 
 
 ## Subagent routing checks
 
-`pi-subagents` 0.70.0 supports role-level model/thinking overrides but no longer supports `fallbackModels` or persistent model exclusions. The committed profile assigns one model per generic role. Availability recovery requires a later explicit launch or a pstack-level workflow decision, so writer execution is not automatically replayed on another model.
+`pi-subagents` 0.70.1 supports role-level model/thinking overrides but no longer supports `fallbackModels` or persistent model exclusions. The committed profile assigns one model per generic role. Availability recovery requires a later explicit launch or a pstack-level workflow decision, so writer execution is not automatically replayed on another model. Runtime-registered agents now honor the configured model, provider, and thinking preferences.
 
-The 0.70.0 package pin is an intentional compatibility hold. Do not bump to 0.70.1 while `nicobailon/pi-subagents#2377` remains applicable to stable Pi 0.86.1: the reported watchdog path imports Pi SDK exports that stable 0.86.1 does not provide. Re-evaluate the pin when upstream publishes a fix and then run the delegated-review smoke below.
+The 0.70.1 package pin is coupled to Pi 0.87.0. The watchdog imports `createInitialSystemMessage` and `toToolDeclaration` from `@earendil-works/pi-ai`; those exports are absent from Pi 0.86.1 but present in Pi 0.87.0. `nicobailon/pi-subagents#2377` therefore remains relevant to 0.86.1, not to this audited pair. Keep the Pi and pi-subagents pins synchronized and run the delegated-review smoke below after either changes.
 
 Inspect the resolved runtime mapping after a routing change:
 
@@ -172,7 +172,7 @@ The template intentionally has no model-routing copy in `AGENTS.md`.
 
 ## Provider failures
 
-Pi-subagents 0.70.0 does not use persistent model exclusions or same-launch `fallbackModels`. A provider or model failure should fail the launch clearly. Retry with a later explicit launch only after deciding whether rerouting preserves task semantics. The 0.70.0 compatibility hold is unrelated to provider failover and must not be removed as an availability workaround.
+Pi-subagents 0.70.1 does not use persistent model exclusions or same-launch `fallbackModels`. A provider or model failure should fail the launch clearly. Retry with a later explicit launch only after deciding whether rerouting preserves task semantics. The Pi 0.87.0 / pi-subagents 0.70.1 coupling is an SDK-compatibility constraint, not a provider-failover mechanism; do not change either pin as an availability workaround.
 
 Keep strict `modelScope` as the portfolio boundary; do not widen it as an availability workaround. If launches still fail after the provider is healthy, inspect pi-subagents diagnostics and provider errors before changing routing.
 
