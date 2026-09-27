@@ -1,7 +1,7 @@
 {
   "defaultProvider": "openai-codex",
   "defaultModel": "gpt-6-astra",
-  "defaultThinkingLevel": "high",
+  "defaultThinkingLevel": "low",
   "defaultProjectTrust": "never",
   "subagents": {
     "defaultModel": "openai-codex/gpt-6-luna",
@@ -34,6 +34,12 @@
             "commandcode-goat/z-ai/glm-5.3-flash",
             "commandcode-goat/Qwen/Qwen3.8-Flash"
           ]
+        },
+        "how-analyst": {
+          "allow": [
+            "openai-codex/gpt-6-luna",
+            "openai-codex/gpt-6-astra"
+          ]
         }
       }
     },
@@ -61,6 +67,11 @@
       "researcher": {
         "model": "openai-codex/gpt-6-luna",
         "thinking": "high"
+      },
+      "how-analyst": {
+        "model": "openai-codex/gpt-6-astra",
+        "thinking": "high",
+        "tools": ["read", "grep", "find", "ls"]
       },
       "worker": {
         "model": "openai-codex/gpt-6-luna",
@@ -115,7 +126,8 @@
       },
       "comment-sicko": {
         "model": "commandcode-goat/Qwen/Qwen3.8-Flash",
-        "thinking": "medium"
+        "thinking": "xhigh",
+        "tools": ["read", "grep", "find", "ls"]
       },
       "delegate": {
         "disabled": true

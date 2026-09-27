@@ -12,6 +12,7 @@ Pi parent ---------------- native session, model registry, compaction primitives
   |
   +-- SoL-Pi ------------ parent tool/result/context optimization
   +-- pi-pstack --------- playbooks, Poteto Mode, role selection context
+  +-- pi-goal ----------- bounded autonomous continuation
   +-- Ponytail ---------- implementation-minimization context
   +-- pi-subagents ------ child lifecycle, capabilities, isolation, authority
   +-- supporting tools -- search, diagnostics, web, UI, context inspection
@@ -48,6 +49,7 @@ Downstream repositories remain free to add project-specific agent instructions f
 | Pstack role selectors | `pstack-models.json` |
 | SoL-Pi mechanism enablement and cache ratio | `sol-pi.json` |
 | Pstack method and Poteto Mode | `@zenspc/pi-pstack` runtime |
+| Autonomous continuation | `pi-goal.json`, `@narumitw/pi-goal` runtime |
 | Parent tool/result/context optimization | SoL-Pi runtime |
 | Ponytail implementation guidance | Ponytail runtime |
 | Human rationale | `docs/model-policy.md`, this document |
@@ -95,7 +97,7 @@ SoL-Pi installation does not weaken this boundary. Whether an individual child s
 
 Tool ownership follows the same separation as model ownership. `pi-subagents` package roles keep their package-defined tools unless this template has a reason to impose a narrower capability ceiling. `researcher` therefore has no local `tools` override, while `worker` and `poteto-agent` use `tools: "inherit"`. This lets package-required research tools and ambient extension tools evolve without a second stale copy in the template.
 
-`scout`, `reviewer`, and `oracle` use explicit allowlists because their analysis capability is intentionally narrower. Those allowlists are a Pi capability ceiling, not a prompt convention. The verifier binds them to the audited tool set. `reviewer` retains the current `watchdog_diff` and native `contact_supervisor` surfaces; `scout` retains `contact_supervisor`.
+`scout`, `reviewer`, `oracle`, `how-analyst`, and `comment-sicko` use explicit allowlists because their analysis capability is intentionally narrower. Those allowlists are a Pi capability ceiling, not a prompt convention. The verifier binds them to the audited tool set. `reviewer` retains the current `watchdog_diff` and native `contact_supervisor` surfaces; `scout` retains `contact_supervisor`. The pinned pstack Interrogate and arena judges use `reviewer`, and How uses `how-analyst`, so their read-only boundaries apply.
 
 Pi-Lens 4.3.0 folds the old standalone `lsp_diagnostics` tool into `lens_diagnostics` with `source=lsp`. The explicit analysis roles use the current read-oriented surfaces `project_report`, `module_report`, `read_symbol`, `read_enclosing`, `symbol_search`, and `ast_grep_search`. `ast_grep_search` is situational, so `pi_lens_activate_tools` is allowlisted as its loader. Pi filters the registered tool registry through the role allowlist, so the loader cannot add a tool that is outside that ceiling.
 

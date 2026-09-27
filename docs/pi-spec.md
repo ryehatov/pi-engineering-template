@@ -64,6 +64,7 @@ This document defines repository and harness invariants. It does not define a se
 13. The bounded analysis profile MUST NOT grant mutation-capable Pi-Lens surfaces such as `ast_grep_replace`, `lens_diagnostic_mark`, or the mixed read/write `lsp_navigation` tool merely to obtain their read-only operations.
 14. Roles that intentionally accept the package-owned `pi-subagents` tool surface SHOULD omit a local tool override so new required package tools are not shadowed.
 15. `scout`, `reviewer`, and `oracle` MUST NOT receive a shell or source-mutation tool in their explicit read-oriented allowlists.
+16. Pstack Interrogate and arena judges MUST run through the read-only `reviewer` profile; How MUST use the read-only `how-analyst` profile; `comment-sicko` MUST NOT receive a shell.
 
 ## 7. SoL-Pi invariants
 

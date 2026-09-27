@@ -26,8 +26,20 @@ const required = [
   "pstack-models.json",
   "sol-pi.json",
   "web-search.json",
+  "pi-goal.json",
   "pi-btw.json",
   "pi-fff.json",
+  "scripts/patch-pstack.mjs",
+  "agents/how-analyst.md",
+  "skills/LICENSE.mattpocock",
+  "skills/grill-with-docs/SKILL.md",
+  "skills/domain-modeling/SKILL.md",
+  "skills/domain-modeling/CONTEXT-FORMAT.md",
+  "skills/domain-modeling/ADR-FORMAT.md",
+  "skills/grilling/SKILL.md",
+  "skills/retro/SKILL.md",
+  "skills/writing-for-agents/SKILL.md",
+  "skills/writing-for-agents/SKILL-MECHANICS.md",
 ];
 for (const file of required) ok(exists(file), `${file}: missing`);
 ok(!exists("AGENTS.md"), "AGENTS.md: template-level global agent prompt must remain absent");
@@ -47,8 +59,8 @@ const verifiedPiPackageVersions = new Map([
   ["PI_CONTEXT_VIEW_VERSION", "0.6.0"],
   ["PI_POWERLINE_FOOTER_VERSION", "0.18.0"],
   ["PI_REWIND_HOOK_VERSION", "1.8.6"],
-  ["PLANNOTATOR_VERSION", "0.27.21"],
   ["PI_BTW_VERSION", "0.61.1"],
+  ["PI_GOAL_VERSION", "0.54.8"],
 ]);
 const verifiedSolPiCommit = "1559b5cb12c72da4a485bc50fe326586b216fb19";
 const verifiedPstackVersion = verifiedPiPackageVersions.get("PI_PSTACK_VERSION");
@@ -71,6 +83,8 @@ const verifiedAgentTools = {
     "read_symbol", "read_enclosing", "symbol_search",
     "pi_lens_activate_tools", "ast_grep_search",
   ],
+  "comment-sicko": ["read", "grep", "find", "ls"],
+  "how-analyst": ["read", "grep", "find", "ls"],
 };
 const retiredSubagentTools = new Set(["lsp_diagnostics"]);
 const verifiedPstackRoles = new Set([
@@ -108,12 +122,14 @@ const sub = json("subagent-config.json");
 const pstack = json("pstack-models.json");
 const sol = json("sol-pi.json");
 const web = json("web-search.json");
+const goal = json("pi-goal.json");
 const btw = json("pi-btw.json");
 const fff = json("pi-fff.json");
 
 ok(typeof settings.defaultProvider === "string" && settings.defaultProvider.length > 0, "settings.json: defaultProvider missing");
 ok(typeof settings.defaultModel === "string" && settings.defaultModel.length > 0, "settings.json: defaultModel missing");
 ok(thinkingLevels.has(settings.defaultThinkingLevel), "settings.json: invalid defaultThinkingLevel");
+ok(settings.defaultThinkingLevel === "low", "settings.json: parent orchestrator must use low thinking");
 ok(settings.defaultProjectTrust === "never", "settings.json: defaultProjectTrust must remain never");
 
 const subagents = settings.subagents || {};
@@ -136,6 +152,8 @@ for (const name of ["worker", "poteto-agent"]) {
     ok(scoped.includes(subagents.agentOverrides?.[name]?.model), `settings.json: ${name} default is outside its writer scope`);
   }
 }
+const howScope = scope.agents?.["how-analyst"]?.allow;
+ok(Array.isArray(howScope) && howScope.join(",") === "openai-codex/gpt-6-luna,openai-codex/gpt-6-astra", "settings.json: how-analyst must be scoped to the How models");
 
 const providers = models.providers || {};
 const commandCode = providers["commandcode-goat"];
@@ -266,6 +284,15 @@ if (Array.isArray(runners) && Array.isArray(judges)) {
   const runnerFamilies = new Set(runners.map(family));
   ok(judges.every((selector) => !runnerFamilies.has(family(selector))), "pstack-models.json: arena judge must be independent of every runner family");
 }
+for (const role of ["arena cross-judge pool", "interrogate reviewers"]) {
+  const selectors = pstack.roles?.[role];
+  const reviewerAllow = new Set(scope.agents?.reviewer?.allow ?? allow);
+  ok(Array.isArray(selectors) && selectors.every((raw) => reviewerAllow.has(parseSelector(raw)?.model)), `pstack-models.json: ${role} must use reviewer-scoped models`);
+}
+for (const role of ["how explorer", "how explainer"]) {
+  ok(howScope?.includes(parseSelector(pstack.roles?.[role])?.model), `pstack-models.json: ${role} must use a how-analyst model`);
+}
+ok(/^name: how-analyst$/m.test(text("agents/how-analyst.md")) && /^tools: read, grep, find, ls$/m.test(text("agents/how-analyst.md")), "agents/how-analyst.md: read-only profile mismatch");
 
 ok(sol.version === 1, "sol-pi.json: unsupported version");
 ok(sol.actionFusion === true, "sol-pi.json: actionFusion must remain enabled");
@@ -284,6 +311,8 @@ ok(web.searxngBaseUrl === undefined && web.ssrf?.allowRanges === undefined, "web
 ok(Array.isArray(web.fetchContent?.domainPolicy?.deny) && web.fetchContent.domainPolicy.deny.includes("127.0.0.1"), "web-search.json: fetch_content must deny loopback");
 
 checkModel(btw.model, btw.thinkingLevel, "pi-btw.json");
+ok(btw.model === "openai-codex/gpt-6-astra" && btw.thinkingLevel === "high", "pi-btw.json: side questions must use Astra high");
+ok(goal.continuationLimits?.automaticTurns === 64 && goal.continuationLimits?.noProgressTurns === 3 && goal.rpc?.enabled === false, "pi-goal.json: bounded autonomous continuation required");
 ok(fff.mode === "override", "pi-fff.json: mode must remain override");
 
 for (const [name, value] of [
@@ -334,14 +363,23 @@ for (const needle of [
   "/home/agent/.pi/agent/web-search.json",
   "COPY --chown=agent:agent sol-pi.json",
   "/home/agent/.pi/agent/sol-pi.json",
+  "COPY --chown=agent:agent pi-goal.json",
+  "/home/agent/.pi/agent/pi-goal.json",
+  "COPY --chown=agent:agent skills/",
+  "COPY --chown=agent:agent agents/",
+  "scripts/patch-pstack.mjs",
+  "node /tmp/patch-pstack.mjs",
   "npm:pi-subagents@${PI_SUBAGENTS_VERSION}",
   "npm:@zenspc/pi-pstack@${PI_PSTACK_VERSION}",
+  "npm:@narumitw/pi-goal@${PI_GOAL_VERSION}",
   "git:github.com/NVlabs/SoL-Pi@${SOL_PI_COMMIT}",
 ]) {
   ok(docker.includes(needle), `Dockerfile: required runtime wiring missing (${needle})`);
 }
 ok(!docker.includes("AGENTS.md"), "Dockerfile: template-level AGENTS.md must not be copied");
+ok(!/plannotator/i.test(docker), "Dockerfile: Plannotator must not be installed or configured");
 ok(!docker.includes("PI_SUBAGENTS_LLM_INTENT_ARBITER"), "Dockerfile: removed pi-subagents LLM intent arbiter must not be configured");
+ok(!text("skills/grill-with-docs/SKILL.md").includes("Call the Skill tool") && !text("skills/retro/SKILL.md").includes("Call the Skill tool"), "skills: Pi cannot invoke a Skill tool");
 for (const source of [docker, text("settings.json"), text("models.json"), text("pstack-models.json"), text("subagent-config.json"), text("sol-pi.json")]) {
   for (const legacy of ["opencode-go", "pi-commandcode-provider", "/alpha/generate", "deepseek/deepseek-v4-flash", "deepseek-v4.1-flash-beta"]) {
     ok(!source.includes(legacy), `retired provider/model route remains (${legacy})`);

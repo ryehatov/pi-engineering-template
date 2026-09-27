@@ -7,9 +7,10 @@ The `pstack` branch keeps engineering policy in the runtime mechanisms that can 
 ## Architecture
 
 - **Pi** is the interactive parent runtime and owns the native session, model registry, and compaction primitives.
-- **SoL-Pi** optimizes parent-session tool/result/context handling: Action Fusion, ObservationPack, Evidence-Preserving Reducer, and Online Context Compact.
+- **SoL-Pi** optimizes parent-session tool/result/context handling with Action Fusion and ObservationPack.
 - **pi-subagents** owns delegated execution, isolation, tool capability, model scope, concurrency, and authority controls.
 - **@zenspc/pi-pstack** supplies engineering playbooks, Poteto Mode, review topology, and role-oriented model selection.
+- **pi-goal** supplies bounded, session-scoped continuation for autonomous work.
 - **Ponytail** supplies YAGNI-first implementation guidance when active.
 - Supporting extensions provide capabilities such as structural search, diagnostics, web access, context inspection, and UI.
 
@@ -19,7 +20,8 @@ The executable sources of truth are:
 - `models.json` for the Command Code provider transport and model metadata;
 - `subagent-config.json` for delegated execution and authority policy;
 - `pstack-models.json` for pstack role routing;
-- `sol-pi.json` for SoL-Pi mechanism enablement and cache economics.
+- `sol-pi.json` for SoL-Pi mechanism enablement and cache economics;
+- `pi-goal.json` for autonomous continuation limits.
 
 `docs/model-policy.md` explains the routing rationale. It is descriptive, not an enforcement surface.
 
@@ -56,5 +58,7 @@ pstack state
 ```
 
 After activation, pstack supplies the workflow context. SoL-Pi remains a runtime optimization layer rather than a second engineering workflow. The template does not duplicate Poteto Mode, Ponytail, or SoL-Pi behavior in a global agent prompt.
+
+For a checkable autonomous objective, start `/goal <objective>` after `/poteto-mode`.
 
 See `docs/operations.md` for authentication, smoke checks, upgrades, and failure handling. See `docs/pi-design.md` and `docs/pi-spec.md` for ownership boundaries and invariants.

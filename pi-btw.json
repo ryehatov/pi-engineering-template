@@ -1,4 +1,4 @@
 {
-  "model": "commandcode-goat/Qwen/Qwen3.8-Flash",
-  "thinkingLevel": "medium"
+  "model": "openai-codex/gpt-6-astra",
+  "thinkingLevel": "high"
 }

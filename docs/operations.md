@@ -11,6 +11,8 @@ pstack state
 
 This is operator state. Once Poteto Mode is active, pstack supplies its workflow context directly; no repository-global prompt is required to restate it. SoL-Pi is already loaded as a parent runtime optimization layer and does not require a separate workflow activation command.
 
+Use `/goal <checkable objective>` for a bounded autonomous run. The Poteto playbook supplies the exit predicate and verification; `/goal` supplies continuation and `goal_wait` for an external event.
+
 ## Runtime credentials
 
 ### OpenAI Codex
@@ -138,7 +140,7 @@ Inspect the resolved runtime mapping after a routing change:
 /subagents-models oracle
 ```
 
-The expected normal path is Luna for scout/researcher/worker/Poteto, GLM for reviewer, and Astra for oracle. Pstack's role table is a prompt hint, so inspect the actual launched model as well as the table.
+The expected normal path is Luna for scout/researcher/worker/Poteto, GLM for reviewer, and Astra for oracle and `how-analyst`; `/btw` uses Astra `high`. Pstack's role table is a prompt hint, so inspect the actual launched model as well as the table. Interrogate and arena judges use the read-only reviewer profile.
 
 SoL-Pi does not redefine these child roles. Ambient extension loading for delegated children remains a `pi-subagents` lifecycle/capability decision; do not widen child tools or isolation merely to force SoL-Pi into every child process.
 

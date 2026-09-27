@@ -5,10 +5,10 @@
     "bug-fix": "openai-codex/gpt-6-luna:max",
     "perf-issue": "openai-codex/gpt-6-luna:max",
     "hillclimb": "openai-codex/gpt-6-luna:max",
-    "judgment and prose": "commandcode-goat/Qwen/Qwen3.8-Flash:xhigh",
+    "judgment and prose": "openai-codex/gpt-6-astra:high",
     "hardest tasks": "openai-codex/gpt-6-astra:xhigh",
     "how explorer": "openai-codex/gpt-6-luna:high",
-    "how explainer": "commandcode-goat/Qwen/Qwen3.8-Flash:medium",
+    "how explainer": "openai-codex/gpt-6-astra:high",
     "why investigators": "openai-codex/gpt-6-luna:high",
     "why synthesizer": "openai-codex/gpt-6-astra:high",
     "reflect tooling": "commandcode-goat/z-ai/glm-5.3-flash:high",
@@ -22,7 +22,7 @@
       "commandcode-goat/Qwen/Qwen3.8-Flash:xhigh",
       "commandcode-goat/xiaomi/mimo-v2.6-pro"
     ],
-    "swarm workers": "openai-codex/gpt-6-luna:high",
+    "swarm workers": "openai-codex/gpt-6-luna:max",
     "architect runners": [
       "openai-codex/gpt-6-luna:max",
       "commandcode-goat/z-ai/glm-5.3-flash:max",
