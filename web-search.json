@@ -3,17 +3,15 @@
   "searchRouting": {
     "providers": [
       "openai",
-      "searxng"
+      "exa"
     ],
     "useCurrentModel": true,
     "fallbackOn": [
-      "unsupported"
-    ]
-  },
-  "searxngBaseUrl": "http://127.0.0.1:8080",
-  "ssrf": {
-    "allowRanges": [
-      "127.0.0.1/32"
+      "unsupported",
+      "transient",
+      "quota",
+      "network",
+      "invalid-response"
     ]
   },
   "fetchContent": {

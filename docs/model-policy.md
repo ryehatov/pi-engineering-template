@@ -1,95 +1,41 @@
 # Model Policy
 
-## Status
+`settings.json` controls the parent and generic agents; `pstack-models.json` supplies pstack's role hints. Pi-subagents' strict `modelScope` is the executable boundary. The pstack role table is injected into the parent prompt, so the parent must still choose the indicated model and check the resulting work.
 
-This document explains the current model portfolio and its rationale. It is descriptive. The executable sources of truth are `settings.json` and `pstack-models.json`; `models.json` defines the custom Command Code models and their supported thinking levels.
+## Assignment
 
-If this document and executable configuration diverge, the configuration controls runtime behavior and this document should be corrected.
-
-## Portfolio
-
-The current profile uses four models across two provider paths:
-
-- `commandcode-goat/deepseek/deepseek-v4.1-flash`
-- `commandcode-goat/z-ai/glm-5.3-flash`
-- `commandcode-goat/Qwen/Qwen3.8-Flash`
-- `openai-codex/gpt-6-astra`
-
-The split is task-oriented rather than leaderboard-oriented.
-
-| Function | Current model | Rationale |
+| Work | Route | Reason |
 | --- | --- | --- |
-| Coordinate | GPT-6 Astra | low-effort parent orchestration after the task method and plan are established by pstack/Poteto |
-| Execute | DeepSeek V4.1 Flash | fast, low-cost implementation, debugging, research, and delegated execution |
-| Verify engineering work | GLM 5.3 Flash | independent code and plan review that is not correlated with the primary DeepSeek execution path |
-| Judge and synthesize | Qwen 3.8 Flash | intent, prose, synthesis, ambiguity detection, and a second independent review family |
-| Escalate | GPT-6 Astra | bounded `medium`-effort oracle calls and high-stakes panel participation |
+| Parent coordination | Codex GPT-6 Astra `high` | Resolve design and verification choices with the available Pro allowance. |
+| Routine implementation and Poteto workers | Codex GPT-6 Luna `max` | Reliable tool use and faithful execution; the Codex Pro subscription is already available. |
+| Reconnaissance and research | Codex GPT-6 Luna `low` / `high` | Spend less reasoning on scans; reserve deeper effort for evidence gathering. |
+| Hardest decisions and oracle | Codex GPT-6 Astra `xhigh` | Explicit escalation instead of using the strongest effort on every child. |
+| Ordinary independent review | GOAT GLM-5.3 Flash `high` | A separate model family and provider path at a low token rate. |
+| Additional adversarial review | GOAT MiMo V2.6 Pro | A different family for pstack cross-judge and interrogate panels; review output is evidence for the parent, never the sole release gate. |
+| Prose and a third review perspective | GOAT Qwen 3.8 Flash `medium` / `xhigh` | Separate synthesis and ambiguity checks. |
 
-The profile uses Command Code's explicit `deepseek/deepseek-v4.1-flash` model id rather than the older `deepseek/deepseek-v4-flash` latest alias or the retired beta id.
+Pstack's arena *runners* use Luna, GLM, and Astra; its cross-judge pool uses Qwen and MiMo, outside every arena runner's model family. Architect runners also include Qwen. Interrogate reviewers use GLM, Qwen, and MiMo. When any reviewer also authored work, the parent must exclude that candidate from judging its own work. MiMo appears only in review selectors and is excluded from generic writers because [multi-turn tool-loop reports](https://github.com/XiaomiMiMo/MiMo/issues/98) warrant a bounded, read-oriented trial before autonomous implementation.
 
-`Qwen3.8-Flash` is the deployed model corresponding to Qwen3.8-Flash-Next in this portfolio.
+The generic `worker` and `poteto-agent` have additional model scopes that exclude MiMo even if a per-run override requests it. MiMo's Command Code ID is `xiaomi/mimo-v2.6-pro`. No supported numeric effort map is published for this transport. Its selectors omit `:thinking`, and the model-level `supportsReasoningEffort: false` prevents Pi from transmitting an unsupported `reasoning_effort` value. Its configured output cap is 32,768.
 
-The interactive Pi parent uses GPT-6 Astra at `low`. This keeps orchestration capable but cheap when pstack/Poteto has already made the workflow and verification topology explicit. Normal implementation and delegated execution remain on DeepSeek. Pstack uses `max` only for task families that benefit from a deeper execution pass. GPT-6 Astra oracle and panel routes remain capped at `medium`.
+## Cost and availability
 
-## Current pstack assignments
+GOAT's published rates, in USD per million tokens, are useful for comparing routes. The `cost` fields in `models.json` let Pi estimate child spend; `cacheWrite` uses the uncached input rate as a conservative estimate where Command Code publishes no separate write rate. Subscription credit allowances and real usage are determined by Command Code, not these estimates.
 
-`pstack-models.json` contains the authoritative selectors. At the current revision, the role families are arranged as follows:
+| GOAT model | Input | Output | Cache read | Use here |
+| --- | ---: | ---: | ---: | --- |
+| GLM-5.3 Flash | 0.15 | 0.50 | 0.03 | Default review |
+| MiMo V2.6 Pro | 0.435 | 0.87 | 0.0036 | Selected second review |
+| Qwen 3.8 Flash | 0.16 | 0.47 | 0.016 | Prose and diverse judgment |
 
-- feature/refactoring uses DeepSeek at `high`;
-- bug-fix, performance, and hillclimb execution use DeepSeek at `max`;
-- exploration, investigation, and swarm execution use DeepSeek at `high`;
-- tooling reflection and the primary engineering critic use GLM;
-- explanation, judgment, prose, synthesis, and a second independent review family use Qwen;
-- the hardest-task route uses GPT-6 Astra at `medium`;
-- architecture and arena generation include all four families;
-- cross-judge and interrogate pools exclude DeepSeek where they evaluate DeepSeek-led work, so review diversity is real rather than self-review by the same family.
+Rates and model IDs: [Command Code model catalog](https://commandcode.ai/models) and [GOAT plan](https://commandcode.ai/docs/plans/goat). GOAT's model-specific credit allowances differ; do not equate a displayed Pi dollar estimate with an incremental invoice or assume that the same subscription budget stretches equally across models. Codex models use the existing $200 Pro plan; the [Pi Codex catalog](https://pi.dev/models/openai-codex/gpt-6-luna) reports a 272,000-token window for Luna and [Astra](https://pi.dev/models/openai-codex/gpt-6-astra). Pro usage is bounded by plan limits even when no per-token API bill is issued.
 
-The exact thinking level belongs to the selector in `pstack-models.json`, not to this prose.
+DeepSeek V4.1 Flash is not routed or registered in this profile. [Command Code issue #909](https://github.com/CommandCodeAI/command-code/issues/909) reports missing `tool_calls` since September 22; in addition, [pi-subagents #2483](https://github.com/nicobailon/pi-subagents/issues/2483) reproduces invalid loader arguments with the released 0.71.0. The latter has an unreleased upstream fix; the former needs a successful multi-turn tool-call smoke before this model can resume agent work. MiMo V2.6 Flash is cheaper than Pro but new and unqualified for this workload. Meta's discounted Muse Spark Contributor permits training on supplied prompts and responses, so it is not a default for source code. These choices favor stable completed work over nominal price alone.
 
-## Generic subagents
+## Transport and review discipline
 
-`settings.json` is authoritative for generic subagent defaults and named overrides.
+GOAT uses Pi's OpenAI-compatible `commandcode-goat` provider and a runtime `COMMAND_CODE_API_KEY`; Codex uses `openai-codex`. The GOAT profile does not force `x-cmd-zdr`, so data handling follows the active provider terms. Only one writer owns a given diff; independent judges inspect its tests and evidence. Pstack's models are guidance rather than an authorization control. The parent resolves conflicting reviews and runs the project's actual validation before accepting a result.
 
-- `scout`: DeepSeek `low` for local reconnaissance.
-- `researcher`: DeepSeek `high` for evidence collection.
-- `worker`: DeepSeek `high` as the single normal writer.
-- `reviewer`: GLM `high` for independent verification.
-- `oracle`: GPT-6 Astra `medium` for bounded capability escalation.
-- `poteto-agent`: DeepSeek `high` for delegated pstack execution.
-- `comment-sicko`: Qwen `medium` for comment and prose judgment.
+`pi-subagents` 0.71.0 lazily loads its full delegation tool to reduce unrelated parent prompts. Keep DeepSeek off supervising paths while its released loader and tool-call issues persist. Fresh child contexts and bounded parallelism remain the default. Pi's native compaction preserves recent history and structured summaries; SoL-Pi ObservationPack preserves exact recall of packed observations. Adding Jev's automatic orchestration or compaction would duplicate pstack/Poteto and Pi's lifecycle without demonstrated improvement; see [Pi compaction](https://pi.dev/docs/latest/compaction), [Jev's orchestration](https://github.com/TheoOliveira/pi-jev/blob/main/src/orchestrator.ts), [Jev's compaction](https://github.com/TheoOliveira/pi-jev/blob/main/src/compact.ts), and the [session replay evaluation](https://github.com/iefnaf/pi-jev/blob/main/eval/README.md).
 
-Pi-subagents 0.70.1 no longer supports same-launch `fallbackModels` or persistent model exclusions. Each generic role therefore has one configured model. Availability recovery requires a later explicit launch or a higher-level pstack workflow decision; completed or partially executing writer work is not replayed automatically on another model. Version 0.70.1 also applies configured model, provider, and thinking preferences to runtime-registered agents, so pstack-owned agents honor the committed overrides.
-
-The 0.70.1 pin is coupled to Pi 0.87.0. Its watchdog imports `createInitialSystemMessage` and `toToolDeclaration` from `@earendil-works/pi-ai`; Pi 0.86.1 does not export them (`nicobailon/pi-subagents#2377`), while Pi 0.87.0 does. Do not downgrade Pi independently. Re-run the Docker and delegated-review smoke after either pin changes.
-
-The oracle is a fresh capability escalation that protects decision consistency. It is not a default executor and has no weaker alternate model configured that could silently change the meaning of an oracle call.
-
-Tool capability is enforced by configuration, not by asking models to avoid unavailable operations. `researcher` intentionally has no local tool override, so the package-owned research surface, including `source_check`, is not shadowed. `worker` and `poteto-agent` inherit ambient tools. The narrower `scout`, `reviewer`, and `oracle` allowlists are version-checked by the static verifier. Their Pi-Lens diagnostics entry is `lens_diagnostics`; the retired `lsp_diagnostics` name is not configured. They also receive the current FFF `multi_grep`, Pi-Lens `project_report`, and dynamically loaded read-only structural search without receiving mutation-capable Pi-Lens tools.
-
-## Command Code transport and privacy
-
-GPT-6 Astra uses `openai-codex`. The Flash models use the repository-defined `commandcode-goat` provider.
-
-The Command Code transport configuration lives in `models.json`. The default profile intentionally does not send `x-cmd-zdr`. Enforced ZDR can reject a model with `422 cmd_zdr_no_providers` when no ZDR-capable upstream is available, which conflicts with the goal of keeping DeepSeek and GLM usable.
-
-Without enforced ZDR, this template does not guarantee zero retention. Command Code states that it does not train foundation models on prompts or source code and enables upstream no-training settings where available, while AI request content may be retained for up to 30 days and some upstream terms can differ. Treat these as provider policy, not as an invariant enforced by this repository.
-
-DeepSeek is behind the Command Code proxy URL, so Pi cannot infer DeepSeek-specific OpenAI-completions compatibility from the provider id or URL. `models.json` therefore sets DeepSeek's `thinkingFormat` and assistant reasoning-history requirement explicitly at the model level.
-
-## Why the portfolio is small
-
-Each permanent model should own a materially different task shape. Adding another generalist increases routing ambiguity, maintenance, and fan-out cost without necessarily closing a capability gap.
-
-A candidate should therefore replace an existing role owner or demonstrate an uncovered role. Prefer current provider documentation and public benchmark results that identify the exact model and reasoning-effort setting. Do not keep a weaker model only to increase the model count when existing panels already provide independent families.
-
-## Changing the portfolio
-
-For a model-policy change:
-
-1. change the executable assignment in `settings.json` and/or `pstack-models.json`;
-2. change `models.json` only when the custom provider catalog, transport behavior, or thinking metadata changes;
-3. update this rationale if the task ownership changes;
-4. run `node scripts/verify-template.mjs`;
-5. build and smoke the affected provider path when release qualification requires it.
-
-No `AGENTS.md` update is required because model routing is not encoded in a global agent prompt.
+To change a route, edit its executable JSON first, update this rationale, run `node scripts/verify-template.mjs`, and qualify affected models with the live checks in `docs/operations.md`. Do not expand model scope as a response to a provider outage; choose a later explicit launch after inspecting the failure.

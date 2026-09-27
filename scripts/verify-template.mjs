@@ -34,26 +34,27 @@ ok(!exists("AGENTS.md"), "AGENTS.md: template-level global agent prompt must rem
 
 const thinkingLevels = new Set(["off", "minimal", "low", "medium", "high", "xhigh", "max"]);
 // Compatibility contract for the audited Pi package set. Bumps require an upstream contract review.
-// pi-subagents 0.70.1 uses Pi transcript helpers exported by Pi 0.87.0; the audited pins are coupled.
 const verifiedPiPackageVersions = new Map([
-  ["PI_VERSION", "0.87.0"],
-  ["PI_ACCOUNTS_VERSION", "0.52.0"],
-  ["PI_SUBAGENTS_VERSION", "0.70.1"],
+  ["PI_VERSION", "0.87.1"],
+  ["BUN_VERSION", "1.4.2"],
+  ["PI_ACCOUNTS_VERSION", "0.52.2"],
+  ["PI_SUBAGENTS_VERSION", "0.71.0"],
   ["PI_PSTACK_VERSION", "0.6.0"],
   ["PONYTAIL_VERSION", "4.10.0"],
-  ["PI_WEB_ACCESS_VERSION", "0.30.0"],
-  ["PI_LENS_VERSION", "4.2.1"],
+  ["PI_WEB_ACCESS_VERSION", "0.31.0"],
+  ["PI_LENS_VERSION", "4.3.0"],
   ["PI_FFF_VERSION", "0.11.0"],
   ["PI_CONTEXT_VIEW_VERSION", "0.6.0"],
-  ["PI_POWERLINE_FOOTER_VERSION", "0.17.1"],
+  ["PI_POWERLINE_FOOTER_VERSION", "0.18.0"],
   ["PI_REWIND_HOOK_VERSION", "1.8.6"],
-  ["PLANNOTATOR_VERSION", "0.27.16"],
-  ["PI_BTW_VERSION", "0.60.0"],
+  ["PLANNOTATOR_VERSION", "0.27.21"],
+  ["PI_BTW_VERSION", "0.61.1"],
 ]);
+const verifiedSolPiCommit = "1559b5cb12c72da4a485bc50fe326586b216fb19";
 const verifiedPstackVersion = verifiedPiPackageVersions.get("PI_PSTACK_VERSION");
 const verifiedAgentTools = {
   scout: [
-    "read", "grep", "find", "ls", "bash", "multi_grep",
+    "read", "grep", "find", "ls", "multi_grep",
     "lens_diagnostics", "module_report", "project_report",
     "read_symbol", "read_enclosing", "symbol_search",
     "pi_lens_activate_tools", "ast_grep_search", "contact_supervisor",
@@ -65,7 +66,7 @@ const verifiedAgentTools = {
     "pi_lens_activate_tools", "ast_grep_search", "contact_supervisor",
   ],
   oracle: [
-    "read", "grep", "find", "ls", "bash", "multi_grep",
+    "read", "grep", "find", "ls", "multi_grep",
     "lens_diagnostics", "module_report", "project_report",
     "read_symbol", "read_enclosing", "symbol_search",
     "pi_lens_activate_tools", "ast_grep_search",
@@ -127,6 +128,14 @@ for (const model of allow.filter((value) => value !== "inherit")) {
 const allowedModels = new Set(allow.filter((value) => value !== "inherit"));
 const parentModel = `${settings.defaultProvider}/${settings.defaultModel}`;
 ok(allowedModels.has(parentModel), `settings.json: parent model is outside strict modelScope (${parentModel})`);
+for (const name of ["worker", "poteto-agent"]) {
+  const scoped = scope.agents?.[name]?.allow;
+  ok(Array.isArray(scoped) && scoped.length > 0, `settings.json: ${name} needs a writer model scope`);
+  if (Array.isArray(scoped)) {
+    ok(scoped.every((model) => allowedModels.has(model) && model !== "commandcode-goat/xiaomi/mimo-v2.6-pro"), `settings.json: ${name} may only use qualified writer models`);
+    ok(scoped.includes(subagents.agentOverrides?.[name]?.model), `settings.json: ${name} default is outside its writer scope`);
+  }
+}
 
 const providers = models.providers || {};
 const commandCode = providers["commandcode-goat"];
@@ -140,6 +149,7 @@ if (commandCode) {
 }
 
 const customThinking = new Map();
+const noEffort = new Set();
 for (const [providerName, provider] of Object.entries(providers)) {
   const catalog = Array.isArray(provider?.models) ? provider.models : [];
   ok(new Set(catalog.map((model) => model.id)).size === catalog.length, `models.json: duplicate model ids in ${providerName}`);
@@ -150,6 +160,15 @@ for (const [providerName, provider] of Object.entries(providers)) {
     ok(Array.isArray(model.input) && model.input.length > 0, `models.json: input capability missing (${qualified})`);
     ok(Number.isFinite(model.contextWindow) && model.contextWindow > 0, `models.json: invalid contextWindow (${qualified})`);
     ok(Number.isFinite(model.maxTokens) && model.maxTokens > 0, `models.json: invalid maxTokens (${qualified})`);
+    if (model.compat?.supportsReasoningEffort === false) {
+      noEffort.add(qualified);
+      ok(model.thinkingLevelMap === undefined, `models.json: unverified effort map (${qualified})`);
+    }
+    if (model.cost) {
+      for (const key of ["input", "output", "cacheRead", "cacheWrite"]) {
+        ok(Number.isFinite(model.cost[key]) && model.cost[key] >= 0, `models.json: invalid cost.${key} (${qualified})`);
+      }
+    }
 
     const map = model.thinkingLevelMap;
     if (map && typeof map === "object") {
@@ -176,6 +195,7 @@ const checkModel = (model, thinking, label) => {
   ok(typeof model === "string" && allowedModels.has(model), `${label}: model outside strict modelScope (${model})`);
   if (thinking == null) return;
   ok(thinkingLevels.has(thinking), `${label}: invalid thinking level (${thinking})`);
+  ok(!noEffort.has(model), `${label}: model has no verified effort mapping (${model}:${thinking})`);
   const supported = customThinking.get(model);
   if (supported) ok(supported.has(thinking), `${label}: unsupported thinking level (${model}:${thinking})`);
 };
@@ -227,9 +247,24 @@ for (const [role, raw] of Object.entries(pstack.roles || {})) {
   for (const rawSelector of selectors) {
     const parsed = parseSelector(rawSelector);
     ok(parsed !== null, `pstack-models.json: invalid selector (${role})`);
-    ok(parsed?.thinking !== null, `pstack-models.json: selector must include thinking (${rawSelector})`);
+    ok(parsed?.thinking !== null || noEffort.has(parsed?.model), `pstack-models.json: selector must include a supported thinking level (${rawSelector})`);
     if (parsed) checkModel(parsed.model, parsed.thinking, `pstack-models.json: ${role}`);
+    if (parsed?.model === "commandcode-goat/xiaomi/mimo-v2.6-pro") {
+      ok(["arena cross-judge pool", "interrogate reviewers"].includes(role), `pstack-models.json: MiMo must remain a reviewer (${role})`);
+    }
   }
+}
+const family = (selector) => {
+  const model = parseSelector(selector)?.model || "";
+  const parts = model.split("/");
+  return (parts[0] === "commandcode-goat" ? parts[1] : parts[0]).toLowerCase();
+};
+const runners = pstack.roles?.["arena runners"];
+const judges = pstack.roles?.["arena cross-judge pool"];
+ok(Array.isArray(runners) && Array.isArray(judges), "pstack-models.json: arena runners and judges must be pools");
+if (Array.isArray(runners) && Array.isArray(judges)) {
+  const runnerFamilies = new Set(runners.map(family));
+  ok(judges.every((selector) => !runnerFamilies.has(family(selector))), "pstack-models.json: arena judge must be independent of every runner family");
 }
 
 ok(sol.version === 1, "sol-pi.json: unsupported version");
@@ -242,12 +277,11 @@ ok(sol.evidencePreservingReducerModel === undefined, "sol-pi.json: EPR reducer m
 ok(sol.cacheWriteReadRatio === 12.5, "sol-pi.json: cacheWriteReadRatio must remain 12.5");
 
 ok(web.workflow === "none", "web-search.json: workflow must remain none");
-ok(web.searxngBaseUrl === "http://127.0.0.1:8080", "web-search.json: SearXNG endpoint mismatch");
-ok(Array.isArray(web.searchRouting?.providers) && web.searchRouting.providers.join(",") === "openai,searxng", "web-search.json: search routing must prefer current-model OpenAI then SearXNG");
+ok(Array.isArray(web.searchRouting?.providers) && web.searchRouting.providers.join(",") === "openai,exa", "web-search.json: search routing must prefer current-model OpenAI then Exa");
 ok(web.searchRouting?.useCurrentModel === true, "web-search.json: OpenAI routing must use the current model");
-ok(Array.isArray(web.searchRouting?.fallbackOn) && web.searchRouting.fallbackOn.join(",") === "unsupported", "web-search.json: OpenAI search must only fall back when unsupported");
-ok(Array.isArray(web.ssrf?.allowRanges) && web.ssrf.allowRanges.join(",") === "127.0.0.1/32", "web-search.json: SearXNG loopback exception must remain host-only");
-ok(Array.isArray(web.fetchContent?.domainPolicy?.deny) && web.fetchContent.domainPolicy.deny.includes("127.0.0.1"), "web-search.json: fetch_content must deny the SearXNG loopback host");
+ok(Array.isArray(web.searchRouting?.fallbackOn) && web.searchRouting.fallbackOn.join(",") === "unsupported,transient,quota,network,invalid-response", "web-search.json: unsupported or failed OpenAI search must fall back to Exa");
+ok(web.searxngBaseUrl === undefined && web.ssrf?.allowRanges === undefined, "web-search.json: no unprovisioned local search service or loopback exception");
+ok(Array.isArray(web.fetchContent?.domainPolicy?.deny) && web.fetchContent.domainPolicy.deny.includes("127.0.0.1"), "web-search.json: fetch_content must deny loopback");
 
 checkModel(btw.model, btw.thinkingLevel, "pi-btw.json");
 ok(fff.mode === "override", "pi-fff.json: mode must remain override");
@@ -270,7 +304,7 @@ ok(
 );
 ok(
   sub.completionGuard === undefined,
-  "subagent-config.json: completionGuard was removed by pi-subagents 0.70.1",
+  "subagent-config.json: completionGuard was removed by pi-subagents 0.70.1+",
 );
 ok(sub.defaultSubagentContext === "fresh", "subagent-config.json: delegated context must remain fresh");
 ok(sub.missions?.enabled === false, "subagent-config.json: missions must remain disabled");
@@ -290,7 +324,7 @@ for (const [, name, value] of versionArgs) ok(value.length > 0, `Dockerfile: ${n
 for (const [name, expected] of verifiedPiPackageVersions) {
   ok(versionPins.get(name) === expected, `Dockerfile: ${name} must match audited version (${expected})`);
 }
-ok(/^ARG SOL_PI_COMMIT=[0-9a-f]{40}$/m.test(docker), "Dockerfile: SoL-Pi commit pin missing or mutable");
+ok(docker.includes(`ARG SOL_PI_COMMIT=${verifiedSolPiCommit}`), "Dockerfile: SoL-Pi commit must match audited pin");
 for (const needle of [
   "COPY --chown=agent:agent settings.json",
   "COPY --chown=agent:agent models.json",

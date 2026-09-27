@@ -15,7 +15,7 @@ This is operator state. Once Poteto Mode is active, pstack supplies its workflow
 
 ### OpenAI Codex
 
-The committed model route remains `openai-codex/gpt-6-astra`.
+The parent uses `openai-codex/gpt-6-astra`; routine children use `openai-codex/gpt-6-luna`.
 
 Pi account selection is owned by `@narumitw/pi-accounts`. Run `/accounts` to log in to and name the Codex accounts, for example `codex-a` and `codex-b`. Use **Set default account** for new sessions and **Switch ... account** for the current session. Account selection changes authentication identity only; it does not change the provider, model, role routing, model scope, or delegation policy.
 
@@ -51,7 +51,7 @@ Leave CodexBar's **External Codex OAuth sources** setting out of this integratio
 
 CodexBar already supports Pi session logs. If the host must inspect sessions written inside a Docker Sandbox, mount a host session directory into the sandbox and set `PI_CODING_AGENT_SESSION_DIR` for Pi. Run CodexBar with the same session directory in its own environment. This shares session data only; it does not share authentication state.
 
-Pi's named-account store remains sandbox-local. Reusing the same sandbox preserves it across stop/start. Removing the sandbox discards that local state. The template does not add a backup, token-copy, or restore layer around it.
+Pi's named-account store remains sandbox-local. For a disposable sandbox, persist `~/.pi/agent/sessions/`, `auth.json`, `pi-accounts.json`, and `trust.json` as separate mounts; mounting the whole agent directory would hide the image's pinned packages and configuration. Account switching is per session/default, not per child. Do not automatically consume a token reset ticket or move a failed child to another account.
 
 ### Command Code GOAT
 
@@ -63,7 +63,7 @@ export COMMAND_CODE_API_KEY='...'
 
 `models.json` references the variable; the Dockerfile never receives the secret as an `ARG` or committed `ENV` value.
 
-The committed provider does not force `x-cmd-zdr`. This avoids `422 cmd_zdr_no_providers` failures when DeepSeek, GLM, or another selected model has no ZDR-capable upstream with capacity. This also means the template does not guarantee zero retention. Use only data appropriate for the active Command Code and upstream-provider terms.
+The committed provider does not force `x-cmd-zdr`. This avoids `422 cmd_zdr_no_providers` failures when a selected model has no ZDR-capable upstream with capacity. This also means the template does not guarantee zero retention. Use only data appropriate for the active Command Code and upstream-provider terms.
 
 ## SoL-Pi profile
 
@@ -79,7 +79,7 @@ Run after changes to Docker, providers, models, subagents, pstack routing, SoL-P
 node scripts/verify-template.mjs
 ```
 
-The command requires no credentials and no network access. It validates executable configuration rather than natural-language prompt phrases. It validates the default Command Code provider, parent model qualification, strict model scope, supported thinking levels, the audited Pi/extension version matrix, current pi-subagents configuration semantics, explicit subagent tool contracts, and the committed SoL-Pi mechanism flags and immutable Git pin.
+The command requires no credentials and no network access. It validates executable configuration rather than natural-language prompt phrases. It validates the Command Code provider, parent model qualification, strict model scope, supported thinking levels, the audited Pi/extension version matrix, current pi-subagents configuration semantics, explicit subagent tool contracts, and the committed SoL-Pi mechanism flags and immutable Git pin.
 
 ## Docker verification
 
@@ -108,27 +108,26 @@ SoL-Pi session archives are operational data. Long-lived sandboxes should accoun
 After injecting the appropriate credentials, verify model registry resolution for routes affected by the change. For the current portfolio, a useful filter is:
 
 ```sh
-pi --list-models | grep -E 'openai-codex/gpt-6-astra|commandcode-goat/(deepseek/deepseek-v4.1-flash|z-ai/glm-5.3-flash|Qwen/Qwen3.8-Flash)'
+pi --list-models | grep -E 'openai-codex/gpt-6-(astra|luna)|commandcode-goat/(z-ai/glm-5.3-flash|xiaomi/mimo-v2.6-pro|Qwen/Qwen3.8-Flash)'
 ```
 
 Then make bounded one-shot calls for changed routes. Examples:
 
 ```sh
-pi -p --no-tools --model 'commandcode-goat/deepseek/deepseek-v4.1-flash:low' 'Reply with exactly: DEEPSEEK_LOW_OK'
-pi -p --no-tools --model 'commandcode-goat/deepseek/deepseek-v4.1-flash:high' 'Reply with exactly: DEEPSEEK_HIGH_OK'
-pi -p --no-tools --model 'commandcode-goat/deepseek/deepseek-v4.1-flash:max' 'Reply with exactly: DEEPSEEK_MAX_OK'
 pi -p --no-tools --model 'commandcode-goat/z-ai/glm-5.3-flash:high' 'Reply with exactly: GLM_OK'
+pi -p --no-tools --model 'commandcode-goat/xiaomi/mimo-v2.6-pro' 'Reply with exactly: MIMO_OK'
 pi -p --no-tools --model 'commandcode-goat/Qwen/Qwen3.8-Flash:xhigh' 'Reply with exactly: QWEN_OK'
-pi -p --no-tools --model 'openai-codex/gpt-6-astra:medium' 'Reply with exactly: ASTRA_OK'
+pi -p --no-tools --model 'openai-codex/gpt-6-luna:max' 'Reply with exactly: LUNA_OK'
+pi -p --no-tools --model 'openai-codex/gpt-6-astra:xhigh' 'Reply with exactly: ASTRA_OK'
 ```
 
-Also exercise one multi-turn, tool-using DeepSeek call. A no-tools smoke cannot verify preservation of DeepSeek reasoning state across assistant tool calls and tool results.
+Also exercise one multi-turn, tool-using Luna and GLM call. A no-tools smoke cannot verify their tool behavior.
 
 ## Subagent routing checks
 
-`pi-subagents` 0.70.1 supports role-level model/thinking overrides but no longer supports `fallbackModels` or persistent model exclusions. The committed profile assigns one model per generic role. Availability recovery requires a later explicit launch or a pstack-level workflow decision, so writer execution is not automatically replayed on another model. Runtime-registered agents now honor the configured model, provider, and thinking preferences.
+`pi-subagents` 0.71.0 supports role-level model/thinking overrides but not `fallbackModels` or persistent model exclusions. The committed profile assigns one model per generic role. Availability recovery requires a later explicit launch or a pstack-level workflow decision, so writer execution is not automatically replayed on another model.
 
-The 0.70.1 package pin is coupled to Pi 0.87.0. The watchdog imports `createInitialSystemMessage` and `toToolDeclaration` from `@earendil-works/pi-ai`; those exports are absent from Pi 0.86.1 but present in Pi 0.87.0. `nicobailon/pi-subagents#2377` therefore remains relevant to 0.86.1, not to this audited pair. Keep the Pi and pi-subagents pins synchronized and run the delegated-review smoke below after either changes.
+In 0.71.0 the full `subagent` tool is loaded through `subagents_enable({})` on demand, reducing the schema in turns without delegation. The released loader has a [DeepSeek-specific argument failure](https://github.com/nicobailon/pi-subagents/issues/2483); this profile does not route DeepSeek to a supervising role. Keep the Pi and pi-subagents pins synchronized and run the delegated-review smoke below after either changes.
 
 Inspect the resolved runtime mapping after a routing change:
 
@@ -139,7 +138,7 @@ Inspect the resolved runtime mapping after a routing change:
 /subagents-models oracle
 ```
 
-The expected normal path is DeepSeek for scout/researcher/worker, GLM for reviewer, and Astra for oracle.
+The expected normal path is Luna for scout/researcher/worker/Poteto, GLM for reviewer, and Astra for oracle. Pstack's role table is a prompt hint, so inspect the actual launched model as well as the table.
 
 SoL-Pi does not redefine these child roles. Ambient extension loading for delegated children remains a `pi-subagents` lifecycle/capability decision; do not widen child tools or isolation merely to force SoL-Pi into every child process.
 
@@ -157,7 +156,7 @@ A failure before the first model turn that reports an unavailable explicit tool 
 
 ## Pstack profile changes
 
-`pstack-models.json` is the executable pstack role map. `/setup-pstack` is an interactive generic mapper and is not the normal maintenance path for this committed profile.
+`pstack-models.json` is the committed pstack role map and is injected as guidance into the parent. `/setup-pstack` is an interactive generic mapper and is not the normal maintenance path for this profile. Pi-subagents' strict model scope is the enforceable model boundary.
 
 When changing routing:
 
@@ -172,7 +171,7 @@ The template intentionally has no model-routing copy in `AGENTS.md`.
 
 ## Provider failures
 
-Pi-subagents 0.70.1 does not use persistent model exclusions or same-launch `fallbackModels`. A provider or model failure should fail the launch clearly. Retry with a later explicit launch only after deciding whether rerouting preserves task semantics. The Pi 0.87.0 / pi-subagents 0.70.1 coupling is an SDK-compatibility constraint, not a provider-failover mechanism; do not change either pin as an availability workaround.
+Pi-subagents 0.71.0 does not use persistent model exclusions or same-launch `fallbackModels`. A provider or model failure should fail the launch clearly. Retry with a later explicit launch only after deciding whether rerouting preserves task semantics. Do not switch authentication accounts or consume a token reset ticket automatically.
 
 Keep strict `modelScope` as the portfolio boundary; do not widen it as an availability workaround. If launches still fail after the provider is healthy, inspect pi-subagents diagnostics and provider errors before changing routing.
 

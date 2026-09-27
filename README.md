@@ -31,7 +31,7 @@ Command Code uses Pi's native OpenAI-compatible provider path. Provide its API k
 export COMMAND_CODE_API_KEY='...'
 ```
 
-The committed profile does not force Command Code ZDR routing. This keeps models such as DeepSeek and GLM available when a ZDR-capable upstream is unavailable. Data handling therefore follows the active Command Code and upstream-provider terms. Do not treat this profile as a zero-retention boundary.
+The committed profile does not force Command Code ZDR routing. This keeps the selected GOAT review models available when a ZDR-capable upstream is unavailable. Data handling therefore follows the active Command Code and upstream-provider terms. Do not treat this profile as a zero-retention boundary.
 
 SoL-Pi EPR and Online Context Compact are disabled in the committed profile.
 

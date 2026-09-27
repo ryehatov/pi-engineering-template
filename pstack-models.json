@@ -1,40 +1,38 @@
 {
   "version": 1,
   "roles": {
-    "feature, refactoring": "commandcode-goat/deepseek/deepseek-v4.1-flash:high",
-    "bug-fix": "commandcode-goat/deepseek/deepseek-v4.1-flash:max",
-    "perf-issue": "commandcode-goat/deepseek/deepseek-v4.1-flash:max",
-    "hillclimb": "commandcode-goat/deepseek/deepseek-v4.1-flash:max",
+    "feature, refactoring": "openai-codex/gpt-6-luna:max",
+    "bug-fix": "openai-codex/gpt-6-luna:max",
+    "perf-issue": "openai-codex/gpt-6-luna:max",
+    "hillclimb": "openai-codex/gpt-6-luna:max",
     "judgment and prose": "commandcode-goat/Qwen/Qwen3.8-Flash:xhigh",
-    "hardest tasks": "openai-codex/gpt-6-astra:medium",
-    "how explorer": "commandcode-goat/deepseek/deepseek-v4.1-flash:high",
+    "hardest tasks": "openai-codex/gpt-6-astra:xhigh",
+    "how explorer": "openai-codex/gpt-6-luna:high",
     "how explainer": "commandcode-goat/Qwen/Qwen3.8-Flash:medium",
-    "why investigators": "commandcode-goat/deepseek/deepseek-v4.1-flash:high",
-    "why synthesizer": "commandcode-goat/Qwen/Qwen3.8-Flash:xhigh",
+    "why investigators": "openai-codex/gpt-6-luna:high",
+    "why synthesizer": "openai-codex/gpt-6-astra:high",
     "reflect tooling": "commandcode-goat/z-ai/glm-5.3-flash:high",
     "reflect judgment, divergent, synthesizer": "commandcode-goat/Qwen/Qwen3.8-Flash:xhigh",
     "arena runners": [
-      "commandcode-goat/deepseek/deepseek-v4.1-flash:max",
+      "openai-codex/gpt-6-luna:max",
       "commandcode-goat/z-ai/glm-5.3-flash:max",
-      "commandcode-goat/Qwen/Qwen3.8-Flash:xhigh",
-      "openai-codex/gpt-6-astra:medium"
+      "openai-codex/gpt-6-astra:xhigh"
     ],
     "arena cross-judge pool": [
-      "commandcode-goat/z-ai/glm-5.3-flash:max",
       "commandcode-goat/Qwen/Qwen3.8-Flash:xhigh",
-      "openai-codex/gpt-6-astra:medium"
+      "commandcode-goat/xiaomi/mimo-v2.6-pro"
     ],
-    "swarm workers": "commandcode-goat/deepseek/deepseek-v4.1-flash:high",
+    "swarm workers": "openai-codex/gpt-6-luna:high",
     "architect runners": [
-      "commandcode-goat/deepseek/deepseek-v4.1-flash:max",
+      "openai-codex/gpt-6-luna:max",
       "commandcode-goat/z-ai/glm-5.3-flash:max",
       "commandcode-goat/Qwen/Qwen3.8-Flash:xhigh",
-      "openai-codex/gpt-6-astra:medium"
+      "openai-codex/gpt-6-astra:xhigh"
     ],
     "interrogate reviewers": [
       "commandcode-goat/z-ai/glm-5.3-flash:max",
       "commandcode-goat/Qwen/Qwen3.8-Flash:xhigh",
-      "openai-codex/gpt-6-astra:medium"
+      "commandcode-goat/xiaomi/mimo-v2.6-pro"
     ]
   },
   "skillsEnabled": true

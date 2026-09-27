@@ -1,10 +1,10 @@
 {
   "defaultProvider": "openai-codex",
   "defaultModel": "gpt-6-astra",
-  "defaultThinkingLevel": "low",
+  "defaultThinkingLevel": "high",
   "defaultProjectTrust": "never",
   "subagents": {
-    "defaultModel": "commandcode-goat/deepseek/deepseek-v4.1-flash",
+    "defaultModel": "openai-codex/gpt-6-luna",
     "defaultThinking": "high",
     "maxThinking": "max",
     "modelScope": {
@@ -13,21 +13,39 @@
       "allow": [
         "inherit",
         "openai-codex/gpt-6-astra",
-        "commandcode-goat/deepseek/deepseek-v4.1-flash",
+        "openai-codex/gpt-6-luna",
+        "commandcode-goat/xiaomi/mimo-v2.6-pro",
         "commandcode-goat/z-ai/glm-5.3-flash",
         "commandcode-goat/Qwen/Qwen3.8-Flash"
-      ]
+      ],
+      "agents": {
+        "worker": {
+          "allow": [
+            "openai-codex/gpt-6-luna",
+            "openai-codex/gpt-6-astra",
+            "commandcode-goat/z-ai/glm-5.3-flash",
+            "commandcode-goat/Qwen/Qwen3.8-Flash"
+          ]
+        },
+        "poteto-agent": {
+          "allow": [
+            "openai-codex/gpt-6-luna",
+            "openai-codex/gpt-6-astra",
+            "commandcode-goat/z-ai/glm-5.3-flash",
+            "commandcode-goat/Qwen/Qwen3.8-Flash"
+          ]
+        }
+      }
     },
     "agentOverrides": {
       "scout": {
-        "model": "commandcode-goat/deepseek/deepseek-v4.1-flash",
+        "model": "openai-codex/gpt-6-luna",
         "thinking": "low",
         "tools": [
           "read",
           "grep",
           "find",
           "ls",
-          "bash",
           "multi_grep",
           "lens_diagnostics",
           "module_report",
@@ -41,12 +59,12 @@
         ]
       },
       "researcher": {
-        "model": "commandcode-goat/deepseek/deepseek-v4.1-flash",
+        "model": "openai-codex/gpt-6-luna",
         "thinking": "high"
       },
       "worker": {
-        "model": "commandcode-goat/deepseek/deepseek-v4.1-flash",
-        "thinking": "high",
+        "model": "openai-codex/gpt-6-luna",
+        "thinking": "max",
         "tools": "inherit"
       },
       "reviewer": {
@@ -72,13 +90,12 @@
       },
       "oracle": {
         "model": "openai-codex/gpt-6-astra",
-        "thinking": "medium",
+        "thinking": "xhigh",
         "tools": [
           "read",
           "grep",
           "find",
           "ls",
-          "bash",
           "multi_grep",
           "lens_diagnostics",
           "module_report",
@@ -91,9 +108,9 @@
         ]
       },
       "poteto-agent": {
-        "model": "commandcode-goat/deepseek/deepseek-v4.1-flash",
+        "model": "openai-codex/gpt-6-luna",
         "tools": "inherit",
-        "thinking": "high",
+        "thinking": "max",
         "allowNestedSubagents": true
       },
       "comment-sicko": {

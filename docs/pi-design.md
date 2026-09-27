@@ -73,7 +73,7 @@ The template enables Action Fusion and ObservationPack, while EPR and OCC remain
 
 The portfolio is intentionally small and role-oriented. Its current assignments are documented in `docs/model-policy.md`; the executable assignments are only the JSON configuration files.
 
-The verifier therefore checks that every configured role resolves to an explicitly allowed model and that Command Code thinking selectors are supported. It does not require model-routing prose to exist anywhere.
+The verifier therefore checks that every configured role resolves to an explicitly allowed model and that Command Code thinking selectors are supported. Pstack injects the table as guidance into the parent; the strict pi-subagents model scope is the runtime boundary. The verifier does not require model-routing prose to exist anywhere.
 
 This allows a future model rebalance to change configuration and rationale without also editing a global prompt.
 
@@ -97,11 +97,13 @@ Tool ownership follows the same separation as model ownership. `pi-subagents` pa
 
 `scout`, `reviewer`, and `oracle` use explicit allowlists because their analysis capability is intentionally narrower. Those allowlists are a Pi capability ceiling, not a prompt convention. The verifier binds them to the audited tool set. `reviewer` retains the current `watchdog_diff` and native `contact_supervisor` surfaces; `scout` retains `contact_supervisor`.
 
-Pi-Lens 4.2.1 folds the old standalone `lsp_diagnostics` tool into `lens_diagnostics` with `source=lsp`. The explicit analysis roles use the current read-oriented surfaces `project_report`, `module_report`, `read_symbol`, `read_enclosing`, `symbol_search`, and `ast_grep_search`. `ast_grep_search` is situational, so `pi_lens_activate_tools` is allowlisted as its loader. Pi filters the registered tool registry through the role allowlist, so the loader cannot add a tool that is outside that ceiling.
+Pi-Lens 4.3.0 folds the old standalone `lsp_diagnostics` tool into `lens_diagnostics` with `source=lsp`. The explicit analysis roles use the current read-oriented surfaces `project_report`, `module_report`, `read_symbol`, `read_enclosing`, `symbol_search`, and `ast_grep_search`. `ast_grep_search` is situational, so `pi_lens_activate_tools` is allowlisted as its loader. Pi filters the registered tool registry through the role allowlist, so the loader cannot add a tool that is outside that ceiling.
 
 The explicit analysis roles do not receive `ast_grep_replace` or `lens_diagnostic_mark`. They also do not receive `lsp_navigation`: that single tool includes read operations such as definition and references, but also mutation-capable operations such as rename, code actions, and command execution. Granting the whole tool would be a wider capability than the roles need. Writers that inherit the ambient tool set can use those surfaces when appropriate.
 
 FFF runs in `override` mode. Its current `multi_grep` implementation is therefore included in the explicit analysis allowlists alongside the overridden `grep` and `find` names.
+
+The analysis allowlists omit `bash`: a shell would bypass their read-only source boundary even without `edit` or `write`.
 
 ## Verification strategy
 

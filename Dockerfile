@@ -9,7 +9,7 @@ RUN apt-get update \
       tzdata \
  && rm -rf /var/lib/apt/lists/*
 
-ARG PI_VERSION=0.87.0
+ARG PI_VERSION=0.87.1
 ARG BUN_VERSION=1.4.2
 
 RUN npm install -g --ignore-scripts \
@@ -52,20 +52,19 @@ COPY --chown=agent:agent pi-fff.json \
 COPY --chown=agent:agent sol-pi.json \
     /home/agent/.pi/agent/sol-pi.json
 
-ARG PI_ACCOUNTS_VERSION=0.52.0
-# pi-subagents 0.70.1 uses Pi transcript helpers exported by Pi 0.87.0; keep these pins coupled.
-ARG PI_SUBAGENTS_VERSION=0.70.1
+ARG PI_ACCOUNTS_VERSION=0.52.2
+ARG PI_SUBAGENTS_VERSION=0.71.0
 ARG PI_PSTACK_VERSION=0.6.0
 ARG PONYTAIL_VERSION=4.10.0
-ARG PI_WEB_ACCESS_VERSION=0.30.0
-ARG PI_LENS_VERSION=4.2.1
+ARG PI_WEB_ACCESS_VERSION=0.31.0
+ARG PI_LENS_VERSION=4.3.0
 ARG PI_FFF_VERSION=0.11.0
 ARG PI_CONTEXT_VIEW_VERSION=0.6.0
-ARG PI_POWERLINE_FOOTER_VERSION=0.17.1
+ARG PI_POWERLINE_FOOTER_VERSION=0.18.0
 ARG PI_REWIND_HOOK_VERSION=1.8.6
-ARG PLANNOTATOR_VERSION=0.27.16
-ARG PI_BTW_VERSION=0.60.0
-ARG SOL_PI_COMMIT=bd005888b9b8a3fcdb511feb91fc27d3dfa8f2b1
+ARG PLANNOTATOR_VERSION=0.27.21
+ARG PI_BTW_VERSION=0.61.1
+ARG SOL_PI_COMMIT=1559b5cb12c72da4a485bc50fe326586b216fb19
 
 RUN pi install "npm:@narumitw/pi-accounts@${PI_ACCOUNTS_VERSION}" \
  && pi install "npm:pi-subagents@${PI_SUBAGENTS_VERSION}" \

@@ -43,8 +43,9 @@ This document defines repository and harness invariants. It does not define a se
 3. The Pi parent, generic subagent defaults, named subagent overrides, pstack selectors, and side-question model configuration MUST resolve within the committed model portfolio.
 4. A Command Code selector MUST request a thinking level supported by that model's `thinkingLevelMap`.
 5. A model id that itself contains `/` MUST NOT be mistaken for a provider-qualified Pi selector when validating the separate `defaultProvider` and `defaultModel` fields.
-6. DeepSeek V4.1 Flash behind the Command Code proxy MUST declare the model-local DeepSeek thinking and reasoning-history compatibility required by Pi's OpenAI-completions adapter.
+6. Models without a verified Command Code effort mapping MUST NOT claim a supported `reasoning_effort`; pstack MAY omit the thinking suffix for such a model.
 7. The verifier MUST bind the pinned `pi-pstack` package version to its exact supported role set and reject missing or unknown roles independently of the selected model assignments.
+8. Generic writing agents MUST have agent-specific scope rules that exclude MiMo until its autonomous tool behavior is qualified.
 
 ## 6. Delegated execution invariants
 
@@ -62,6 +63,7 @@ This document defines repository and harness invariants. It does not define a se
 12. Bounded analysis roles MAY use `pi_lens_activate_tools` only with situational Pi-Lens tools that are also present in that role's Pi tool allowlist. Dynamic activation MUST NOT widen the Pi allowlist.
 13. The bounded analysis profile MUST NOT grant mutation-capable Pi-Lens surfaces such as `ast_grep_replace`, `lens_diagnostic_mark`, or the mixed read/write `lsp_navigation` tool merely to obtain their read-only operations.
 14. Roles that intentionally accept the package-owned `pi-subagents` tool surface SHOULD omit a local tool override so new required package tools are not shadowed.
+15. `scout`, `reviewer`, and `oracle` MUST NOT receive a shell or source-mutation tool in their explicit read-oriented allowlists.
 
 ## 7. SoL-Pi invariants
 

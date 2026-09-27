@@ -14,32 +14,13 @@
       },
       "models": [
         {
-          "id": "deepseek/deepseek-v4.1-flash",
-          "name": "DeepSeek V4.1 Flash (GOAT)",
-          "reasoning": true,
-          "input": ["text"],
-          "contextWindow": 1000000,
-          "maxTokens": 65536,
-          "thinkingLevelMap": {
-            "minimal": null,
-            "low": "low",
-            "medium": "high",
-            "high": "high",
-            "xhigh": "high",
-            "max": "max"
-          },
-          "compat": {
-            "thinkingFormat": "deepseek",
-            "requiresReasoningContentOnAssistantMessages": true
-          }
-        },
-        {
           "id": "z-ai/glm-5.3-flash",
           "name": "GLM 5.3 Flash (GOAT)",
           "reasoning": true,
           "input": ["text"],
           "contextWindow": 1000000,
-          "maxTokens": 65536,
+          "maxTokens": 32768,
+          "cost": { "input": 0.15, "output": 0.50, "cacheRead": 0.03, "cacheWrite": 0.15 },
           "thinkingLevelMap": {
             "minimal": null,
             "low": "low",
@@ -50,12 +31,23 @@
           }
         },
         {
+          "id": "xiaomi/mimo-v2.6-pro",
+          "name": "MiMo V2.6 Pro (GOAT)",
+          "reasoning": true,
+          "input": ["text"],
+          "contextWindow": 1000000,
+          "maxTokens": 32768,
+          "cost": { "input": 0.435, "output": 0.87, "cacheRead": 0.0036, "cacheWrite": 0.435 },
+          "compat": { "supportsReasoningEffort": false }
+        },
+        {
           "id": "Qwen/Qwen3.8-Flash",
           "name": "Qwen 3.8 Flash (GOAT)",
           "reasoning": true,
           "input": ["text"],
           "contextWindow": 1000000,
-          "maxTokens": 65536,
+          "maxTokens": 32768,
+          "cost": { "input": 0.16, "output": 0.47, "cacheRead": 0.016, "cacheWrite": 0.16 },
           "thinkingLevelMap": {
             "minimal": null,
             "low": "low",
