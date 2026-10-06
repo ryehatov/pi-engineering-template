@@ -47,22 +47,22 @@ ok(!exists("AGENTS.md"), "AGENTS.md: template-level global agent prompt must rem
 const thinkingLevels = new Set(["off", "minimal", "low", "medium", "high", "xhigh", "max"]);
 // Compatibility contract for the audited Pi package set. Bumps require an upstream contract review.
 const verifiedPiPackageVersions = new Map([
-  ["PI_VERSION", "0.87.1"],
+  ["PI_VERSION", "1.0.4"],
   ["BUN_VERSION", "1.4.2"],
-  ["PI_ACCOUNTS_VERSION", "0.52.2"],
-  ["PI_SUBAGENTS_VERSION", "0.71.0"],
+  ["PI_ACCOUNTS_VERSION", "0.53.1"],
+  ["PI_SUBAGENTS_VERSION", "0.76.1"],
   ["PI_PSTACK_VERSION", "0.6.0"],
-  ["PONYTAIL_VERSION", "4.10.0"],
-  ["PI_WEB_ACCESS_VERSION", "0.31.0"],
+  ["PONYTAIL_VERSION", "4.13.0"],
+  ["PI_WEB_ACCESS_VERSION", "0.37.0"],
   ["PI_LENS_VERSION", "4.3.0"],
   ["PI_FFF_VERSION", "0.11.0"],
   ["PI_CONTEXT_VIEW_VERSION", "0.6.0"],
-  ["PI_POWERLINE_FOOTER_VERSION", "0.18.0"],
-  ["PI_REWIND_HOOK_VERSION", "1.8.6"],
+  ["PI_POWERLINE_FOOTER_VERSION", "0.19.1"],
+  ["PI_REWIND_HOOK_VERSION", "1.8.7"],
   ["PI_BTW_VERSION", "0.61.1"],
   ["PI_GOAL_VERSION", "0.54.8"],
 ]);
-const verifiedSolPiCommit = "1559b5cb12c72da4a485bc50fe326586b216fb19";
+const verifiedSolPiCommit = "e1a586af0ad8956f42ae5b26bba20e48fbf30e00";
 const verifiedPstackVersion = verifiedPiPackageVersions.get("PI_PSTACK_VERSION");
 const verifiedAgentTools = {
   scout: [
@@ -225,7 +225,7 @@ for (const [name, config] of Object.entries(subagents.agentOverrides || {})) {
   if (config.model) checkModel(config.model, config.thinking ?? subagents.defaultThinking, `settings.json: agentOverrides.${name}`);
   ok(
     config.fallbackModels === undefined,
-    `settings.json: agentOverrides.${name}.fallbackModels was removed by pi-subagents 0.68.0+`,
+    `settings.json: agentOverrides.${name}.fallbackModels must remain unset; provider/model rerouting is an explicit workflow decision`,
   );
 }
 

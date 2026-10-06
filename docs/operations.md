@@ -93,7 +93,7 @@ docker build -t pi-engineering-template:pstack .
 
 This catches package-version and installation incompatibilities that the static verifier cannot see.
 
-After a Pi or SoL-Pi pin change, also confirm that `pi list --approve` reports the expected SoL-Pi Git source and that `pi --offline --approve` starts without an extension-load error. Upstream SoL-Pi treats a Pi version different from its tested release as a compatibility change, so requalify the mechanisms rather than assuming extension API compatibility.
+After a Pi or SoL-Pi pin change, also confirm that `pi list --approve` reports the expected SoL-Pi Git source and that `pi --offline --approve` starts without an extension-load error. Upstream SoL-Pi treats a Pi version different from its tested release as a compatibility change, so requalify the mechanisms rather than assuming extension API compatibility. Its current upstream test baseline is Pi 0.85.1, so the Pi 1.0.4/SoL-Pi pair requires the full local smoke below before it is treated as qualified.
 
 ## SoL-Pi smoke
 
@@ -127,9 +127,9 @@ Also exercise one multi-turn, tool-using Luna and GLM call. A no-tools smoke can
 
 ## Subagent routing checks
 
-`pi-subagents` 0.71.0 supports role-level model/thinking overrides but not `fallbackModels` or persistent model exclusions. The committed profile assigns one model per generic role. Availability recovery requires a later explicit launch or a pstack-level workflow decision, so writer execution is not automatically replayed on another model.
+`pi-subagents` 0.76.1 supports role-level model/thinking overrides and `fallbackModels`. The committed profile intentionally leaves `fallbackModels` unset and assigns one model per generic role. Availability recovery requires a later explicit launch or a pstack-level workflow decision, so writer execution is not automatically replayed on another model.
 
-In 0.71.0 the full `subagent` tool is loaded through `subagents_enable({})` on demand, reducing the schema in turns without delegation. The released loader has a [DeepSeek-specific argument failure](https://github.com/nicobailon/pi-subagents/issues/2483); this profile does not route DeepSeek to a supervising role. Keep the Pi and pi-subagents pins synchronized and run the delegated-review smoke below after either changes.
+In 0.76.1 the default `auto` activation uses `subagents_enable({})` on demand only when the selected model supports mid-conversation tool additions; otherwise `subagent` is active eagerly. The [DeepSeek-specific loader argument failure](https://github.com/nicobailon/pi-subagents/issues/2483) was fixed in 0.72.0. DeepSeek V4.1 Flash remains excluded from supervising roles because [Command Code issue #909](https://github.com/CommandCodeAI/command-code/issues/909) still reports broken tool-call responses. Keep the Pi and pi-subagents pins synchronized and run the delegated-review smoke below after either changes.
 
 Inspect the resolved runtime mapping after a routing change:
 
@@ -173,7 +173,7 @@ The template intentionally has no model-routing copy in `AGENTS.md`.
 
 ## Provider failures
 
-Pi-subagents 0.71.0 does not use persistent model exclusions or same-launch `fallbackModels`. A provider or model failure should fail the launch clearly. Retry with a later explicit launch only after deciding whether rerouting preserves task semantics. Do not switch authentication accounts or consume a token reset ticket automatically.
+Pi-subagents 0.76.1 supports same-launch `fallbackModels`, but this profile intentionally leaves them unset. A provider or model failure should fail the selected launch clearly. Retry with a later explicit launch only after deciding whether rerouting preserves task semantics. Do not switch authentication accounts or consume a token reset ticket automatically.
 
 Keep strict `modelScope` as the portfolio boundary; do not widen it as an availability workaround. If launches still fail after the provider is healthy, inspect pi-subagents diagnostics and provider errors before changing routing.
 

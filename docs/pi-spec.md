@@ -92,7 +92,7 @@ The static verifier MUST check at least:
 - strict explicit model scope and model-reference consistency;
 - correct parent provider/model qualification when a model id contains `/`;
 - Command Code provider URL, API type, credential reference, and absence of forced default ZDR routing;
-- current pi-subagents configuration semantics, including absence of removed fallback and exclusion settings;
+- current pi-subagents configuration semantics, including the explicit no-automatic-fallback policy and absence of retired exclusion settings;
 - explicit subagent tool-capability contracts, retired tool names, and package-owned versus inherited tool surfaces;
 - pinned pi-pstack package-version/schema compatibility, exact role coverage, and model/thinking selector validity;
 - SoL-Pi mechanism flags, cache ratio, commit pin, and Docker wiring;
