@@ -40,7 +40,8 @@ This document defines repository and harness invariants. It does not define a se
 2. Parent, native child, pstack and side-question routes MUST agree on the committed model portfolio.
 3. Pstack reviewer selectors MUST use real `anthropic/` model IDs, and the patched skills MUST invoke the native `reviewer` agent.
 4. Thinking levels MUST be explicit, and a failed model MUST NOT silently reroute to another provider.
-5. Pstack role keys MUST match the pinned package's role schema exactly.
+5. The worker/Poteto scope MUST permit explicit Astra selections required by pstack workflows.
+6. Pstack role keys MUST match the pinned package's role schema exactly.
 ## 6. Delegated execution invariants
 
 1. Delegated context MUST default to `fresh`.

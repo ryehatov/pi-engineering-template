@@ -20,12 +20,14 @@
       "agents": {
         "worker": {
           "allow": [
-            "openai/gpt-6.1-sol"
+            "openai/gpt-6.1-sol",
+            "openai/gpt-6-astra"
           ]
         },
         "poteto-agent": {
           "allow": [
-            "openai/gpt-6.1-sol"
+            "openai/gpt-6.1-sol",
+            "openai/gpt-6-astra"
           ]
         },
         "how-analyst": {

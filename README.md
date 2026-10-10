@@ -17,6 +17,7 @@ Run `/login openai` and select **Sign in with ChatGPT**. Run `/login anthropic` 
 
 ```sh
 node scripts/verify-template.mjs
+node --test scripts/verify-template.test.mjs
 docker build -t pi-engineering-template:pstack .
 ```
 

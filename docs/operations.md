@@ -10,6 +10,7 @@ Do not accidentally supply an `ANTHROPIC_API_KEY` as an API-billing credential w
 
 ```sh
 node scripts/verify-template.mjs
+node --test scripts/verify-template.test.mjs
 docker build -t pi-engineering-template:pstack .
 ```
 
@@ -26,7 +27,7 @@ pi -p --no-tools --model 'anthropic/claude-sonnet-5-5:high' 'Reply exactly SONNE
 pi -p --no-tools --model 'anthropic/claude-haiku-5-5:medium' 'Reply exactly HAIKU_OK'
 ```
 
-Inspect `/subagents-models` and the resolved `reviewer`, `worker`, `researcher` and `oracle` mappings. Launch `subagent({agent:"reviewer",model:"anthropic/claude-opus-5-5:high",task:"Review this diff and inspect relevant files"})` and confirm native `read/grep` and `watchdog_diff` work. Interrogate/Arena should use Opus and Sonnet as native reviewers, without CLI processes. Confirm workers can edit, test and access registered FFF/Pi-Lens tools. Check researcher Web tools and scout exploration without conditionally registered startup names.
+Inspect `/subagents-models` and the resolved `reviewer`, `worker`, `researcher` and `oracle` mappings. Launch `subagent({agent:"reviewer",model:"anthropic/claude-opus-5-5:high",task:"Review this diff and inspect relevant files"})` and confirm native `read/grep` and `watchdog_diff` work. Interrogate/Arena should use Opus and Sonnet as native reviewers, without CLI processes. Confirm workers can edit, test and access registered FFF/Pi-Lens tools. Check researcher Web tools and scout exploration without conditionally registered startup names. Exercise pstack `why`, `reflect`, and `arena` with Astra-selected workers to verify strict model-scope routing.
 
 ## SoL-Pi qualification
 

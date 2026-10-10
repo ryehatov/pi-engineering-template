@@ -34,7 +34,7 @@ Pi-FFF's `multi_grep` is conditionally registered, and Pi-Lens activates some to
 
 ## Independent review routing
 
-Pstack Interrogate/Arena selectors use **real Pi model IDs** (`anthropic/claude-opus-5-5:high` and `anthropic/claude-sonnet-5-5:high`). The pinned pstack patch invokes `subagent()` with `agent: "reviewer"` and the selected native model. This preserves source inspection, runtime evidence and the package's review tool policy. The three Claude models are allowed only for that review role; normal writers are Sol-only, and the oracle is Astra.
+Pstack Interrogate/Arena selectors use **real Pi model IDs** (`anthropic/claude-opus-5-5:high` and `anthropic/claude-sonnet-5-5:high`). The pinned pstack patch invokes `subagent()` with `agent: "reviewer"` and the selected native model. This preserves source inspection, runtime evidence and the package's review tool policy. The three Claude models are allowed only for that review role; writers default to Sol but permit explicit Astra selection for pstack synthesis/design workflows. The oracle is Astra.
 
 Do not silently reroute failed reviews to another provider or auth account. `claude-code` and `claude-code-writer` built-in external CLI profiles are disabled.
 

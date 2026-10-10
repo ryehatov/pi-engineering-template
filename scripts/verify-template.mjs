@@ -16,7 +16,14 @@ for (const [key,value] of pins) ok(new RegExp("^ARG "+key+"="+value.replaceAll("
 ok(/^ARG BASE_IMAGE=.*@sha256:[0-9a-f]{64}$/m.test(docker), "Docker base image digest pin missing");
 ok(docker.includes("ARG SOL_PI_COMMIT=03529c710269d3e3336a033cead49a95189987f1"), "SoL-Pi commit drift");
 for (const x of ["npm:pi-subagents@\u0024{PI_SUBAGENTS_VERSION}","npm:@zenspc/pi-pstack@\u0024{PI_PSTACK_VERSION}","npm:@narumitw/pi-accounts@\u0024{PI_ACCOUNTS_VERSION}","node /tmp/patch-pstack.mjs","COPY --chown=agent:agent settings.json","COPY --chown=agent:agent pstack-models.json","COPY --chown=agent:agent subagent-config.json","COPY --chown=agent:agent skills/"]) ok(docker.includes(x), "Docker runtime wiring missing: "+x);
-ok(!docker.includes("models.json") && !docker.includes("@anthropic-ai/claude-code") && !docker.includes("CLAUDE_CODE_VERSION") && /^ENV TZ=Asia\/Tokyo$/m.test(docker), "Docker provider, CLI dependency or timezone mismatch");
+// Inspect complete COPY/ADD source tokens, not "pstack-models.json" suffixes.
+const dockerInstructions = docker.replace(/\\\r?\n\s*/g, " ").split(/\r?\n/);
+const copiesLegacyModels = dockerInstructions.some(line =>
+  /^\s*(?:COPY|ADD)\b/i.test(line) && /(?:^|\s)models\.json(?=\s|$)/.test(line)
+);
+ok(!copiesLegacyModels && !docker.includes("/home/agent/.pi/agent/models.json") &&
+  !docker.includes("@anthropic-ai/claude-code") && !docker.includes("CLAUDE_CODE_VERSION") &&
+  /^ENV TZ=Asia\/Tokyo$/m.test(docker), "Docker provider, CLI dependency or timezone mismatch");
 const s = json("settings.json"), p = json("pstack-models.json"), sub = json("subagent-config.json"), so = json("sol-pi.json"), w = json("web-search.json"), btw = json("pi-btw.json"), goal = json("pi-goal.json"), fff = json("pi-fff.json");
 const openai = new Set(["openai/gpt-6.1-sol","openai/gpt-6-astra"]);
 const claude = new Set(["anthropic/claude-opus-5-5","anthropic/claude-sonnet-5-5","anthropic/claude-haiku-5-5"]);
@@ -26,7 +33,8 @@ const sa=s.subagents||{}, scope=sa.modelScope||{}, a=sa.agentOverrides||{};
 ok(sa.defaultModel==="openai/gpt-6.1-sol" && sa.defaultThinking==="xhigh" && sa.maxThinking==="max","Subagent defaults mismatch");
 ok(scope.enforce===true && scope.strict===true,"Model scope is not strict");
 const allow=new Set(scope.allow||[]);
-ok(allow.size===5 && [...native,...claude].every(x=>allow.has(x)), "Model scope portfolio mismatch");
+ok(Array.isArray(scope.allow) && allow.size === 5 &&
+  [...native].every(model => allow.has(model)), "Model scope portfolio mismatch");
 for (const [name,cfg] of Object.entries(a)) {
  if (cfg.disabled) continue;
   ok(name==="reviewer" ? claude.has(cfg.model) : openai.has(cfg.model), "Invalid role model: "+name);
@@ -36,9 +44,37 @@ for (const [name,cfg] of Object.entries(a)) {
 }
 ok(a["claude-code"]?.disabled===true && a["claude-code-writer"]?.disabled===true && !scope.agents?.["claude-code"], "External CLI agents must remain disabled");
 ok(a.oracle?.model==="openai/gpt-6-astra" && a.reviewer?.model==="anthropic/claude-opus-5-5" && a.reviewer?.thinking==="high", "Oracle or independent native reviewer mismatch");
-for(const name of ["worker","poteto-agent"])ok(scope.agents?.[name]?.allow?.join(",")==="openai/gpt-6.1-sol", "Writer scope widened: "+name);
-for(const name of ["scout","researcher","comment-sicko"])ok(scope.agents?.[name]?.allow?.join(",")==="openai/gpt-6.1-sol", "Scout/researcher scope widened: "+name);
-ok(scope.agents?.reviewer?.allow?.length===3 && scope.agents.reviewer.allow.every(x=>claude.has(x)), "Native reviewer Claude scope mismatch");
+// These pstack workflows dispatch Astra to worker/poteto roles for synthesis.
+const delegatedOpenAI = new Set([...openai]);
+const delegatedRoles = [
+  "feature, refactoring", "bug-fix", "perf-issue", "hillclimb", "hardest tasks",
+  "why investigators", "why synthesizer", "reflect tooling",
+  "reflect judgment, divergent, synthesizer", "arena runners",
+  "swarm workers", "architect runners",
+];
+const requiredDelegatedModels = new Set(
+  delegatedRoles.flatMap(name => {
+    const value = p.roles?.[name];
+    return (Array.isArray(value) ? value : [value]).map(selector =>
+      typeof selector === "string" ? selector.split(":")[0] : null
+    );
+  })
+);
+for (const name of ["worker", "poteto-agent"]) {
+  const scoped = scope.agents?.[name]?.allow;
+  ok(Array.isArray(scoped) && scoped.length === delegatedOpenAI.size &&
+    scoped.every(model => delegatedOpenAI.has(model)) &&
+    [...requiredDelegatedModels].every(model => scoped.includes(model)),
+    "pstack delegated model scope mismatch: " + name);
+}
+for (const name of ["scout", "researcher", "comment-sicko"]) {
+  const scoped = scope.agents?.[name]?.allow;
+  ok(Array.isArray(scoped) && scoped.length === 1 && scoped[0] === "openai/gpt-6.1-sol",
+    "Scout/researcher scope widened: " + name);
+}
+const reviewerScope = scope.agents?.reviewer?.allow;
+ok(Array.isArray(reviewerScope) && reviewerScope.length === 3 &&
+  reviewerScope.every(model => claude.has(model)), "Native reviewer Claude scope mismatch");
 ok(/^tools: read, grep, find, ls$/m.test(text("agents/how-analyst.md")),"how-analyst tools mismatch");
 const keys=["feature, refactoring","bug-fix","perf-issue","hillclimb","judgment and prose","hardest tasks","how explorer","how explainer","why investigators","why synthesizer","reflect tooling","reflect judgment, divergent, synthesizer","arena runners","arena cross-judge pool","swarm workers","architect runners","interrogate reviewers"];
 ok(p.version===1 && p.skillsEnabled===true && p.roles && Object.keys(p.roles).length===keys.length,"pstack role contract mismatch");
@@ -55,7 +91,9 @@ for(const name of keys) {
 const patch=text("scripts/patch-pstack.mjs");
 ok(patch.includes("agent: \\\"reviewer\\\"") && patch.includes("anthropic/...") && !patch.includes("claude-code/"),"pstack native reviewer routing mismatch");
 ok(so.actionFusion===true && so.observationPack===true && so.evidencePreservingReducer===false && so.onlineContextCompact===false && so.cacheWriteReadRatio===12.5,"SoL-Pi mechanism mismatch");
-ok(w.workflow==="none"&&w.searchRouting?.providers?.join(",")==="openai,exa"&&w.searchRouting.useCurrentModel===true,"Web search routing mismatch");
+ok(w.workflow === "none" && Array.isArray(w.searchRouting?.providers) &&
+  w.searchRouting.providers.join(",") === "openai,exa" &&
+  w.searchRouting.useCurrentModel === true, "Web search routing mismatch");
 ok(btw.model==="openai/gpt-6-astra" && btw.thinkingLevel==="high","Side-question model mismatch");
 ok(fff.mode==="override","FFF mode mismatch");
 ok(goal.continuationLimits?.automaticTurns===64 && goal.continuationLimits?.noProgressTurns===3 && goal.rpc?.enabled===false,"Goal bounds mismatch");
