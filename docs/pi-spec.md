@@ -22,7 +22,7 @@ This document defines repository and harness invariants. It does not define a se
 ## 3. Executable sources of truth
 
 1. `settings.json` MUST own Pi defaults and generic subagent model/tool configuration.
-2. Pi's native `openai` provider and the separately logged-in Claude Code CLI MUST own their respective subscription transports; the template MUST NOT install a custom GOAT `models.json` provider.
+2. Pi's native `openai` and `anthropic` providers MUST own their respective subscription OAuth transports; the template MUST NOT install a custom GOAT `models.json` provider or external Claude Code CLI.
 3. `subagent-config.json` MUST own delegated execution bounds and authority policy.
 4. `pstack-models.json` MUST own pstack role-to-model selectors.
 5. `sol-pi.json` MUST own SoL-Pi mechanism enablement and cache-write/read ratio.
@@ -30,15 +30,15 @@ This document defines repository and harness invariants. It does not define a se
 
 ## 4. Provider invariants
 
-1. Parent and native subagents MUST use Pi's built-in `openai` provider through Sign in with ChatGPT, not legacy `openai-codex`.
-2. Independent Claude auditors MUST use the `claude-code` external CLI adapter and separately authenticated Claude Code. The native `anthropic` API provider MUST NOT be represented as Claude Pro subscription usage.
-3. Committed Docker and JSON files MUST NOT contain secrets or the retired Command Code GOAT provider.
-4. The no-tools Claude reviewer MUST receive the actual diff/rubric/test evidence inline rather than relying on file paths.
+1. The parent and implementation subagents MUST use Pi's built-in `openai` provider through Sign in with ChatGPT, not legacy `openai-codex`.
+2. Independent Claude auditors MUST use Pi's native `anthropic` provider with Claude Pro/Max subscription OAuth, not an external CLI adapter.
+3. Committed Docker and JSON files MUST NOT contain secrets, the retired Command Code GOAT provider or a Claude Code CLI installation.
+4. A native Claude reviewer MUST retain the package-defined `reviewer` tool contract and be able to inspect source files.
 ## 5. Model and role consistency
 
-1. The subagent model scope MUST be strict and enforced and MUST list the two native OpenAI model IDs and the permitted Claude Code CLI model IDs explicitly.
+1. The subagent model scope MUST be strict and enforced and MUST list the two native OpenAI model IDs and the three native Anthropic model IDs explicitly.
 2. Parent, native child, pstack and side-question routes MUST agree on the committed model portfolio.
-3. Pstack `claude-code/` selectors are routing tags, not native Pi model IDs. The bridge MUST remove this prefix before passing a model to the Claude CLI adapter.
+3. Pstack reviewer selectors MUST use real `anthropic/` model IDs, and the patched skills MUST invoke the native `reviewer` agent.
 4. Thinking levels MUST be explicit, and a failed model MUST NOT silently reroute to another provider.
 5. Pstack role keys MUST match the pinned package's role schema exactly.
 ## 6. Delegated execution invariants
@@ -55,7 +55,7 @@ This document defines repository and harness invariants. It does not define a se
 10. Explicit static tool lists MUST NOT contain conditionally registered extension names (including `multi_grep`).
 11. Built-in Pi-subagents role tool definitions MUST remain package-owned unless a specific role requires an override.
 12. Only implementation roles `worker` and `poteto-agent` MAY inherit ambient extension tools; this is not the default for every child.
-13. The external `claude-code-writer` profile MUST remain disabled, and the read-only `claude-code` reviewer MUST receive full evidence inline.
+13. Both external `claude-code` and `claude-code-writer` profiles MUST remain disabled; native reviewers MUST retain the package-defined read-only tools.
 14. The local `how-analyst` MUST remain read-only, and built-in search tool names MUST work without optional extension activation.
 ## 7. SoL-Pi invariants
 
@@ -81,8 +81,8 @@ The static verifier MUST check at least:
 - required configuration and documentation files and JSON validity;
 - absence of the template-level `AGENTS.md` and its Docker injection;
 - strict explicit model scope and model-reference consistency;
-- correct parent provider/model qualification and Claude Code routing-tag translation;
-- native OpenAI subscription route and external Claude Code review adapter separation;
+- correct parent provider/model qualification and native Anthropic reviewer selectors;
+- native OpenAI and Anthropic subscription provider routing;
 - current pi-subagents configuration semantics, including the explicit no-automatic-fallback policy and absence of retired exclusion settings;
 - preservation of package-owned role tools and intentional implementation-role ambient tools;
 - pinned pi-pstack package-version/schema compatibility, exact role coverage, and model/thinking selector validity;

@@ -11,14 +11,11 @@ RUN apt-get update \
 
 ARG PI_VERSION=1.1.0
 ARG BUN_VERSION=1.4.3
-ARG CLAUDE_CODE_VERSION=2.1.296
 
 RUN npm install -g --ignore-scripts \
     "@earendil-works/pi-coding-agent@${PI_VERSION}" \
  && npm install -g "bun@${BUN_VERSION}" \
- && bun --version \
- && npm install -g --ignore-scripts "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}" \
- && claude --version
+ && bun --version
 
 USER agent
 

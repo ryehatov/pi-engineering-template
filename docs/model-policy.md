@@ -1,43 +1,43 @@
 # Model Policy
 
-## Transports and subscription boundaries
+## Providers and subscriptions
 
-Pi 1.1.0 supports ChatGPT subscription OAuth on **`openai`**. The `openai-codex` provider is legacy. Claude Pro is used through a separately logged-in **Claude Code CLI**, with pi-subagents' built-in `claude-code` external CLI adapter. Native Pi `anthropic` requests are **not** assumed to consume the Claude Pro subscription; they may be separately billed.
+Pi 1.1.0 supports ChatGPT subscription OAuth on its native `openai` provider and Claude Pro/Max subscription OAuth on its native `anthropic` provider. Authenticate with `/login openai` and `/login anthropic` respectively. `openai-codex` is legacy. Do not use API-key credentials unintentionally when the goal is subscription usage. The project installs no Claude Code CLI, external agent bridge or custom provider transport.
 
 ## Role assignment
 
-| Role | Model | Thinking | Rationale |
+| Role | Model | Thinking | Purpose |
 | --- | --- | --- | --- |
-| Parent/orchestrator | `openai/gpt-6.1-sol` | `xhigh` | Preferred subscription and quality/cost operating point |
-| Worker, Poteto, engineering execution | `openai/gpt-6.1-sol` | `xhigh` | Minimize rework and preserve high-quality implementation |
-| Scout, comment-sicko | `openai/gpt-6.1-sol` | `high` | Bounded reconnaissance |
-| Researcher | `openai/gpt-6.1-sol` | `xhigh` | Careful evidence validation |
-| Oracle, How explainer, native reviewer | `openai/gpt-6-astra` | `xhigh` | Hard reasoning and internal validation |
-| Independent primary reviewer | Claude Code `claude-opus-5-5` | `high` | Cross-model adversarial audit |
-| Independent second reviewer | Claude Code `claude-sonnet-5-5` | `high` | Independent second perspective |
-| Optional narrowly scoped triage | Claude Code `claude-haiku-5-5` | `medium` | Short review; not a security sign-off |
+| Parent/orchestrator | `openai/gpt-6.1-sol` | `xhigh` | Preferred subscription, implementation planning and coordination |
+| Worker / Poteto | `openai/gpt-6.1-sol` | `xhigh` | High-quality implementation and validation |
+| Scout / comment-sicko | `openai/gpt-6.1-sol` | `high` | Scoped reconnaissance |
+| Researcher | `openai/gpt-6.1-sol` | `xhigh` | Evidence verification |
+| Oracle / How explainer | `openai/gpt-6-astra` | `xhigh` | Hard architecture and design questions |
+| Native independent reviewer | `anthropic/claude-opus-5-5` | `high` | Independent adversarial audit using Pi's review tools |
+| Second opinion (Interrogate/Arena) | `anthropic/claude-sonnet-5-5` | `high` | Additional Claude-family reviewer |
+| Optional targeted triage | `anthropic/claude-haiku-5-5` | `medium` | Short tasks; not the release sign-off |
 
-OpenAI `xhigh` is the requested quality/cost baseline. Anthropic's current effort guide recommends `high` for complex Opus 5.5 work, `medium` or `high` for Sonnet 5.5 depending on task difficulty, and `medium` for most Haiku 5.5 work. These choices are workload policy rather than claims of a universally optimal effort level.
+OpenAI `xhigh` is the requested quality/cost baseline. Claude review defaults to `high`; lower effort may be chosen for narrow triage. Model-family independence from OpenAI reduces shared failure modes; two Claude models are not independent model families from each other.
 
-## Subagent tools: preserve role ownership
+## Subagent tools and authority
 
-Do **not** copy the parent's tool registry to every subagent. The pinned pi-subagents package already declares role-specific tools:
+Retain the audited pi-subagents role capabilities instead of hardcoding extension tool names:
 
-- `scout`: `read, grep, find, ls, bash, write, contact_supervisor` (source exploration and a context artifact).
-- `researcher`: `read, write, web_search, fetch_content, get_search_content, source_check` (Web evidence).
-- `reviewer`: `read, grep, find, ls, watchdog_diff, contact_supervisor` (no source edits).
-- `oracle`: `read, grep, find, ls, bash` (inspection/verification).
-- `comment-sicko`: its package-defined inspection tools; `how-analyst` uses its local read-only definition.
-- `worker` and `poteto-agent`: **`tools: "inherit"`** deliberately, so implementation can use ambient Pi-FFF, Pi-Lens, native mutation and validation tools. Only these implementation roles get the broad active tool surface.
+- `scout`: package-defined `read, grep, find, ls, bash, write, contact_supervisor`.
+- `researcher`: package-defined `read, write, web_search, fetch_content, get_search_content, source_check`.
+- `reviewer`: package-defined `read, grep, find, ls, watchdog_diff, contact_supervisor`. **This native Pi agent now runs Opus 5.5** and can read the codebase directly.
+- `oracle`: package-defined `read, grep, find, ls, bash`.
+- `comment-sicko`: package-defined inspection tools. `how-analyst`: local read-only profile.
+- `worker` and `poteto-agent`: `tools: "inherit"` intentionally to permit ambient Pi-FFF, Pi-Lens, mutation and test tools. This exception does not apply to other roles.
 
-Do not hard-code conditional extension names into startup allowlists. Pi-FFF's `multi_grep` exists only in certain override/indexing states; Pi-Lens has lazily activated tools. The stable `grep` and `find` tool names work independently of whether FFF is active, and workers can call extra extension tools when registered. There are no unnecessary capability restrictions on code-writing workers.
+Pi-FFF's `multi_grep` is conditionally registered, and Pi-Lens activates some tools lazily. Avoid putting conditional names into explicit subagent allowlists. Keep native `grep` and `find` available. A reviewer is read-only by its own tool contract, not because it lacks the Claude Code CLI.
 
-## Independent review bridge
+## Independent review routing
 
-Pstack selectors `claude-code/claude-opus-5-5:high` and `claude-code/claude-sonnet-5-5:high` are **pstack routing tags**, not Pi model IDs. `scripts/patch-pstack.mjs` maps these to `subagent({agent:"claude-code",model:"claude-opus-5-5:high",async:true,task:"..."})`. The adapter validates `--model` and `--effort`. Its read-only profile has *no tools*. The handoff MUST inline the actual diff, relevant snippets, requirements, rubric and test results; paths alone cannot be inspected. If quota/authentication fails, independent review is unavailable: never silently substitute a native reviewer.
+Pstack Interrogate/Arena selectors use **real Pi model IDs** (`anthropic/claude-opus-5-5:high` and `anthropic/claude-sonnet-5-5:high`). The pinned pstack patch invokes `subagent()` with `agent: "reviewer"` and the selected native model. This preserves source inspection, runtime evidence and the package's review tool policy. The three Claude models are allowed only for that review role; normal writers are Sol-only, and the oracle is Astra.
 
-`claude-code-writer` is disabled. Native worker scope is Sol-only; native oracle and reviewer are Astra. The strict CLI scope lists only the three approved Claude models. Parent and subagents do not automatically switch accounts or providers on failure.
+Do not silently reroute failed reviews to another provider or auth account. `claude-code` and `claude-code-writer` built-in external CLI profiles are disabled.
 
 ## Qualification note
 
-SoL-Pi upstream tests against Pi 0.85.1; its newer Git commit does not certify Pi 1.1.0. The upgraded image needs Docker build and authenticated smoke testing. Pi-subagents 0.77.0 improves schema size, async wake behavior, and tool/runtime recovery; Pi-web-access 0.38.0 changes its default OpenAI search model. Refer to `docs/operations.md`.
+SoL-Pi upstream tests against Pi 0.85.1, not Pi 1.1.0. A static check does not establish runtime compatibility. Perform Docker, authenticated model and native subagent smoke tests as described in `docs/operations.md`.

@@ -18,8 +18,8 @@
       "openai/gpt-6-astra:xhigh"
     ],
     "arena cross-judge pool": [
-      "claude-code/claude-opus-5-5:high",
-      "claude-code/claude-sonnet-5-5:high"
+      "anthropic/claude-opus-5-5:high",
+      "anthropic/claude-sonnet-5-5:high"
     ],
     "swarm workers": "openai/gpt-6.1-sol:xhigh",
     "architect runners": [
@@ -27,8 +27,8 @@
       "openai/gpt-6-astra:xhigh"
     ],
     "interrogate reviewers": [
-      "claude-code/claude-opus-5-5:high",
-      "claude-code/claude-sonnet-5-5:high"
+      "anthropic/claude-opus-5-5:high",
+      "anthropic/claude-sonnet-5-5:high"
     ]
   },
   "skillsEnabled": true

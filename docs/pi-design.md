@@ -43,7 +43,7 @@ Downstream repositories remain free to add project-specific agent instructions f
 | Pi parent defaults | `settings.json` |
 | Generic subagent routing and tool capabilities | `settings.json` |
 | Allowed delegated models | `settings.json` `modelScope` |
-| Subscription providers | Pi `openai` OAuth and separate Claude Code CLI login |
+| Subscription providers | Pi native `openai` and `anthropic` OAuth |
 | Delegation context, limits, and authority | `subagent-config.json` |
 | Pstack role selectors | `pstack-models.json` |
 | SoL-Pi mechanism enablement and cache ratio | `sol-pi.json` |
@@ -74,13 +74,13 @@ The template enables Action Fusion and ObservationPack, while EPR and OCC remain
 
 The portfolio is intentionally small and role-oriented. Its current assignments are documented in `docs/model-policy.md`; the executable assignments are only the JSON configuration files.
 
-The verifier checks that native roles resolve to subscribed OpenAI models and that pstack independent-review tags translate to the Claude Code CLI adapter. Pstack injects the table as guidance into the parent; the strict pi-subagents model scope is the runtime boundary. The verifier does not require model-routing prose to exist anywhere.
+The verifier checks that implementation roles resolve to OpenAI, reviewers to native Anthropic models, and pstack selectors match the strict model scope. Pstack injects the table as guidance into the parent; the strict pi-subagents model scope is the runtime boundary. The verifier does not require model-routing prose to exist anywhere.
 
 This allows a future model rebalance to change configuration and rationale without also editing a global prompt.
 
 ## Provider boundary
 
-Pi's native `openai` provider uses Sign in with ChatGPT; `openai-codex` is legacy. Claude reviewers use their own logged-in CLI through the `claude-code` external adapter rather than the separately billed native Anthropic API provider.
+Pi's native `openai` provider uses Sign in with ChatGPT, and its native `anthropic` provider supports Claude Pro/Max subscription OAuth. No external Claude CLI adapter is required.
 
 Provider policy therefore stays in executable configuration instead of a behavioral request to the model.
 
@@ -98,7 +98,7 @@ Pi-subagents 0.77.0's built-in role definitions own their tool sets. The `scout`
 
 Only implementation roles `worker` and `poteto-agent` use `tools: "inherit"`, to access *currently registered* mutation, FFF, Pi-Lens and other extension tools. This is a deliberate exception, not blanket parity with the parent. Built-in `grep`/`find` survive when optional FFF indexing is unavailable; conditional `multi_grep` and Pi-Lens activation tools are never startup prerequisites.
 
-Pstack's external Claude Code audit role has a separate no-tools read-only runner contract. Its review handoff must include source/diff/test evidence inline. Failed independent reviews are surfaced rather than replaced by a native reviewer.
+Pstack's independent Anthropic reviewers run as ordinary Pi `reviewer` children with package-defined source-inspection tools. Failed independent reviews remain visible rather than silently falling back to a different model.
 ## Verification strategy
 
 Verification is layered by failure class:

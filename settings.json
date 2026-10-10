@@ -13,9 +13,9 @@
       "allow": [
         "openai/gpt-6.1-sol",
         "openai/gpt-6-astra",
-        "claude-opus-5-5",
-        "claude-sonnet-5-5",
-        "claude-haiku-5-5"
+        "anthropic/claude-opus-5-5",
+        "anthropic/claude-sonnet-5-5",
+        "anthropic/claude-haiku-5-5"
       ],
       "agents": {
         "worker": {
@@ -36,20 +36,14 @@
         },
         "reviewer": {
           "allow": [
-            "openai/gpt-6.1-sol",
-            "openai/gpt-6-astra"
+            "anthropic/claude-opus-5-5",
+            "anthropic/claude-sonnet-5-5",
+            "anthropic/claude-haiku-5-5"
           ]
         },
         "oracle": {
           "allow": [
             "openai/gpt-6-astra"
-          ]
-        },
-        "claude-code": {
-          "allow": [
-            "claude-opus-5-5",
-            "claude-sonnet-5-5",
-            "claude-haiku-5-5"
           ]
         },
         "scout": {
@@ -88,8 +82,8 @@
         "tools": "inherit"
       },
       "reviewer": {
-        "model": "openai/gpt-6-astra",
-        "thinking": "xhigh"
+        "model": "anthropic/claude-opus-5-5",
+        "thinking": "high"
       },
       "oracle": {
         "model": "openai/gpt-6-astra",
@@ -106,8 +100,7 @@
         "thinking": "high"
       },
       "claude-code": {
-        "model": "claude-opus-5-5",
-        "thinking": "high"
+        "disabled": true
       },
       "claude-code-writer": {
         "disabled": true
