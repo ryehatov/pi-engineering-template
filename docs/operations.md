@@ -1,194 +1,38 @@
 # Operations
 
-## Session startup
+## Logins
 
-The normal interactive startup routine is:
+Start Pi and use `/login openai` -> **Sign in with ChatGPT**. This consumes the OpenAI subscription. Start the installed `claude` CLI inside the sandbox, as user `agent`, and complete its normal Claude Pro login. Inspect/approve the CLI's user-level settings and hooks; the read-only adapter excludes project settings and MCP. Do not set `ANTHROPIC_API_KEY` for this subscription-only profile.
 
-```text
-pstack state
-/poteto-mode
-```
+`@narumitw/pi-accounts` can manage named Pi OAuth accounts; it does not switch Claude Code's login. Mount credential files separately rather than masking all of `~/.pi/agent`.
 
-This is operator state. Once Poteto Mode is active, pstack supplies its workflow context directly; no repository-global prompt is required to restate it. SoL-Pi is already loaded as a parent runtime optimization layer and does not require a separate workflow activation command.
-
-Use `/goal <checkable objective>` for a bounded autonomous run. The Poteto playbook supplies the exit predicate and verification; `/goal` supplies continuation and `goal_wait` for an external event.
-
-## Runtime credentials
-
-### OpenAI Codex
-
-The parent uses `openai-codex/gpt-6-astra`; routine children use `openai-codex/gpt-6-luna`.
-
-Pi account selection is owned by `@narumitw/pi-accounts`. Run `/accounts` to log in to and name the Codex accounts, for example `codex-a` and `codex-b`. Use **Set default account** for new sessions and **Switch ... account** for the current session. Account selection changes authentication identity only; it does not change the provider, model, role routing, model scope, or delegation policy.
-
-Do not install `@narumitw/pi-usage` for this profile. Codex usage display belongs to CodexBar, not to the Pi authentication extension.
-
-#### CodexBar
-
-Do not copy or translate Pi OAuth credentials into CodexBar. `pi-accounts.json` and Codex `auth.json` have different owners and update rules.
-
-Give CodexBar its own native Codex profile homes. Authenticate each profile with the Codex CLI:
-
-```sh
-mkdir -p "$HOME/.codex-profiles/codex-a" "$HOME/.codex-profiles/codex-b"
-CODEX_HOME="$HOME/.codex-profiles/codex-a" codex login
-CODEX_HOME="$HOME/.codex-profiles/codex-b" codex login
-```
-
-Then merge the profile paths into the existing Codex provider entry in the CodexBar config:
-
-```json
-{
-  "id": "codex",
-  "codexProfileHomePaths": [
-    "~/.codex-profiles/codex-a",
-    "~/.codex-profiles/codex-b"
-  ]
-}
-```
-
-CodexBar reads each profile's native `auth.json` and scopes its Codex fetches with that profile's `CODEX_HOME`. Pi continues to refresh only `pi-accounts.json`; Codex CLI continues to refresh only its profile homes. No token synchronization or compatibility adapter is required.
-
-Leave CodexBar's **External Codex OAuth sources** setting out of this integration. That setting does not make `pi-accounts.json` a supported credential source.
-
-CodexBar already supports Pi session logs. If the host must inspect sessions written inside a Docker Sandbox, mount a host session directory into the sandbox and set `PI_CODING_AGENT_SESSION_DIR` for Pi. Run CodexBar with the same session directory in its own environment. This shares session data only; it does not share authentication state.
-
-Pi's named-account store remains sandbox-local. For a disposable sandbox, persist `~/.pi/agent/sessions/`, `auth.json`, `pi-accounts.json`, and `trust.json` as separate mounts; mounting the whole agent directory would hide the image's pinned packages and configuration. Account switching is per session/default, not per child. Do not automatically consume a token reset ticket or move a failed child to another account.
-
-### Command Code GOAT
-
-Create a Command Code API key in Studio and inject it only at runtime:
-
-```sh
-export COMMAND_CODE_API_KEY='...'
-```
-
-`models.json` references the variable; the Dockerfile never receives the secret as an `ARG` or committed `ENV` value.
-
-The committed provider does not force `x-cmd-zdr`. This avoids `422 cmd_zdr_no_providers` failures when a selected model has no ZDR-capable upstream with capacity. This also means the template does not guarantee zero retention. Use only data appropriate for the active Command Code and upstream-provider terms.
-
-## SoL-Pi profile
-
-`sol-pi.json` enables Action Fusion and ObservationPack. Evidence-Preserving Reducer and Online Context Compact are disabled.
-
-The profile is user-wide at `~/.pi/agent/sol-pi.json` inside the image. Do not duplicate it in a downstream project's `.pi/sol-pi.json` unless a project intentionally overrides the template profile and is trusted; SoL-Pi replaces rather than merges the two files.
-
-## Static verification
-
-Run after changes to Docker, providers, models, subagents, pstack routing, SoL-Pi configuration, or the ownership documents:
+## Build and static checks
 
 ```sh
 node scripts/verify-template.mjs
-```
-
-The command requires no credentials and no network access. It validates executable configuration rather than natural-language prompt phrases. It validates the Command Code provider, parent model qualification, strict model scope, supported thinking levels, the audited Pi/extension version matrix, current pi-subagents configuration semantics, explicit subagent tool contracts, and the committed SoL-Pi mechanism flags and immutable Git pin.
-
-## Docker verification
-
-Build the real image after static verification:
-
-```sh
 docker build -t pi-engineering-template:pstack .
 ```
 
-This catches package-version and installation incompatibilities that the static verifier cannot see.
+Static checks detect stale model IDs, pins, routing tags, tool-policy drift and old transports. They do NOT establish Docker-build compatibility, OAuth success or runtime tool availability.
 
-After a Pi or SoL-Pi pin change, also confirm that `pi list --approve` reports the expected SoL-Pi Git source and that `pi --offline --approve` starts without an extension-load error. Upstream SoL-Pi treats a Pi version different from its tested release as a compatibility change, so requalify the mechanisms rather than assuming extension API compatibility. Its current upstream test baseline is Pi 0.85.1, so the Pi 1.0.4/SoL-Pi pair requires the full local smoke below before it is treated as qualified.
-
-## SoL-Pi smoke
-
-For a SoL-Pi or Pi upgrade, exercise the enabled mechanisms on disposable files/session data:
-
-1. Action Fusion: run one `edit` or `write` with `then_run` and confirm the mutation and validator result are returned together.
-2. ObservationPack: produce a >10 KiB text observation, advance provider turns until it is packed, and confirm `obs_recall` retrieves the original content.
-3. Run `pstack state`, enter `/poteto-mode`, and exercise one nested workflow so SoL-Pi, pstack, subagents, and rewind behavior are checked together.
-
-SoL-Pi session archives are operational data. Long-lived sandboxes should account for their storage growth; do not treat the archive as a credential store.
-
-## Live model smoke
-
-After injecting the appropriate credentials, verify model registry resolution for routes affected by the change. For the current portfolio, a useful filter is:
+## Live smoke after login
 
 ```sh
-pi --list-models | grep -E 'openai-codex/gpt-6-(astra|luna)|commandcode-goat/(z-ai/glm-5.3-flash|xiaomi/mimo-v2.6-pro|Qwen/Qwen3.8-Flash)'
+pi --list-models | grep -E 'gpt-6\.1-sol|gpt-6-astra'
+pi -p --no-tools --model 'openai/gpt-6.1-sol:xhigh' 'Reply exactly SOL_OK'
+pi -p --no-tools --model 'openai/gpt-6-astra:xhigh' 'Reply exactly ASTRA_OK'
+claude --version
+claude -p --model claude-opus-5-5 --effort high 'Reply exactly OPUS_OK'
+claude -p --model claude-sonnet-5-5 --effort high 'Reply exactly SONNET_OK'
+claude -p --model claude-haiku-5-5 --effort medium 'Reply exactly HAIKU_OK'
 ```
 
-Then make bounded one-shot calls for changed routes. Examples:
+Run `/subagents-models` and inspect `worker`, `researcher`, `reviewer`, `oracle`, and `claude-code`. Launch a native worker and verify its `edit/write/bash`, active FFF and Pi-Lens capabilities. Launch `scout`, `reviewer`, and `oracle` to inspect a disposable diff; verify `watchdog_diff` and source reading work without nonexistent optional tools. Launch `researcher` and confirm its Web/source-check tools. Do not assume the FFF index or lazy Pi-Lens tools are active before they register.
 
-```sh
-pi -p --no-tools --model 'commandcode-goat/z-ai/glm-5.3-flash:high' 'Reply with exactly: GLM_OK'
-pi -p --no-tools --model 'commandcode-goat/xiaomi/mimo-v2.6-pro' 'Reply with exactly: MIMO_OK'
-pi -p --no-tools --model 'commandcode-goat/Qwen/Qwen3.8-Flash:xhigh' 'Reply with exactly: QWEN_OK'
-pi -p --no-tools --model 'openai-codex/gpt-6-luna:max' 'Reply with exactly: LUNA_OK'
-pi -p --no-tools --model 'openai-codex/gpt-6-astra:xhigh' 'Reply with exactly: ASTRA_OK'
-```
+For independent review, use `subagent({agent:"claude-code",model:"claude-opus-5-5:high",async:true,task:"FULL DIFF, RUBRIC, TEST EVIDENCE"})`. The adapter is read-only **and has no file tools**, so include actual source and diff text. Pstack `interrogate` and `arena` use the same bridge after the Docker patch. Run a second Sonnet `high` review only when a second judgment is useful. Do not silently reroute on subscription quota failures.
 
-Also exercise one multi-turn, tool-using Luna and GLM call. A no-tools smoke cannot verify their tool behavior.
+## SoL-Pi qualification
 
-## Subagent routing checks
+SoL-Pi's tested Pi baseline is 0.85.1, older than this image's Pi 1.1.0. In the built sandbox verify `pi list --approve` and offline startup without extension errors, then exercise Action Fusion (edit/write + `then_run`), ObservationPack + exact `obs_recall`, one nested pstack/Poteto worker, and one independent Claude audit. Until then the combination is **not runtime-qualified**.
 
-`pi-subagents` 0.76.1 supports role-level model/thinking overrides and `fallbackModels`. The committed profile intentionally leaves `fallbackModels` unset and assigns one model per generic role. Availability recovery requires a later explicit launch or a pstack-level workflow decision, so writer execution is not automatically replayed on another model.
-
-In 0.76.1 the default `auto` activation uses `subagents_enable({})` on demand only when the selected model supports mid-conversation tool additions; otherwise `subagent` is active eagerly. The [DeepSeek-specific loader argument failure](https://github.com/nicobailon/pi-subagents/issues/2483) was fixed in 0.72.0. DeepSeek V4.1 Flash remains excluded from supervising roles because [Command Code issue #909](https://github.com/CommandCodeAI/command-code/issues/909) still reports broken tool-call responses. Keep the Pi and pi-subagents pins synchronized and run the delegated-review smoke below after either changes.
-
-Inspect the resolved runtime mapping after a routing change:
-
-```text
-/subagents-models
-/subagents-models worker
-/subagents-models reviewer
-/subagents-models oracle
-```
-
-The expected normal path is Luna for scout/researcher/worker/Poteto, GLM for reviewer, and Astra for oracle and `how-analyst`; `/btw` uses Astra `high`. Pstack's role table is a prompt hint, so inspect the actual launched model as well as the table. Interrogate and arena judges use the read-only reviewer profile.
-
-SoL-Pi does not redefine these child roles. Ambient extension loading for delegated children remains a `pi-subagents` lifecycle/capability decision; do not widen child tools or isolation merely to force SoL-Pi into every child process.
-
-### Subagent tool smoke
-
-After a Pi, pi-subagents, Pi-Lens, FFF, or tool-policy change, exercise the tool registration boundary rather than checking only model routing:
-
-1. Launch `scout` and confirm `lens_diagnostics` is available. Exercise LSP diagnostics through `lens_diagnostics` with `source=lsp`; `lsp_diagnostics` must not be required or exposed by the template.
-2. In the same bounded analysis path, confirm `project_report` and FFF `multi_grep` are callable. Activate `ast_grep_search` through `pi_lens_activate_tools`, then call `ast_grep_search` on the following turn.
-3. Launch `reviewer` on a disposable diff and confirm `watchdog_diff` is registered. If supervisor coordination is needed, confirm `contact_supervisor` is present.
-4. Launch `researcher` through the normal background path and confirm the package-owned web tool set includes `source_check`; do not add a local researcher tool list merely to make this test pass.
-5. Launch a writer only when mutation is intended and confirm the inherited ambient tool surface still contains the mutation-capable Pi-Lens tools.
-
-A failure before the first model turn that reports an unavailable explicit tool is a registration/configuration defect. Fix the tool name or provider loading; do not add a compatibility alias to the role allowlist.
-
-## Pstack profile changes
-
-`pstack-models.json` is the committed pstack role map and is injected as guidance into the parent. `/setup-pstack` is an interactive generic mapper and is not the normal maintenance path for this profile. Pi-subagents' strict model scope is the enforceable model boundary.
-
-When changing routing:
-
-1. edit `pstack-models.json` for pstack role selectors;
-2. edit `settings.json` for generic subagent defaults or named overrides;
-3. edit `models.json` only when the custom provider catalog, transport behavior, or thinking metadata changes;
-4. edit `sol-pi.json` only when SoL-Pi feature policy or cache ratio changes;
-5. update `docs/model-policy.md` when the model-routing rationale changes;
-6. run the static verifier.
-
-The template intentionally has no model-routing copy in `AGENTS.md`.
-
-## Provider failures
-
-Pi-subagents 0.76.1 supports same-launch `fallbackModels`, but this profile intentionally leaves them unset. A provider or model failure should fail the selected launch clearly. Retry with a later explicit launch only after deciding whether rerouting preserves task semantics. Do not switch authentication accounts or consume a token reset ticket automatically.
-
-Keep strict `modelScope` as the portfolio boundary; do not widen it as an availability workaround. If launches still fail after the provider is healthy, inspect pi-subagents diagnostics and provider errors before changing routing.
-
-## Upgrade sequence
-
-Upgrade one core dependency at a time unless upstream requires a coordinated bump.
-
-1. Read the release notes and relevant open issues.
-2. If the newest release has a known compatibility regression on a configured path, retain the last qualified pin and document the hold. Otherwise update the immutable version or commit pin.
-3. Run `node scripts/verify-template.mjs`.
-4. Build the Docker image.
-5. Smoke the affected provider/model or enabled SoL-Pi mechanism path.
-6. Exercise one nested pstack workflow if Pi, pi-subagents, pi-pstack, or SoL-Pi changed.
-7. Commit the verified unit before starting the next upgrade.
-
-For pi-pstack upgrades, review role names and selector parsing because the verifier checks role coverage and model/thinking consistency against the committed profile.
-
-For SoL-Pi upgrades, inspect its configuration schema and Pi compatibility notes, then rerun smoke tests for the enabled mechanisms. For Pi upgrades, treat SoL-Pi compatibility as part of the Pi qualification rather than as an independent afterthought.
+Start with `/pstack status`, activate `/poteto-mode` and optionally `/goal <objective>`. Default subagent context is fresh, concurrency finite, missions/schedules disabled and auto provider fallback unset.

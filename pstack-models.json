@@ -1,38 +1,34 @@
 {
   "version": 1,
   "roles": {
-    "feature, refactoring": "openai-codex/gpt-6-luna:max",
-    "bug-fix": "openai-codex/gpt-6-luna:max",
-    "perf-issue": "openai-codex/gpt-6-luna:max",
-    "hillclimb": "openai-codex/gpt-6-luna:max",
-    "judgment and prose": "openai-codex/gpt-6-astra:high",
-    "hardest tasks": "openai-codex/gpt-6-astra:xhigh",
-    "how explorer": "openai-codex/gpt-6-luna:high",
-    "how explainer": "openai-codex/gpt-6-astra:high",
-    "why investigators": "openai-codex/gpt-6-luna:high",
-    "why synthesizer": "openai-codex/gpt-6-astra:high",
-    "reflect tooling": "commandcode-goat/z-ai/glm-5.3-flash:high",
-    "reflect judgment, divergent, synthesizer": "commandcode-goat/Qwen/Qwen3.8-Flash:xhigh",
+    "feature, refactoring": "openai/gpt-6.1-sol:xhigh",
+    "bug-fix": "openai/gpt-6.1-sol:xhigh",
+    "perf-issue": "openai/gpt-6.1-sol:xhigh",
+    "hillclimb": "openai/gpt-6.1-sol:xhigh",
+    "judgment and prose": "openai/gpt-6.1-sol:xhigh",
+    "hardest tasks": "openai/gpt-6-astra:xhigh",
+    "how explorer": "openai/gpt-6.1-sol:high",
+    "how explainer": "openai/gpt-6-astra:xhigh",
+    "why investigators": "openai/gpt-6.1-sol:xhigh",
+    "why synthesizer": "openai/gpt-6-astra:xhigh",
+    "reflect tooling": "openai/gpt-6.1-sol:high",
+    "reflect judgment, divergent, synthesizer": "openai/gpt-6-astra:xhigh",
     "arena runners": [
-      "openai-codex/gpt-6-luna:max",
-      "commandcode-goat/z-ai/glm-5.3-flash:max",
-      "openai-codex/gpt-6-astra:xhigh"
+      "openai/gpt-6.1-sol:xhigh",
+      "openai/gpt-6-astra:xhigh"
     ],
     "arena cross-judge pool": [
-      "commandcode-goat/Qwen/Qwen3.8-Flash:xhigh",
-      "commandcode-goat/xiaomi/mimo-v2.6-pro"
+      "claude-code/claude-opus-5-5:high",
+      "claude-code/claude-sonnet-5-5:high"
     ],
-    "swarm workers": "openai-codex/gpt-6-luna:max",
+    "swarm workers": "openai/gpt-6.1-sol:xhigh",
     "architect runners": [
-      "openai-codex/gpt-6-luna:max",
-      "commandcode-goat/z-ai/glm-5.3-flash:max",
-      "commandcode-goat/Qwen/Qwen3.8-Flash:xhigh",
-      "openai-codex/gpt-6-astra:xhigh"
+      "openai/gpt-6.1-sol:xhigh",
+      "openai/gpt-6-astra:xhigh"
     ],
     "interrogate reviewers": [
-      "commandcode-goat/z-ai/glm-5.3-flash:max",
-      "commandcode-goat/Qwen/Qwen3.8-Flash:xhigh",
-      "commandcode-goat/xiaomi/mimo-v2.6-pro"
+      "claude-code/claude-opus-5-5:high",
+      "claude-code/claude-sonnet-5-5:high"
     ]
   },
   "skillsEnabled": true

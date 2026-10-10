@@ -1,133 +1,116 @@
 {
-  "defaultProvider": "openai-codex",
-  "defaultModel": "gpt-6-astra",
-  "defaultThinkingLevel": "low",
+  "defaultProvider": "openai",
+  "defaultModel": "gpt-6.1-sol",
+  "defaultThinkingLevel": "xhigh",
   "defaultProjectTrust": "never",
   "subagents": {
-    "defaultModel": "openai-codex/gpt-6-luna",
-    "defaultThinking": "high",
+    "defaultModel": "openai/gpt-6.1-sol",
+    "defaultThinking": "xhigh",
     "maxThinking": "max",
     "modelScope": {
       "enforce": true,
       "strict": true,
       "allow": [
-        "inherit",
-        "openai-codex/gpt-6-astra",
-        "openai-codex/gpt-6-luna",
-        "commandcode-goat/xiaomi/mimo-v2.6-pro",
-        "commandcode-goat/z-ai/glm-5.3-flash",
-        "commandcode-goat/Qwen/Qwen3.8-Flash"
+        "openai/gpt-6.1-sol",
+        "openai/gpt-6-astra",
+        "claude-opus-5-5",
+        "claude-sonnet-5-5",
+        "claude-haiku-5-5"
       ],
       "agents": {
         "worker": {
           "allow": [
-            "openai-codex/gpt-6-luna",
-            "openai-codex/gpt-6-astra",
-            "commandcode-goat/z-ai/glm-5.3-flash",
-            "commandcode-goat/Qwen/Qwen3.8-Flash"
+            "openai/gpt-6.1-sol"
           ]
         },
         "poteto-agent": {
           "allow": [
-            "openai-codex/gpt-6-luna",
-            "openai-codex/gpt-6-astra",
-            "commandcode-goat/z-ai/glm-5.3-flash",
-            "commandcode-goat/Qwen/Qwen3.8-Flash"
+            "openai/gpt-6.1-sol"
           ]
         },
         "how-analyst": {
           "allow": [
-            "openai-codex/gpt-6-luna",
-            "openai-codex/gpt-6-astra"
+            "openai/gpt-6.1-sol",
+            "openai/gpt-6-astra"
+          ]
+        },
+        "reviewer": {
+          "allow": [
+            "openai/gpt-6.1-sol",
+            "openai/gpt-6-astra"
+          ]
+        },
+        "oracle": {
+          "allow": [
+            "openai/gpt-6-astra"
+          ]
+        },
+        "claude-code": {
+          "allow": [
+            "claude-opus-5-5",
+            "claude-sonnet-5-5",
+            "claude-haiku-5-5"
+          ]
+        },
+        "scout": {
+          "allow": [
+            "openai/gpt-6.1-sol"
+          ]
+        },
+        "researcher": {
+          "allow": [
+            "openai/gpt-6.1-sol"
+          ]
+        },
+        "comment-sicko": {
+          "allow": [
+            "openai/gpt-6.1-sol"
           ]
         }
       }
     },
     "agentOverrides": {
       "scout": {
-        "model": "openai-codex/gpt-6-luna",
-        "thinking": "low",
-        "tools": [
-          "read",
-          "grep",
-          "find",
-          "ls",
-          "multi_grep",
-          "lens_diagnostics",
-          "module_report",
-          "project_report",
-          "read_symbol",
-          "read_enclosing",
-          "symbol_search",
-          "pi_lens_activate_tools",
-          "ast_grep_search",
-          "contact_supervisor"
-        ]
-      },
-      "researcher": {
-        "model": "openai-codex/gpt-6-luna",
+        "model": "openai/gpt-6.1-sol",
         "thinking": "high"
       },
+      "researcher": {
+        "model": "openai/gpt-6.1-sol",
+        "thinking": "xhigh"
+      },
       "how-analyst": {
-        "model": "openai-codex/gpt-6-astra",
-        "thinking": "high",
-        "tools": ["read", "grep", "find", "ls"]
+        "model": "openai/gpt-6-astra",
+        "thinking": "xhigh"
       },
       "worker": {
-        "model": "openai-codex/gpt-6-luna",
-        "thinking": "max",
+        "model": "openai/gpt-6.1-sol",
+        "thinking": "xhigh",
         "tools": "inherit"
       },
       "reviewer": {
-        "model": "commandcode-goat/z-ai/glm-5.3-flash",
-        "thinking": "high",
-        "tools": [
-          "read",
-          "grep",
-          "find",
-          "ls",
-          "multi_grep",
-          "watchdog_diff",
-          "lens_diagnostics",
-          "module_report",
-          "project_report",
-          "read_symbol",
-          "read_enclosing",
-          "symbol_search",
-          "pi_lens_activate_tools",
-          "ast_grep_search",
-          "contact_supervisor"
-        ]
+        "model": "openai/gpt-6-astra",
+        "thinking": "xhigh"
       },
       "oracle": {
-        "model": "openai-codex/gpt-6-astra",
-        "thinking": "xhigh",
-        "tools": [
-          "read",
-          "grep",
-          "find",
-          "ls",
-          "multi_grep",
-          "lens_diagnostics",
-          "module_report",
-          "project_report",
-          "read_symbol",
-          "read_enclosing",
-          "symbol_search",
-          "pi_lens_activate_tools",
-          "ast_grep_search"
-        ]
+        "model": "openai/gpt-6-astra",
+        "thinking": "xhigh"
       },
       "poteto-agent": {
-        "model": "openai-codex/gpt-6-luna",
+        "model": "openai/gpt-6.1-sol",
+        "thinking": "xhigh",
         "tools": "inherit",
-        "thinking": "max",
         "allowNestedSubagents": true
       },
       "comment-sicko": {
-        "model": "commandcode-goat/Qwen/Qwen3.8-Flash",
-        "thinking": "xhigh",
-        "tools": ["read", "grep", "find", "ls"]
+        "model": "openai/gpt-6.1-sol",
+        "thinking": "high"
+      },
+      "claude-code": {
+        "model": "claude-opus-5-5",
+        "thinking": "high"
+      },
+      "claude-code-writer": {
+        "disabled": true
       },
       "delegate": {
         "disabled": true

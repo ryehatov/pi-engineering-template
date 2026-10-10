@@ -19,7 +19,6 @@ Pi parent ---------------- native session, model registry, compaction primitives
   |
   +-- executable configuration
        settings.json
-       models.json
        subagent-config.json
        pstack-models.json
        sol-pi.json
@@ -33,7 +32,7 @@ A global prompt is appropriate only for instructions that the model must judge g
 
 Model allowlists, thinking ceilings, tool access, concurrency, scheduling authority, provider configuration, and SoL-Pi mechanism selection are machine-readable controls. Repeating them in `AGENTS.md` would add prompt tokens without strengthening enforcement and would create a second policy copy that can drift.
 
-Pstack and Ponytail already provide their own runtime guidance. SoL-Pi operates through extension hooks and tools. When the operator starts a session by inspecting pstack state and enabling `/poteto-mode`, duplicating any of those mechanisms in a repository-global prompt is unnecessary.
+Pstack and Ponytail already provide their own runtime guidance. SoL-Pi operates through extension hooks and tools. When the operator starts a session by inspecting /pstack status and enabling `/poteto-mode`, duplicating any of those mechanisms in a repository-global prompt is unnecessary.
 
 Downstream repositories remain free to add project-specific agent instructions for local architecture, domain constraints, compatibility contracts, or other facts that the harness cannot infer.
 
@@ -44,7 +43,7 @@ Downstream repositories remain free to add project-specific agent instructions f
 | Pi parent defaults | `settings.json` |
 | Generic subagent routing and tool capabilities | `settings.json` |
 | Allowed delegated models | `settings.json` `modelScope` |
-| Command Code transport | `models.json` |
+| Subscription providers | Pi `openai` OAuth and separate Claude Code CLI login |
 | Delegation context, limits, and authority | `subagent-config.json` |
 | Pstack role selectors | `pstack-models.json` |
 | SoL-Pi mechanism enablement and cache ratio | `sol-pi.json` |
@@ -75,13 +74,13 @@ The template enables Action Fusion and ObservationPack, while EPR and OCC remain
 
 The portfolio is intentionally small and role-oriented. Its current assignments are documented in `docs/model-policy.md`; the executable assignments are only the JSON configuration files.
 
-The verifier therefore checks that every configured role resolves to an explicitly allowed model and that Command Code thinking selectors are supported. Pstack injects the table as guidance into the parent; the strict pi-subagents model scope is the runtime boundary. The verifier does not require model-routing prose to exist anywhere.
+The verifier checks that native roles resolve to subscribed OpenAI models and that pstack independent-review tags translate to the Claude Code CLI adapter. Pstack injects the table as guidance into the parent; the strict pi-subagents model scope is the runtime boundary. The verifier does not require model-routing prose to exist anywhere.
 
 This allows a future model rebalance to change configuration and rationale without also editing a global prompt.
 
 ## Provider boundary
 
-Command Code is registered directly through Pi's native OpenAI-compatible provider path. Provider URL, adapter, authentication, compatibility, and model metadata live in `models.json`.
+Pi's native `openai` provider uses Sign in with ChatGPT; `openai-codex` is legacy. Claude reviewers use their own logged-in CLI through the `claude-code` external adapter rather than the separately billed native Anthropic API provider.
 
 Provider policy therefore stays in executable configuration instead of a behavioral request to the model.
 
@@ -95,18 +94,11 @@ SoL-Pi installation does not weaken this boundary. Whether an individual child s
 
 ## Delegated tool surface
 
-Tool ownership follows the same separation as model ownership. `pi-subagents` package roles keep their package-defined tools unless this template has a reason to impose a narrower capability ceiling. `researcher` therefore has no local `tools` override, while `worker` and `poteto-agent` use `tools: "inherit"`. This lets package-required research tools and ambient extension tools evolve without a second stale copy in the template.
+Pi-subagents 0.77.0's built-in role definitions own their tool sets. The `scout` keeps shell inspection and artifact writing, `researcher` keeps Web evidence tools, `reviewer` keeps `watchdog_diff` plus read-only search, and `oracle` keeps shell inspection. The pstack `comment-sicko` and local `how-analyst` likewise keep role-specific profiles. Do not shadow these definitions with stale static lists.
 
-`scout`, `reviewer`, `oracle`, `how-analyst`, and `comment-sicko` use explicit allowlists because their analysis capability is intentionally narrower. Those allowlists are a Pi capability ceiling, not a prompt convention. The verifier binds them to the audited tool set. `reviewer` retains the current `watchdog_diff` and native `contact_supervisor` surfaces; `scout` retains `contact_supervisor`. The pinned pstack Interrogate and arena judges use `reviewer`, and How uses `how-analyst`, so their read-only boundaries apply.
+Only implementation roles `worker` and `poteto-agent` use `tools: "inherit"`, to access *currently registered* mutation, FFF, Pi-Lens and other extension tools. This is a deliberate exception, not blanket parity with the parent. Built-in `grep`/`find` survive when optional FFF indexing is unavailable; conditional `multi_grep` and Pi-Lens activation tools are never startup prerequisites.
 
-Pi-Lens 4.3.0 folds the old standalone `lsp_diagnostics` tool into `lens_diagnostics` with `source=lsp`. The explicit analysis roles use the current read-oriented surfaces `project_report`, `module_report`, `read_symbol`, `read_enclosing`, `symbol_search`, and `ast_grep_search`. `ast_grep_search` is situational, so `pi_lens_activate_tools` is allowlisted as its loader. Pi filters the registered tool registry through the role allowlist, so the loader cannot add a tool that is outside that ceiling.
-
-The explicit analysis roles do not receive `ast_grep_replace` or `lens_diagnostic_mark`. They also do not receive `lsp_navigation`: that single tool includes read operations such as definition and references, but also mutation-capable operations such as rename, code actions, and command execution. Granting the whole tool would be a wider capability than the roles need. Writers that inherit the ambient tool set can use those surfaces when appropriate.
-
-FFF runs in `override` mode. Its current `multi_grep` implementation is therefore included in the explicit analysis allowlists alongside the overridden `grep` and `find` names.
-
-The analysis allowlists omit `bash`: a shell would bypass their read-only source boundary even without `edit` or `write`.
-
+Pstack's external Claude Code audit role has a separate no-tools read-only runner contract. Its review handoff must include source/diff/test evidence inline. Failed independent reviews are surfaced rather than replaced by a native reviewer.
 ## Verification strategy
 
 Verification is layered by failure class:

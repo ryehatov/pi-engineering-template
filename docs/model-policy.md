@@ -1,42 +1,43 @@
 # Model Policy
 
-`settings.json` controls the parent and generic agents; `pstack-models.json` supplies pstack's role hints. Pi-subagents' strict `modelScope` is the executable boundary. The pstack role table is injected into the parent prompt, so the parent must still choose the indicated model and check the resulting work.
+## Transports and subscription boundaries
 
-## Assignment
+Pi 1.1.0 supports ChatGPT subscription OAuth on **`openai`**. The `openai-codex` provider is legacy. Claude Pro is used through a separately logged-in **Claude Code CLI**, with pi-subagents' built-in `claude-code` external CLI adapter. Native Pi `anthropic` requests are **not** assumed to consume the Claude Pro subscription; they may be separately billed.
 
-| Work | Route | Reason |
-| --- | --- | --- |
-| Parent coordination | Codex GPT-6 Astra `low` | Keep the default orchestrator responsive; escalate in named roles. |
-| Routine implementation and Poteto workers | Codex GPT-6 Luna `max` | Reliable tool use and faithful execution; the Codex Pro subscription is already available. |
-| Reconnaissance and research | Codex GPT-6 Luna `low` / `high` | Spend less reasoning on scans; reserve deeper effort for evidence gathering. |
-| Hardest decisions and oracle | Codex GPT-6 Astra `xhigh` | Explicit escalation instead of using the strongest effort on every child. |
-| Ordinary independent review | GOAT GLM-5.3 Flash `high` | A separate model family and provider path at a low token rate. |
-| Additional adversarial review | GOAT MiMo V2.6 Pro | A different family for pstack cross-judge and interrogate panels; review output is evidence for the parent, never the sole release gate. |
-| Divergent reflection and a third review perspective | GOAT Qwen 3.8 Flash `xhigh` | Separate ambiguity checks and independent judgment. |
-| Side questions and pstack explanation | Codex GPT-6 Astra `high` | Use spare Pro capacity for stronger one-off reasoning. |
+## Role assignment
 
-Pstack's arena *runners* use Luna, GLM, and Astra; its cross-judge pool uses Qwen and MiMo, outside every arena runner's model family. Architect runners also include Qwen. Interrogate reviewers use GLM, Qwen, and MiMo. The pinned pstack skills route Interrogate and arena judges through the read-only `reviewer` agent, and How through `how-analyst`. When any reviewer also authored work, the parent must exclude that candidate from judging its own work. MiMo appears only in review selectors and is excluded from generic writers because [multi-turn tool-loop reports](https://github.com/XiaomiMiMo/MiMo/issues/98) warrant a bounded, read-oriented trial before autonomous implementation.
+| Role | Model | Thinking | Rationale |
+| --- | --- | --- | --- |
+| Parent/orchestrator | `openai/gpt-6.1-sol` | `xhigh` | Preferred subscription and quality/cost operating point |
+| Worker, Poteto, engineering execution | `openai/gpt-6.1-sol` | `xhigh` | Minimize rework and preserve high-quality implementation |
+| Scout, comment-sicko | `openai/gpt-6.1-sol` | `high` | Bounded reconnaissance |
+| Researcher | `openai/gpt-6.1-sol` | `xhigh` | Careful evidence validation |
+| Oracle, How explainer, native reviewer | `openai/gpt-6-astra` | `xhigh` | Hard reasoning and internal validation |
+| Independent primary reviewer | Claude Code `claude-opus-5-5` | `high` | Cross-model adversarial audit |
+| Independent second reviewer | Claude Code `claude-sonnet-5-5` | `high` | Independent second perspective |
+| Optional narrowly scoped triage | Claude Code `claude-haiku-5-5` | `medium` | Short review; not a security sign-off |
 
-The generic `worker` and `poteto-agent` have additional model scopes that exclude MiMo even if a per-run override requests it. MiMo's Command Code ID is `xiaomi/mimo-v2.6-pro`. No supported numeric effort map is published for this transport. Its selectors omit `:thinking`, and the model-level `supportsReasoningEffort: false` prevents Pi from transmitting an unsupported `reasoning_effort` value. Its configured output cap is 32,768.
+OpenAI `xhigh` is the requested quality/cost baseline. Anthropic's current effort guide recommends `high` for complex Opus 5.5 work, `medium` or `high` for Sonnet 5.5 depending on task difficulty, and `medium` for most Haiku 5.5 work. These choices are workload policy rather than claims of a universally optimal effort level.
 
-## Cost and availability
+## Subagent tools: preserve role ownership
 
-GOAT's published rates, in USD per million tokens, are useful for comparing routes. The `cost` fields in `models.json` let Pi estimate child spend; `cacheWrite` uses the uncached input rate as a conservative estimate where Command Code publishes no separate write rate. Subscription credit allowances and real usage are determined by Command Code, not these estimates.
+Do **not** copy the parent's tool registry to every subagent. The pinned pi-subagents package already declares role-specific tools:
 
-| GOAT model | Input | Output | Cache read | Use here |
-| --- | ---: | ---: | ---: | --- |
-| GLM-5.3 Flash | 0.15 | 0.50 | 0.03 | Default review |
-| MiMo V2.6 Pro | 0.435 | 0.87 | 0.0036 | Selected second review |
-| Qwen 3.8 Flash | 0.16 | 0.47 | 0.016 | Divergent reflection and review |
+- `scout`: `read, grep, find, ls, bash, write, contact_supervisor` (source exploration and a context artifact).
+- `researcher`: `read, write, web_search, fetch_content, get_search_content, source_check` (Web evidence).
+- `reviewer`: `read, grep, find, ls, watchdog_diff, contact_supervisor` (no source edits).
+- `oracle`: `read, grep, find, ls, bash` (inspection/verification).
+- `comment-sicko`: its package-defined inspection tools; `how-analyst` uses its local read-only definition.
+- `worker` and `poteto-agent`: **`tools: "inherit"`** deliberately, so implementation can use ambient Pi-FFF, Pi-Lens, native mutation and validation tools. Only these implementation roles get the broad active tool surface.
 
-Rates and model IDs: [Command Code model catalog](https://commandcode.ai/models) and [GOAT plan](https://commandcode.ai/docs/plans/goat). GOAT's model-specific credit allowances differ; do not equate a displayed Pi dollar estimate with an incremental invoice or assume that the same subscription budget stretches equally across models. Codex models use the existing $200 Pro plan; the [Pi Codex catalog](https://pi.dev/models/openai-codex/gpt-6-luna) reports a 272,000-token window for Luna and [Astra](https://pi.dev/models/openai-codex/gpt-6-astra). Pro usage is bounded by plan limits even when no per-token API bill is issued.
+Do not hard-code conditional extension names into startup allowlists. Pi-FFF's `multi_grep` exists only in certain override/indexing states; Pi-Lens has lazily activated tools. The stable `grep` and `find` tool names work independently of whether FFF is active, and workers can call extra extension tools when registered. There are no unnecessary capability restrictions on code-writing workers.
 
-DeepSeek V4.1 Flash is not routed or registered in this profile. [Command Code issue #909](https://github.com/CommandCodeAI/command-code/issues/909) remains open and reports missing `tool_calls` since September 22. [pi-subagents #2483](https://github.com/nicobailon/pi-subagents/issues/2483) was fixed in pi-subagents 0.72.0, so the loader is no longer a blocker; the Command Code transport regression still needs a successful multi-turn tool-call smoke before this model can resume agent work. MiMo V2.6 Flash is cheaper than Pro but new and unqualified for this workload. Meta's discounted Muse Spark Contributor permits training on supplied prompts and responses, so it is not a default for source code. These choices favor stable completed work over nominal price alone.
+## Independent review bridge
 
-## Transport and review discipline
+Pstack selectors `claude-code/claude-opus-5-5:high` and `claude-code/claude-sonnet-5-5:high` are **pstack routing tags**, not Pi model IDs. `scripts/patch-pstack.mjs` maps these to `subagent({agent:"claude-code",model:"claude-opus-5-5:high",async:true,task:"..."})`. The adapter validates `--model` and `--effort`. Its read-only profile has *no tools*. The handoff MUST inline the actual diff, relevant snippets, requirements, rubric and test results; paths alone cannot be inspected. If quota/authentication fails, independent review is unavailable: never silently substitute a native reviewer.
 
-GOAT uses Pi's OpenAI-compatible `commandcode-goat` provider and a runtime `COMMAND_CODE_API_KEY`; Codex uses `openai-codex`. The GOAT profile does not force `x-cmd-zdr`, so data handling follows the active provider terms. Only one writer owns a given diff; independent judges inspect its tests and evidence. Pstack's models are guidance rather than an authorization control. The parent resolves conflicting reviews and runs the project's actual validation before accepting a result.
+`claude-code-writer` is disabled. Native worker scope is Sol-only; native oracle and reviewer are Astra. The strict CLI scope lists only the three approved Claude models. Parent and subagents do not automatically switch accounts or providers on failure.
 
-`pi-subagents` 0.76.1 lazily activates its full delegation tool for models that support mid-conversation tool additions and exposes it eagerly otherwise. Keep DeepSeek off supervising paths while the Command Code tool-call regression persists. Fresh child contexts and bounded parallelism remain the default. Pi-goal handles autonomous continuation; [Pi's native compaction](https://pi.dev/docs/latest/compaction) retains the summary lifecycle, and SoL-Pi ObservationPack preserves exact recall of packed observations. Jev's [compaction hook](https://github.com/TheoOliveira/pi-jev/blob/main/src/compact.ts) omits Pi's prepared summary inputs, while an [independent replay evaluation](https://github.com/iefnaf/pi-jev/blob/main/eval/README.md) shows no clear gain. Jev therefore does not own delegation or compaction in this profile.
+## Qualification note
 
-To change a route, edit its executable JSON first, update this rationale, run `node scripts/verify-template.mjs`, and qualify affected models with the live checks in `docs/operations.md`. Do not expand model scope as a response to a provider outage; choose a later explicit launch after inspecting the failure.
+SoL-Pi upstream tests against Pi 0.85.1; its newer Git commit does not certify Pi 1.1.0. The upgraded image needs Docker build and authenticated smoke testing. Pi-subagents 0.77.0 improves schema size, async wake behavior, and tool/runtime recovery; Pi-web-access 0.38.0 changes its default OpenAI search model. Refer to `docs/operations.md`.

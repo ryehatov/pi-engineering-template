@@ -1,64 +1,24 @@
 # pi-engineering-template
 
-A Docker Sandbox template for rigorous software engineering with Pi.
+Docker Sandbox template for Pi, pstack / Poteto Mode and independent Claude Code reviews.
 
-The `pstack` branch keeps engineering policy in the runtime mechanisms that can enforce it. It does not ship a repository-global `AGENTS.md` for generic workflow or safety rules.
+## Runtime ownership
 
-## Architecture
-
-- **Pi** is the interactive parent runtime and owns the native session, model registry, and compaction primitives.
-- **SoL-Pi** optimizes parent-session tool/result/context handling with Action Fusion and ObservationPack.
-- **pi-subagents** owns delegated execution, isolation, tool capability, model scope, concurrency, and authority controls.
-- **@zenspc/pi-pstack** supplies engineering playbooks, Poteto Mode, review topology, and role-oriented model selection.
-- **pi-goal** supplies bounded, session-scoped continuation for autonomous work.
-- **Ponytail** supplies YAGNI-first implementation guidance when active.
-- Supporting extensions provide capabilities such as structural search, diagnostics, web access, context inspection, and UI.
-
-The executable sources of truth are:
-
-- `settings.json` for Pi and generic subagent routing/capabilities;
-- `models.json` for the Command Code provider transport and model metadata;
-- `subagent-config.json` for delegated execution and authority policy;
-- `pstack-models.json` for pstack role routing;
-- `sol-pi.json` for SoL-Pi mechanism enablement and cache economics;
-- `pi-goal.json` for autonomous continuation limits.
-
-`docs/model-policy.md` explains the routing rationale. It is descriptive, not an enforcement surface.
+- **Pi** owns native sessions and the `openai` provider, authenticated with **Sign in with ChatGPT**. `openai-codex` is legacy.
+- **pi-subagents** owns child routing, tool contracts, isolation, model allowlists and concurrency. Package-defined role capabilities are preserved. Implementation roles alone inherit active extension tools.
+- **Claude Code CLI** provides independent read-only reviews through pi-subagents' `claude-code` external CLI adapter. Its subscription login is separate from Pi and its adapter has no filesystem tools.
+- **pstack** owns Poteto Mode, workflow playbooks and model-role hints. A version-pinned patch adapts the independent-review skills to Claude Code CLI.
+- **SoL-Pi** supplies parent context efficiency; **pi-goal** supplies bounded continuation. Pi-FFF, Pi-Lens, and other extensions provide search, diagnostics and UI.
 
 ## Authentication
 
-Command Code uses Pi's native OpenAI-compatible provider path. Provide its API key only at runtime:
+Run `/login openai` in Pi and select **Sign in with ChatGPT**. Log into `claude` interactively inside the sandbox as the same `agent` user. Do not use Pi's `anthropic` API provider to consume Claude Pro; that may result in separately billed API usage. Never bake credentials into Docker layers.
+
+## Build / startup
 
 ```sh
-export COMMAND_CODE_API_KEY='...'
-```
-
-The committed profile does not force Command Code ZDR routing. This keeps the selected GOAT review models available when a ZDR-capable upstream is unavailable. Data handling therefore follows the active Command Code and upstream-provider terms. Do not treat this profile as a zero-retention boundary.
-
-SoL-Pi EPR and Online Context Compact are disabled in the committed profile.
-
-OpenAI Codex uses Pi's native `openai-codex` provider. `@narumitw/pi-accounts` owns named Pi account selection. CodexBar authentication is separate and uses native Codex profile homes; the template does not copy or synchronize OAuth tokens between Pi and CodexBar. See `docs/operations.md`.
-
-## Build and validate
-
-```sh
-docker build -t pi-engineering-template:pstack .
 node scripts/verify-template.mjs
+docker build -t pi-engineering-template:pstack .
 ```
 
-The verifier checks machine-readable configuration invariants and cross-file consistency. It does not validate prompt wording.
-
-## Operate
-
-The normal interactive startup routine is to inspect pstack state and enable Poteto Mode:
-
-```text
-pstack state
-/poteto-mode
-```
-
-After activation, pstack supplies the workflow context. SoL-Pi remains a runtime optimization layer rather than a second engineering workflow. The template does not duplicate Poteto Mode, Ponytail, or SoL-Pi behavior in a global agent prompt.
-
-For a checkable autonomous objective, start `/goal <objective>` after `/poteto-mode`.
-
-See `docs/operations.md` for authentication, smoke checks, upgrades, and failure handling. See `docs/pi-design.md` and `docs/pi-spec.md` for ownership boundaries and invariants.
+At session startup, inspect `/pstack status` and activate `/poteto-mode`. See `docs/operations.md` for live validation and `docs/model-policy.md` for routing. No global generic `AGENTS.md` is installed.

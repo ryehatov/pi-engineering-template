@@ -11,13 +11,13 @@ const patches = {
     ["- tools: read-only (`read, grep, find, ls, bash`)", "- tools: the `how-analyst` profile enforces read-only access; do not pass per-call tools", 3],
   ],
   "skills/interrogate/SKILL.md": [
-    ["Launch all reviewers in a single message using the Task tool.", "Launch each reviewer with `subagent()` using `agent: \"reviewer\"`, the selected model, and the shared brief. Background calls can run concurrently."],
-    ["- agent: \"worker\"", "- agent: \"reviewer\""],
-    ["- tools: read-only (`read, grep, find, ls, bash`)", "- Tools come from the configured `reviewer` profile; do not pass a per-call tool list."],
-    ["Task tool's error message", "`subagent` model-resolution error"],
+    ["Launch all reviewers in a single message using the Task tool.", "Use `subagent()` with `agent: \"reviewer\"` for native selectors. For a selector starting `claude-code/`, use `agent: \"claude-code\"`, strip that prefix from `model` and preserve the thinking suffix (e.g. `claude-opus-5-5:high`). Run asynchronously. The read-only Claude Code CLI adapter has NO tools: inline the full diff, relevant source, rubric and test evidence in each `task`, not only file paths. A failed independent review must be reported, never silently replaced by OpenAI."],
+    ["- agent: \"worker\"", "- agent: \"reviewer\" (native model) or \"claude-code\" (selector starting `claude-code/`)"],
+    ["- tools: read-only (`read, grep, find, ls, bash`)", "- Do not pass per-call tools. The native reviewer has its package-defined tool surface; the Claude Code CLI reviewer is no-tools and needs inlined evidence."],
+    ["If a model slug is rejected as unresolvable when you try to spawn the subagent, check the valid slugs in the Task tool\u0027s error message, pick the closest equivalent (prefer the highest-reasoning tier of the same family), spawn with the valid slug, and open a separate PR to update the configured value or default table. Do not block the review on the slug issue. If the configured value is `inherit-parent` or `auto`, omit `model` instead. Never treat those aliases as broken slugs or enter this fallback for them.", "If the configured model cannot be resolved or the Claude Code adapter cannot start, record the missing independent review and the exact error. Do not silently substitute or guess a different reviewer model. The `inherit-parent` and `auto` selectors omit `model`."],
   ],
   "skills/arena/SKILL.md": [
-    ["Spawn one readonly judge subagent on that model.", "Spawn one `subagent()` judge with `agent: \"reviewer\"` and the selected model. The reviewer profile enforces read-only tools."],
+    ["Spawn one readonly judge subagent on that model.", "Spawn a judge with `subagent()` and `async: true`. For a `claude-code/` selector choose `agent: \"claude-code\"` and strip this prefix from `model` (keep the effort suffix); inline the complete rubric, candidate contents and test evidence because the CLI adapter has no filesystem tools. For a native selector choose `agent: \"reviewer\"` with its normal tools. Never silently replace a failed independent judge with a same-provider one."],
     ["`run_in_background: true`", "`async: true`"],
   ],
   "skills/swarm/SKILL.md": [

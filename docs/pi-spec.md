@@ -22,7 +22,7 @@ This document defines repository and harness invariants. It does not define a se
 ## 3. Executable sources of truth
 
 1. `settings.json` MUST own Pi defaults and generic subagent model/tool configuration.
-2. `models.json` MUST own custom provider transport and model metadata.
+2. Pi's native `openai` provider and the separately logged-in Claude Code CLI MUST own their respective subscription transports; the template MUST NOT install a custom GOAT `models.json` provider.
 3. `subagent-config.json` MUST own delegated execution bounds and authority policy.
 4. `pstack-models.json` MUST own pstack role-to-model selectors.
 5. `sol-pi.json` MUST own SoL-Pi mechanism enablement and cache-write/read ratio.
@@ -30,23 +30,17 @@ This document defines repository and harness invariants. It does not define a se
 
 ## 4. Provider invariants
 
-1. The Command Code provider MUST use `https://api.commandcode.ai/provider/v1` with the `openai-completions` API adapter.
-2. Its credential MUST resolve from `$COMMAND_CODE_API_KEY`; no credential may be committed or baked into the image.
-3. The default Command Code provider MUST NOT force `x-cmd-zdr`; runtime availability of the selected model takes precedence over zero-retention enforcement in this profile.
-4. The template MUST NOT claim that non-ZDR Command Code traffic has zero retention.
-5. Legacy OpenCode Go and `pi-commandcode-provider` routes MUST NOT be runtime dependencies of this branch.
-
+1. Parent and native subagents MUST use Pi's built-in `openai` provider through Sign in with ChatGPT, not legacy `openai-codex`.
+2. Independent Claude auditors MUST use the `claude-code` external CLI adapter and separately authenticated Claude Code. The native `anthropic` API provider MUST NOT be represented as Claude Pro subscription usage.
+3. Committed Docker and JSON files MUST NOT contain secrets or the retired Command Code GOAT provider.
+4. The no-tools Claude reviewer MUST receive the actual diff/rubric/test evidence inline rather than relying on file paths.
 ## 5. Model and role consistency
 
-1. `subagents.modelScope` MUST be enabled and strict.
-2. The scope MUST use explicit provider-qualified model IDs for the committed portfolio; wildcard expansion is not permitted in this profile.
-3. The Pi parent, generic subagent defaults, named subagent overrides, pstack selectors, and side-question model configuration MUST resolve within the committed model portfolio.
-4. A Command Code selector MUST request a thinking level supported by that model's `thinkingLevelMap`.
-5. A model id that itself contains `/` MUST NOT be mistaken for a provider-qualified Pi selector when validating the separate `defaultProvider` and `defaultModel` fields.
-6. Models without a verified Command Code effort mapping MUST NOT claim a supported `reasoning_effort`; pstack MAY omit the thinking suffix for such a model.
-7. The verifier MUST bind the pinned `pi-pstack` package version to its exact supported role set and reject missing or unknown roles independently of the selected model assignments.
-8. Generic writing agents MUST have agent-specific scope rules that exclude MiMo until its autonomous tool behavior is qualified.
-
+1. The subagent model scope MUST be strict and enforced and MUST list the two native OpenAI model IDs and the permitted Claude Code CLI model IDs explicitly.
+2. Parent, native child, pstack and side-question routes MUST agree on the committed model portfolio.
+3. Pstack `claude-code/` selectors are routing tags, not native Pi model IDs. The bridge MUST remove this prefix before passing a model to the Claude CLI adapter.
+4. Thinking levels MUST be explicit, and a failed model MUST NOT silently reroute to another provider.
+5. Pstack role keys MUST match the pinned package's role schema exactly.
 ## 6. Delegated execution invariants
 
 1. Delegated context MUST default to `fresh`.
@@ -58,14 +52,11 @@ This document defines repository and harness invariants. It does not define a se
 7. Docker Sandbox remains the outer process and filesystem isolation boundary.
 8. Generic subagent availability recovery MUST require a later explicit launch rather than same-launch automatic model switching, and any rerouted model MUST remain within strict model scope.
 9. The template MUST NOT weaken child capability or isolation policy merely to force ambient SoL-Pi loading into delegated children.
-10. Every explicit named-tool allowlist MUST use tool names registered by the pinned Pi and extension set; retired aliases MUST NOT remain in executable configuration.
-11. `lens_diagnostics` MUST be the Pi-Lens diagnostics surface for both session and LSP diagnostics; the retired standalone `lsp_diagnostics` name MUST NOT be configured.
-12. Bounded analysis roles MAY use `pi_lens_activate_tools` only with situational Pi-Lens tools that are also present in that role's Pi tool allowlist. Dynamic activation MUST NOT widen the Pi allowlist.
-13. The bounded analysis profile MUST NOT grant mutation-capable Pi-Lens surfaces such as `ast_grep_replace`, `lens_diagnostic_mark`, or the mixed read/write `lsp_navigation` tool merely to obtain their read-only operations.
-14. Roles that intentionally accept the package-owned `pi-subagents` tool surface SHOULD omit a local tool override so new required package tools are not shadowed.
-15. `scout`, `reviewer`, and `oracle` MUST NOT receive a shell or source-mutation tool in their explicit read-oriented allowlists.
-16. Pstack Interrogate and arena judges MUST run through the read-only `reviewer` profile; How MUST use the read-only `how-analyst` profile; `comment-sicko` MUST NOT receive a shell.
-
+10. Explicit static tool lists MUST NOT contain conditionally registered extension names (including `multi_grep`).
+11. Built-in Pi-subagents role tool definitions MUST remain package-owned unless a specific role requires an override.
+12. Only implementation roles `worker` and `poteto-agent` MAY inherit ambient extension tools; this is not the default for every child.
+13. The external `claude-code-writer` profile MUST remain disabled, and the read-only `claude-code` reviewer MUST receive full evidence inline.
+14. The local `how-analyst` MUST remain read-only, and built-in search tool names MUST work without optional extension activation.
 ## 7. SoL-Pi invariants
 
 1. Action Fusion and ObservationPack MUST be enabled in the committed profile.
@@ -90,19 +81,19 @@ The static verifier MUST check at least:
 - required configuration and documentation files and JSON validity;
 - absence of the template-level `AGENTS.md` and its Docker injection;
 - strict explicit model scope and model-reference consistency;
-- correct parent provider/model qualification when a model id contains `/`;
-- Command Code provider URL, API type, credential reference, and absence of forced default ZDR routing;
+- correct parent provider/model qualification and Claude Code routing-tag translation;
+- native OpenAI subscription route and external Claude Code review adapter separation;
 - current pi-subagents configuration semantics, including the explicit no-automatic-fallback policy and absence of retired exclusion settings;
-- explicit subagent tool-capability contracts, retired tool names, and package-owned versus inherited tool surfaces;
+- preservation of package-owned role tools and intentional implementation-role ambient tools;
 - pinned pi-pstack package-version/schema compatibility, exact role coverage, and model/thinking selector validity;
 - SoL-Pi mechanism flags, cache ratio, commit pin, and Docker wiring;
 - source-read-only role capability boundaries;
 - delegation, concurrency, mission, schedule, and authority bounds;
 - pinned base image plus the audited Pi and extension version matrix;
-- absence of retired provider and model routes.
+- absence of legacy providers, model routes and embedded credentials.
 
 A passing static verifier does not prove live provider availability, model routing, tool-call compatibility, extension lifecycle compatibility, or package-install compatibility. Release qualification SHOULD also include a Docker build, smoke tests for the enabled SoL-Pi mechanisms, and authenticated calls for routes affected by the change.
 
 ## 10. Operator activation
 
-Pstack activation is an operator/session concern, not a repository prompt concern. The normal operating procedure MAY inspect pstack state and enter `/poteto-mode` at Pi startup. Once active, the extension-provided state is authoritative for engineering workflow; SoL-Pi remains the parent runtime optimization layer.
+Pstack activation is an operator/session concern, not a repository prompt concern. The normal operating procedure MAY inspect /pstack status and enter `/poteto-mode` at Pi startup. Once active, the extension-provided state is authoritative for engineering workflow; SoL-Pi remains the parent runtime optimization layer.

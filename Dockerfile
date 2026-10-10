@@ -9,13 +9,16 @@ RUN apt-get update \
       tzdata \
  && rm -rf /var/lib/apt/lists/*
 
-ARG PI_VERSION=1.0.4
-ARG BUN_VERSION=1.4.2
+ARG PI_VERSION=1.1.0
+ARG BUN_VERSION=1.4.3
+ARG CLAUDE_CODE_VERSION=2.1.296
 
 RUN npm install -g --ignore-scripts \
     "@earendil-works/pi-coding-agent@${PI_VERSION}" \
  && npm install -g "bun@${BUN_VERSION}" \
- && bun --version
+ && bun --version \
+ && npm install -g --ignore-scripts "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}" \
+ && claude --version
 
 USER agent
 
@@ -29,18 +32,13 @@ RUN mkdir -p \
 COPY --chown=agent:agent settings.json \
     /home/agent/.pi/agent/settings.json
 
-COPY --chown=agent:agent models.json \
-    /home/agent/.pi/agent/models.json
-
 COPY --chown=agent:agent subagent-config.json \
     /home/agent/.pi/agent/extensions/subagent/config.json
 
 COPY --chown=agent:agent pstack-models.json \
     /home/agent/.pi/agent/pstack/models.json
 
-RUN chmod 600 \
-    /home/agent/.pi/agent/models.json \
-    /home/agent/.pi/agent/pstack/models.json
+RUN chmod 600 /home/agent/.pi/agent/pstack/models.json
 
 COPY --chown=agent:agent web-search.json \
     /home/agent/.pi/agent/web-search.json
@@ -65,18 +63,18 @@ COPY --chown=agent:agent agents/ \
     /home/agent/.pi/agent/agents/
 
 ARG PI_ACCOUNTS_VERSION=0.53.1
-ARG PI_SUBAGENTS_VERSION=0.76.1
+ARG PI_SUBAGENTS_VERSION=0.77.0
 ARG PI_PSTACK_VERSION=0.6.0
-ARG PONYTAIL_VERSION=4.13.0
-ARG PI_WEB_ACCESS_VERSION=0.37.0
-ARG PI_LENS_VERSION=4.3.0
+ARG PONYTAIL_VERSION=5.1.0
+ARG PI_WEB_ACCESS_VERSION=0.38.0
+ARG PI_LENS_VERSION=4.4.2
 ARG PI_FFF_VERSION=0.11.0
 ARG PI_CONTEXT_VIEW_VERSION=0.6.0
-ARG PI_POWERLINE_FOOTER_VERSION=0.19.1
+ARG PI_POWERLINE_FOOTER_VERSION=0.20.0
 ARG PI_REWIND_HOOK_VERSION=1.8.7
 ARG PI_BTW_VERSION=0.61.1
 ARG PI_GOAL_VERSION=0.54.8
-ARG SOL_PI_COMMIT=e1a586af0ad8956f42ae5b26bba20e48fbf30e00
+ARG SOL_PI_COMMIT=03529c710269d3e3336a033cead49a95189987f1
 
 RUN pi install "npm:@narumitw/pi-accounts@${PI_ACCOUNTS_VERSION}" \
  && pi install "npm:pi-subagents@${PI_SUBAGENTS_VERSION}" \

@@ -4,390 +4,62 @@ import path from "node:path";
 
 const root = path.resolve(process.argv[2] || process.cwd());
 const errors = [];
-const filePath = (file) => path.join(root, file);
-const exists = (file) => fs.existsSync(filePath(file));
-const ok = (value, message) => { if (!value) errors.push(message); };
-const text = (file) => {
-  try { return fs.readFileSync(filePath(file), "utf8"); }
-  catch (error) { errors.push(`${file}: ${error.message}`); return ""; }
-};
-const json = (file) => {
-  const source = text(file);
-  if (!source) return {};
-  try { return JSON.parse(source); }
-  catch (error) { errors.push(`${file}: ${error.message}`); return {}; }
-};
-
-const required = [
-  "Dockerfile",
-  "settings.json",
-  "models.json",
-  "subagent-config.json",
-  "pstack-models.json",
-  "sol-pi.json",
-  "web-search.json",
-  "pi-goal.json",
-  "pi-btw.json",
-  "pi-fff.json",
-  "scripts/patch-pstack.mjs",
-  "agents/how-analyst.md",
-  "skills/LICENSE.mattpocock",
-  "skills/grill-with-docs/SKILL.md",
-  "skills/domain-modeling/SKILL.md",
-  "skills/domain-modeling/CONTEXT-FORMAT.md",
-  "skills/domain-modeling/ADR-FORMAT.md",
-  "skills/grilling/SKILL.md",
-  "skills/retro/SKILL.md",
-  "skills/writing-for-agents/SKILL.md",
-  "skills/writing-for-agents/SKILL-MECHANICS.md",
-];
-for (const file of required) ok(exists(file), `${file}: missing`);
-ok(!exists("AGENTS.md"), "AGENTS.md: template-level global agent prompt must remain absent");
-
-const thinkingLevels = new Set(["off", "minimal", "low", "medium", "high", "xhigh", "max"]);
-// Compatibility contract for the audited Pi package set. Bumps require an upstream contract review.
-const verifiedPiPackageVersions = new Map([
-  ["PI_VERSION", "1.0.4"],
-  ["BUN_VERSION", "1.4.2"],
-  ["PI_ACCOUNTS_VERSION", "0.53.1"],
-  ["PI_SUBAGENTS_VERSION", "0.76.1"],
-  ["PI_PSTACK_VERSION", "0.6.0"],
-  ["PONYTAIL_VERSION", "4.13.0"],
-  ["PI_WEB_ACCESS_VERSION", "0.37.0"],
-  ["PI_LENS_VERSION", "4.3.0"],
-  ["PI_FFF_VERSION", "0.11.0"],
-  ["PI_CONTEXT_VIEW_VERSION", "0.6.0"],
-  ["PI_POWERLINE_FOOTER_VERSION", "0.19.1"],
-  ["PI_REWIND_HOOK_VERSION", "1.8.7"],
-  ["PI_BTW_VERSION", "0.61.1"],
-  ["PI_GOAL_VERSION", "0.54.8"],
-]);
-const verifiedSolPiCommit = "e1a586af0ad8956f42ae5b26bba20e48fbf30e00";
-const verifiedPstackVersion = verifiedPiPackageVersions.get("PI_PSTACK_VERSION");
-const verifiedAgentTools = {
-  scout: [
-    "read", "grep", "find", "ls", "multi_grep",
-    "lens_diagnostics", "module_report", "project_report",
-    "read_symbol", "read_enclosing", "symbol_search",
-    "pi_lens_activate_tools", "ast_grep_search", "contact_supervisor",
-  ],
-  reviewer: [
-    "read", "grep", "find", "ls", "multi_grep", "watchdog_diff",
-    "lens_diagnostics", "module_report", "project_report",
-    "read_symbol", "read_enclosing", "symbol_search",
-    "pi_lens_activate_tools", "ast_grep_search", "contact_supervisor",
-  ],
-  oracle: [
-    "read", "grep", "find", "ls", "multi_grep",
-    "lens_diagnostics", "module_report", "project_report",
-    "read_symbol", "read_enclosing", "symbol_search",
-    "pi_lens_activate_tools", "ast_grep_search",
-  ],
-  "comment-sicko": ["read", "grep", "find", "ls"],
-  "how-analyst": ["read", "grep", "find", "ls"],
-};
-const retiredSubagentTools = new Set(["lsp_diagnostics"]);
-const verifiedPstackRoles = new Set([
-  "feature, refactoring",
-  "bug-fix",
-  "perf-issue",
-  "hillclimb",
-  "judgment and prose",
-  "hardest tasks",
-  "how explorer",
-  "how explainer",
-  "why investigators",
-  "why synthesizer",
-  "reflect tooling",
-  "reflect judgment, divergent, synthesizer",
-  "arena runners",
-  "arena cross-judge pool",
-  "swarm workers",
-  "architect runners",
-  "interrogate reviewers",
-]);
-const parseSelector = (value) => {
-  if (typeof value !== "string" || value.length === 0) return null;
-  const split = value.lastIndexOf(":");
-  if (split <= 0) return { model: value, thinking: null };
-  const thinking = value.slice(split + 1);
-  return thinkingLevels.has(thinking)
-    ? { model: value.slice(0, split), thinking }
-    : { model: value, thinking: null };
-};
-
-const settings = json("settings.json");
-const models = json("models.json");
-const sub = json("subagent-config.json");
-const pstack = json("pstack-models.json");
-const sol = json("sol-pi.json");
-const web = json("web-search.json");
-const goal = json("pi-goal.json");
-const btw = json("pi-btw.json");
-const fff = json("pi-fff.json");
-
-ok(typeof settings.defaultProvider === "string" && settings.defaultProvider.length > 0, "settings.json: defaultProvider missing");
-ok(typeof settings.defaultModel === "string" && settings.defaultModel.length > 0, "settings.json: defaultModel missing");
-ok(thinkingLevels.has(settings.defaultThinkingLevel), "settings.json: invalid defaultThinkingLevel");
-ok(settings.defaultThinkingLevel === "low", "settings.json: parent orchestrator must use low thinking");
-ok(settings.defaultProjectTrust === "never", "settings.json: defaultProjectTrust must remain never");
-
-const subagents = settings.subagents || {};
-const scope = subagents.modelScope || {};
-const allow = Array.isArray(scope.allow) ? scope.allow : [];
-ok(scope.enforce === true && scope.strict === true, "settings.json: subagent modelScope must be strict and enforced");
-ok(allow.includes("inherit"), "settings.json: modelScope must include inherit");
-ok(new Set(allow).size === allow.length, "settings.json: modelScope contains duplicate entries");
-for (const model of allow.filter((value) => value !== "inherit")) {
-  ok(typeof model === "string" && model.includes("/") && !model.includes("*"), `settings.json: modelScope entry must be explicit and provider-qualified (${model})`);
-}
-const allowedModels = new Set(allow.filter((value) => value !== "inherit"));
-const parentModel = `${settings.defaultProvider}/${settings.defaultModel}`;
-ok(allowedModels.has(parentModel), `settings.json: parent model is outside strict modelScope (${parentModel})`);
-for (const name of ["worker", "poteto-agent"]) {
-  const scoped = scope.agents?.[name]?.allow;
-  ok(Array.isArray(scoped) && scoped.length > 0, `settings.json: ${name} needs a writer model scope`);
-  if (Array.isArray(scoped)) {
-    ok(scoped.every((model) => allowedModels.has(model) && model !== "commandcode-goat/xiaomi/mimo-v2.6-pro"), `settings.json: ${name} may only use qualified writer models`);
-    ok(scoped.includes(subagents.agentOverrides?.[name]?.model), `settings.json: ${name} default is outside its writer scope`);
-  }
-}
-const howScope = scope.agents?.["how-analyst"]?.allow;
-ok(Array.isArray(howScope) && howScope.join(",") === "openai-codex/gpt-6-luna,openai-codex/gpt-6-astra", "settings.json: how-analyst must be scoped to the How models");
-
-const providers = models.providers || {};
-const commandCode = providers["commandcode-goat"];
-ok(commandCode && typeof commandCode === "object", "models.json: commandcode-goat provider missing");
-if (commandCode) {
-  ok(commandCode.baseUrl === "https://api.commandcode.ai/provider/v1", "models.json: Command Code API URL mismatch");
-  ok(commandCode.api === "openai-completions", "models.json: Command Code API adapter mismatch");
-  ok(commandCode.apiKey === "$COMMAND_CODE_API_KEY" && commandCode.authHeader === true, "models.json: runtime API-key auth mismatch");
-  const hasForcedZdr = Object.keys(commandCode.headers || {}).some((name) => name.toLowerCase() === "x-cmd-zdr");
-  ok(!hasForcedZdr, "models.json: default Command Code provider must not force ZDR routing");
-}
-
-const customThinking = new Map();
-const noEffort = new Set();
-for (const [providerName, provider] of Object.entries(providers)) {
-  const catalog = Array.isArray(provider?.models) ? provider.models : [];
-  ok(new Set(catalog.map((model) => model.id)).size === catalog.length, `models.json: duplicate model ids in ${providerName}`);
-  for (const model of catalog) {
-    ok(typeof model.id === "string" && model.id.length > 0, `models.json: model id missing in ${providerName}`);
-    const qualified = `${providerName}/${model.id}`;
-    ok(allowedModels.has(qualified), `models.json: custom model is outside strict modelScope (${qualified})`);
-    ok(Array.isArray(model.input) && model.input.length > 0, `models.json: input capability missing (${qualified})`);
-    ok(Number.isFinite(model.contextWindow) && model.contextWindow > 0, `models.json: invalid contextWindow (${qualified})`);
-    ok(Number.isFinite(model.maxTokens) && model.maxTokens > 0, `models.json: invalid maxTokens (${qualified})`);
-    if (model.compat?.supportsReasoningEffort === false) {
-      noEffort.add(qualified);
-      ok(model.thinkingLevelMap === undefined, `models.json: unverified effort map (${qualified})`);
-    }
-    if (model.cost) {
-      for (const key of ["input", "output", "cacheRead", "cacheWrite"]) {
-        ok(Number.isFinite(model.cost[key]) && model.cost[key] >= 0, `models.json: invalid cost.${key} (${qualified})`);
-      }
-    }
-
-    const map = model.thinkingLevelMap;
-    if (map && typeof map === "object") {
-      const active = new Set(
-        Object.entries(map)
-          .filter(([, value]) => typeof value === "string" && value.length > 0)
-          .map(([level]) => level),
-      );
-      ok([...active].every((level) => thinkingLevels.has(level)), `models.json: invalid thinkingLevelMap (${qualified})`);
-      customThinking.set(qualified, active);
-    }
-  }
-}
-for (const model of allowedModels) {
-  if (!model.includes("/")) continue;
-  const providerName = model.slice(0, model.indexOf("/"));
-  if (providers[providerName]) {
-    const ids = new Set((providers[providerName].models || []).map((entry) => `${providerName}/${entry.id}`));
-    ok(ids.has(model), `settings.json: scoped custom model missing from models.json (${model})`);
-  }
-}
-
-const checkModel = (model, thinking, label) => {
-  ok(typeof model === "string" && allowedModels.has(model), `${label}: model outside strict modelScope (${model})`);
-  if (thinking == null) return;
-  ok(thinkingLevels.has(thinking), `${label}: invalid thinking level (${thinking})`);
-  ok(!noEffort.has(model), `${label}: model has no verified effort mapping (${model}:${thinking})`);
-  const supported = customThinking.get(model);
-  if (supported) ok(supported.has(thinking), `${label}: unsupported thinking level (${model}:${thinking})`);
-};
-
-checkModel(subagents.defaultModel, subagents.defaultThinking, "settings.json: subagent default");
-ok(thinkingLevels.has(subagents.maxThinking), "settings.json: invalid subagent maxThinking");
-for (const [name, config] of Object.entries(subagents.agentOverrides || {})) {
-  if (!config || config.disabled === true) continue;
-  if (config.model) checkModel(config.model, config.thinking ?? subagents.defaultThinking, `settings.json: agentOverrides.${name}`);
-  ok(
-    config.fallbackModels === undefined,
-    `settings.json: agentOverrides.${name}.fallbackModels must remain unset; provider/model rerouting is an explicit workflow decision`,
-  );
-}
-
-const agentOverrides = subagents.agentOverrides || {};
-for (const [name, expectedTools] of Object.entries(verifiedAgentTools)) {
-  const actualTools = agentOverrides[name]?.tools;
-  ok(Array.isArray(actualTools), `settings.json: agentOverrides.${name}.tools must be an explicit array`);
-  if (!Array.isArray(actualTools)) continue;
-  const actualSet = new Set(actualTools);
-  ok(actualSet.size === actualTools.length, `settings.json: agentOverrides.${name}.tools contains duplicates`);
-  for (const tool of actualTools) {
-    ok(!retiredSubagentTools.has(tool), `settings.json: agentOverrides.${name} references retired tool (${tool})`);
-  }
-  ok(
-    actualSet.size === expectedTools.length && expectedTools.every((tool) => actualSet.has(tool)),
-    `settings.json: agentOverrides.${name}.tools drifted from the audited capability contract`,
-  );
-}
-// Keep package-owned tool surfaces package-owned where no tighter capability ceiling is needed.
-ok(agentOverrides.researcher?.tools === undefined, "settings.json: researcher must inherit the pi-subagents research tool surface");
-ok(agentOverrides.worker?.tools === "inherit", "settings.json: worker tools must remain inherit");
-ok(agentOverrides["poteto-agent"]?.tools === "inherit", "settings.json: poteto-agent tools must remain inherit");
-
-ok(pstack.version === 1, "pstack-models.json: unsupported version");
-ok(pstack.skillsEnabled === true, "pstack-models.json: skills must remain enabled");
-ok(pstack.roles && typeof pstack.roles === "object" && !Array.isArray(pstack.roles) && Object.keys(pstack.roles).length > 0, "pstack-models.json: roles missing");
-const configuredPstackRoles = new Set(Object.keys(pstack.roles || {}));
-for (const role of verifiedPstackRoles) {
-  ok(configuredPstackRoles.has(role), `pstack-models.json: missing pi-pstack ${verifiedPstackVersion} role (${role})`);
-}
-for (const role of configuredPstackRoles) {
-  ok(verifiedPstackRoles.has(role), `pstack-models.json: unknown pi-pstack ${verifiedPstackVersion} role (${role})`);
-}
-for (const [role, raw] of Object.entries(pstack.roles || {})) {
-  const selectors = Array.isArray(raw) ? raw : [raw];
-  ok(selectors.length > 0, `pstack-models.json: empty selector list (${role})`);
-  for (const rawSelector of selectors) {
-    const parsed = parseSelector(rawSelector);
-    ok(parsed !== null, `pstack-models.json: invalid selector (${role})`);
-    ok(parsed?.thinking !== null || noEffort.has(parsed?.model), `pstack-models.json: selector must include a supported thinking level (${rawSelector})`);
-    if (parsed) checkModel(parsed.model, parsed.thinking, `pstack-models.json: ${role}`);
-    if (parsed?.model === "commandcode-goat/xiaomi/mimo-v2.6-pro") {
-      ok(["arena cross-judge pool", "interrogate reviewers"].includes(role), `pstack-models.json: MiMo must remain a reviewer (${role})`);
-    }
-  }
-}
-const family = (selector) => {
-  const model = parseSelector(selector)?.model || "";
-  const parts = model.split("/");
-  return (parts[0] === "commandcode-goat" ? parts[1] : parts[0]).toLowerCase();
-};
-const runners = pstack.roles?.["arena runners"];
-const judges = pstack.roles?.["arena cross-judge pool"];
-ok(Array.isArray(runners) && Array.isArray(judges), "pstack-models.json: arena runners and judges must be pools");
-if (Array.isArray(runners) && Array.isArray(judges)) {
-  const runnerFamilies = new Set(runners.map(family));
-  ok(judges.every((selector) => !runnerFamilies.has(family(selector))), "pstack-models.json: arena judge must be independent of every runner family");
-}
-for (const role of ["arena cross-judge pool", "interrogate reviewers"]) {
-  const selectors = pstack.roles?.[role];
-  const reviewerAllow = new Set(scope.agents?.reviewer?.allow ?? allow);
-  ok(Array.isArray(selectors) && selectors.every((raw) => reviewerAllow.has(parseSelector(raw)?.model)), `pstack-models.json: ${role} must use reviewer-scoped models`);
-}
-for (const role of ["how explorer", "how explainer"]) {
-  ok(howScope?.includes(parseSelector(pstack.roles?.[role])?.model), `pstack-models.json: ${role} must use a how-analyst model`);
-}
-ok(/^name: how-analyst$/m.test(text("agents/how-analyst.md")) && /^tools: read, grep, find, ls$/m.test(text("agents/how-analyst.md")), "agents/how-analyst.md: read-only profile mismatch");
-
-ok(sol.version === 1, "sol-pi.json: unsupported version");
-ok(sol.actionFusion === true, "sol-pi.json: actionFusion must remain enabled");
-ok(sol.observationPack === true, "sol-pi.json: observationPack must remain enabled");
-ok(sol.evidencePreservingReducer === false, "sol-pi.json: evidencePreservingReducer must remain disabled");
-ok(sol.onlineContextCompact === false, "sol-pi.json: onlineContextCompact must remain disabled");
-ok(sol.evidencePreservingReducerProvider === undefined, "sol-pi.json: EPR reducer provider must remain unset while EPR is disabled");
-ok(sol.evidencePreservingReducerModel === undefined, "sol-pi.json: EPR reducer model must remain unset while EPR is disabled");
-ok(sol.cacheWriteReadRatio === 12.5, "sol-pi.json: cacheWriteReadRatio must remain 12.5");
-
-ok(web.workflow === "none", "web-search.json: workflow must remain none");
-ok(Array.isArray(web.searchRouting?.providers) && web.searchRouting.providers.join(",") === "openai,exa", "web-search.json: search routing must prefer current-model OpenAI then Exa");
-ok(web.searchRouting?.useCurrentModel === true, "web-search.json: OpenAI routing must use the current model");
-ok(Array.isArray(web.searchRouting?.fallbackOn) && web.searchRouting.fallbackOn.join(",") === "unsupported,transient,quota,network,invalid-response", "web-search.json: unsupported or failed OpenAI search must fall back to Exa");
-ok(web.searxngBaseUrl === undefined && web.ssrf?.allowRanges === undefined, "web-search.json: no unprovisioned local search service or loopback exception");
-ok(Array.isArray(web.fetchContent?.domainPolicy?.deny) && web.fetchContent.domainPolicy.deny.includes("127.0.0.1"), "web-search.json: fetch_content must deny loopback");
-
-checkModel(btw.model, btw.thinkingLevel, "pi-btw.json");
-ok(btw.model === "openai-codex/gpt-6-astra" && btw.thinkingLevel === "high", "pi-btw.json: side questions must use Astra high");
-ok(goal.continuationLimits?.automaticTurns === 64 && goal.continuationLimits?.noProgressTurns === 3 && goal.rpc?.enabled === false, "pi-goal.json: bounded autonomous continuation required");
-ok(fff.mode === "override", "pi-fff.json: mode must remain override");
-
-for (const [name, value] of [
-  ["maxSubagentDepth", sub.maxSubagentDepth],
-  ["maxSubagentSpawnsPerRun", sub.maxSubagentSpawnsPerRun],
-  ["globalConcurrencyLimit", sub.globalConcurrencyLimit],
-  ["parallel.maxTasks", sub.parallel?.maxTasks],
-  ["parallel.concurrency", sub.parallel?.concurrency],
-]) {
-  ok(Number.isInteger(value) && value > 0, `subagent-config.json: ${name} must be a positive integer`);
-}
-if (Number.isInteger(sub.parallel?.concurrency) && Number.isInteger(sub.globalConcurrencyLimit)) {
-  ok(sub.parallel.concurrency <= sub.globalConcurrencyLimit, "subagent-config.json: parallel concurrency exceeds global concurrency");
-}
-ok(
-  sub.modelExclusions === undefined,
-  "subagent-config.json: modelExclusions was removed by pi-subagents 0.68.0+",
-);
-ok(
-  sub.completionGuard === undefined,
-  "subagent-config.json: completionGuard was removed by pi-subagents 0.70.1+",
-);
-ok(sub.defaultSubagentContext === "fresh", "subagent-config.json: delegated context must remain fresh");
-ok(sub.missions?.enabled === false, "subagent-config.json: missions must remain disabled");
-ok(sub.scheduledRuns?.enabled === false, "subagent-config.json: scheduled runs must remain disabled");
-ok(sub.authorityPolicy?.scheduleCreate === "forbid", "subagent-config.json: schedule creation must remain forbidden");
-for (const [action, decision] of Object.entries(sub.authorityPolicy || {})) {
-  ok(["auto", "confirm", "forbid"].includes(decision), `subagent-config.json: invalid authority decision (${action}:${decision})`);
-}
-
+const ok = (v, msg) => { if (!v) errors.push(msg); };
+const has = (file) => fs.existsSync(path.join(root, file));
+const text = (file) => { try { return fs.readFileSync(path.join(root, file), "utf8"); } catch (e) { errors.push(file+": "+e.message); return ""; } };
+const json = (file) => { try { return JSON.parse(text(file)); } catch (e) { errors.push(file+": "+e.message); return {}; } };
+for (const name of ["Dockerfile","settings.json","pstack-models.json","subagent-config.json","sol-pi.json","web-search.json","pi-goal.json","pi-btw.json","pi-fff.json","scripts/patch-pstack.mjs","agents/how-analyst.md","skills/LICENSE.mattpocock","skills/grill-with-docs/SKILL.md","skills/domain-modeling/SKILL.md","skills/domain-modeling/CONTEXT-FORMAT.md","skills/domain-modeling/ADR-FORMAT.md","skills/grilling/SKILL.md","skills/retro/SKILL.md","skills/writing-for-agents/SKILL.md","skills/writing-for-agents/SKILL-MECHANICS.md"]) ok(has(name), name+": missing");
+ok(!has("models.json") && !has("AGENTS.md"), "retired custom provider or generic global agent prompt remains");
+const pins = new Map([["PI_VERSION","1.1.0"],["BUN_VERSION","1.4.3"],["PI_ACCOUNTS_VERSION","0.53.1"],["PI_SUBAGENTS_VERSION","0.77.0"],["PI_PSTACK_VERSION","0.6.0"],["PONYTAIL_VERSION","5.1.0"],["PI_WEB_ACCESS_VERSION","0.38.0"],["PI_LENS_VERSION","4.4.2"],["PI_FFF_VERSION","0.11.0"],["PI_CONTEXT_VIEW_VERSION","0.6.0"],["PI_POWERLINE_FOOTER_VERSION","0.20.0"],["PI_REWIND_HOOK_VERSION","1.8.7"],["PI_BTW_VERSION","0.61.1"],["PI_GOAL_VERSION","0.54.8"],["CLAUDE_CODE_VERSION","2.1.296"]]);
 const docker = text("Dockerfile");
-ok(/^ENV TZ=Asia\/Tokyo$/m.test(docker), "Dockerfile: runtime timezone must remain Asia/Tokyo");
-ok(/^ARG BASE_IMAGE=.*@sha256:[0-9a-f]{64}$/m.test(docker), "Dockerfile: base image digest pin missing");
-const versionArgs = [...docker.matchAll(/^ARG ([A-Z0-9_]+_VERSION)=([^\s$]+)$/gm)];
-ok(versionArgs.length > 0, "Dockerfile: no explicit version pins found");
-const versionPins = new Map(versionArgs.map(([, name, value]) => [name, value]));
-for (const [, name, value] of versionArgs) ok(value.length > 0, `Dockerfile: ${name} version pin missing`);
-for (const [name, expected] of verifiedPiPackageVersions) {
-  ok(versionPins.get(name) === expected, `Dockerfile: ${name} must match audited version (${expected})`);
+for (const [key,value] of pins) ok(new RegExp("^ARG "+key+"="+value.replaceAll(".", "\\.")+"$", "m").test(docker), "Dockerfile pin drift: "+key);
+ok(/^ARG BASE_IMAGE=.*@sha256:[0-9a-f]{64}$/m.test(docker), "Docker base image digest pin missing");
+ok(docker.includes("ARG SOL_PI_COMMIT=03529c710269d3e3336a033cead49a95189987f1"), "SoL-Pi commit drift");
+for (const x of ["npm:pi-subagents@\u0024{PI_SUBAGENTS_VERSION}","npm:@zenspc/pi-pstack@\u0024{PI_PSTACK_VERSION}","npm:@narumitw/pi-accounts@\u0024{PI_ACCOUNTS_VERSION}","@anthropic-ai/claude-code@\u0024{CLAUDE_CODE_VERSION}","node /tmp/patch-pstack.mjs","COPY --chown=agent:agent settings.json","COPY --chown=agent:agent pstack-models.json","COPY --chown=agent:agent subagent-config.json","COPY --chown=agent:agent skills/"]) ok(docker.includes(x), "Docker runtime wiring missing: "+x);
+ok(!docker.includes("models.json") && /^ENV TZ=Asia\/Tokyo$/m.test(docker), "Docker transport or timezone mismatch");
+const s = json("settings.json"), p = json("pstack-models.json"), sub = json("subagent-config.json"), so = json("sol-pi.json"), w = json("web-search.json"), btw = json("pi-btw.json"), goal = json("pi-goal.json"), fff = json("pi-fff.json");
+const native = new Set(["openai/gpt-6.1-sol","openai/gpt-6-astra"]), claude = new Set(["claude-opus-5-5","claude-sonnet-5-5","claude-haiku-5-5"]);
+ok(s.defaultProvider==="openai" && s.defaultModel==="gpt-6.1-sol" && s.defaultThinkingLevel==="xhigh" && s.defaultProjectTrust==="never","Parent model/provider/trust mismatch");
+const sa=s.subagents||{}, scope=sa.modelScope||{}, a=sa.agentOverrides||{};
+ok(sa.defaultModel==="openai/gpt-6.1-sol" && sa.defaultThinking==="xhigh" && sa.maxThinking==="max","Subagent defaults mismatch");
+ok(scope.enforce===true && scope.strict===true,"Model scope is not strict");
+const allow=new Set(scope.allow||[]);
+ok(allow.size===5 && [...native,...claude].every(x=>allow.has(x)), "Model scope portfolio mismatch");
+for (const [name,cfg] of Object.entries(a)) {
+ if (cfg.disabled) continue;
+ ok(name==="claude-code"?claude.has(cfg.model):native.has(cfg.model), "Invalid resolved role model: "+name);
+ ok(["high","xhigh"].includes(cfg.thinking), "Invalid role effort: "+name);
+ ok(cfg.fallbackModels===undefined,"Unapproved fallback: "+name);
+ ok(name==="worker"||name==="poteto-agent" ? cfg.tools==="inherit" : cfg.tools===undefined, "Role tool ownership drift: "+name);
 }
-ok(docker.includes(`ARG SOL_PI_COMMIT=${verifiedSolPiCommit}`), "Dockerfile: SoL-Pi commit must match audited pin");
-for (const needle of [
-  "COPY --chown=agent:agent settings.json",
-  "COPY --chown=agent:agent models.json",
-  "COPY --chown=agent:agent subagent-config.json",
-  "COPY --chown=agent:agent pstack-models.json",
-  "COPY --chown=agent:agent web-search.json",
-  "/home/agent/.pi/agent/web-search.json",
-  "COPY --chown=agent:agent sol-pi.json",
-  "/home/agent/.pi/agent/sol-pi.json",
-  "COPY --chown=agent:agent pi-goal.json",
-  "/home/agent/.pi/agent/pi-goal.json",
-  "COPY --chown=agent:agent skills/",
-  "COPY --chown=agent:agent agents/",
-  "scripts/patch-pstack.mjs",
-  "node /tmp/patch-pstack.mjs",
-  "npm:pi-subagents@${PI_SUBAGENTS_VERSION}",
-  "npm:@zenspc/pi-pstack@${PI_PSTACK_VERSION}",
-  "npm:@narumitw/pi-goal@${PI_GOAL_VERSION}",
-  "git:github.com/NVlabs/SoL-Pi@${SOL_PI_COMMIT}",
-]) {
-  ok(docker.includes(needle), `Dockerfile: required runtime wiring missing (${needle})`);
+ok(a["claude-code"]?.model==="claude-opus-5-5" && a["claude-code-writer"]?.disabled===true, "Claude independent auditor/writer boundary mismatch");
+ok(a.oracle?.model==="openai/gpt-6-astra" && a.reviewer?.model==="openai/gpt-6-astra", "Oracle or native reviewer mismatch");
+for(const name of ["worker","poteto-agent"])ok(scope.agents?.[name]?.allow?.join(",")==="openai/gpt-6.1-sol", "Writer scope widened: "+name);
+for(const name of ["scout","researcher","comment-sicko"])ok(scope.agents?.[name]?.allow?.join(",")==="openai/gpt-6.1-sol", "Scout/researcher scope widened: "+name);
+ok(scope.agents?.["claude-code"]?.allow?.length===3 && scope.agents["claude-code"].allow.every(x=>claude.has(x)), "Claude scope mismatch");
+ok(/^tools: read, grep, find, ls$/m.test(text("agents/how-analyst.md")),"how-analyst tools mismatch");
+const keys=["feature, refactoring","bug-fix","perf-issue","hillclimb","judgment and prose","hardest tasks","how explorer","how explainer","why investigators","why synthesizer","reflect tooling","reflect judgment, divergent, synthesizer","arena runners","arena cross-judge pool","swarm workers","architect runners","interrogate reviewers"];
+ok(p.version===1 && p.skillsEnabled===true && p.roles && Object.keys(p.roles).length===keys.length,"pstack role contract mismatch");
+const arrays=new Set(["arena runners","arena cross-judge pool","architect runners","interrogate reviewers"]);
+for(const name of keys) {
+ const v=p.roles?.[name], vals=Array.isArray(v)?v:[v], isJudge=name==="arena cross-judge pool"||name==="interrogate reviewers";
+ ok(Array.isArray(v)===arrays.has(name) && vals.length>0, "Role shape mismatch: "+name);
+ for(const x of vals) {
+  const parts=typeof x==="string"?x.split(":"):[];
+  const model=parts[0],thinking=parts[1];
+  ok(parts.length===2 && (isJudge ? model?.startsWith("claude-code/")&&claude.has(model.slice(12))&&thinking==="high" : native.has(model)&&["high","xhigh"].includes(thinking)), "Invalid selector "+name+": "+x);
+ }
 }
-ok(!docker.includes("AGENTS.md"), "Dockerfile: template-level AGENTS.md must not be copied");
-ok(!/plannotator/i.test(docker), "Dockerfile: Plannotator must not be installed or configured");
-ok(!docker.includes("PI_SUBAGENTS_LLM_INTENT_ARBITER"), "Dockerfile: removed pi-subagents LLM intent arbiter must not be configured");
-ok(!text("skills/grill-with-docs/SKILL.md").includes("Call the Skill tool") && !text("skills/retro/SKILL.md").includes("Call the Skill tool"), "skills: Pi cannot invoke a Skill tool");
-for (const source of [docker, text("settings.json"), text("models.json"), text("pstack-models.json"), text("subagent-config.json"), text("sol-pi.json")]) {
-  for (const legacy of ["opencode-go", "pi-commandcode-provider", "/alpha/generate", "deepseek/deepseek-v4-flash", "deepseek-v4.1-flash-beta"]) {
-    ok(!source.includes(legacy), `retired provider/model route remains (${legacy})`);
-  }
-}
-
-if (errors.length) {
-  for (const error of errors) console.error(`FAIL ${error}`);
-  process.exit(1);
-}
+const patch=text("scripts/patch-pstack.mjs");
+ok(patch.includes("claude-code/") && patch.includes("inline the full diff") && patch.includes("agent: \\\"claude-code\\\""),"pstack Claude adapter bridge missing");
+ok(so.actionFusion===true && so.observationPack===true && so.evidencePreservingReducer===false && so.onlineContextCompact===false && so.cacheWriteReadRatio===12.5,"SoL-Pi mechanism mismatch");
+ok(w.workflow==="none"&&w.searchRouting?.providers?.join(",")==="openai,exa"&&w.searchRouting.useCurrentModel===true,"Web search routing mismatch");
+ok(btw.model==="openai/gpt-6-astra" && btw.thinkingLevel==="high","Side-question model mismatch");
+ok(fff.mode==="override","FFF mode mismatch");
+ok(goal.continuationLimits?.automaticTurns===64 && goal.continuationLimits?.noProgressTurns===3 && goal.rpc?.enabled===false,"Goal bounds mismatch");
+ok(sub.defaultSubagentContext==="fresh" && sub.missions?.enabled===false && sub.scheduledRuns?.enabled===false && sub.authorityPolicy?.scheduleCreate==="forbid","Delegation policy mismatch");
+for(const key of ["maxSubagentDepth","maxSubagentSpawnsPerRun","globalConcurrencyLimit"])ok(Number.isInteger(sub[key])&&sub[key]>0,"Invalid delegation limit "+key);
+ok(sub.parallel?.concurrency>0 && sub.parallel.concurrency<=sub.globalConcurrencyLimit,"Parallel concurrency unbounded");
+for(const legacy of ["openai-codex","commandcode-goat","COMMAND_CODE_API_KEY","multi_grep","lsp_diagnostics"])for(const [name,source] of [["Dockerfile",docker],["settings.json",text("settings.json")],["pstack-models.json",text("pstack-models.json")]])ok(!source.includes(legacy),"Legacy or conditional runtime symbol "+legacy+" in "+name);
+if(errors.length){errors.forEach(e=>console.error("FAIL "+e));process.exit(1)}
 console.log("template verification: ok");

@@ -1,4 +1,4 @@
 {
-  "model": "openai-codex/gpt-6-astra",
+  "model": "openai/gpt-6-astra",
   "thinkingLevel": "high"
 }
