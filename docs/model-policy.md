@@ -8,10 +8,10 @@ Pi selects the parent provider and model in `settings.json`. The pstack-claude e
 | --- | --- | --- | --- |
 | `opus` | `openai/gpt-6.1-sol` | xhigh | Implementation, investigation, swarm workers |
 | `fable` | `openai/gpt-6-astra` | xhigh | Architecture, synthesis, hard judgments |
-| `sonnet` | `anthropic/claude-opus-5-5` | high | Independent adversarial review |
-| `haiku` | `anthropic/claude-sonnet-5-5` | high | Additional cross-provider review |
+| `sonnet` | `openai/gpt-6-sol` | high | Alternative-model adversarial review |
+| `haiku` | `openai/gpt-6-luna` | high | Additional lightweight review |
 
-`arena`, `architect`, and `interrogate` use all four slots. The cross-judge pool is also diverse. All four IDs are distinct, but there are only **two providers**; two Claude models do not supply independent vendor evidence. The default parent remains Sol at `xhigh`.
+`arena`, `architect`, and `interrogate` use all four slots. The cross-judge pool also uses these four model IDs. They are distinct but run on **one provider**. Distinct models can reduce shared blind spots, but this panel provides **no cross-vendor independence**. The `sonnet` and `haiku` labels are pstack family aliases, not Claude endpoints. The default parent remains Sol at `xhigh`.
 
 ## Execution and trust boundaries
 
@@ -19,7 +19,11 @@ Pi selects the parent provider and model in `settings.json`. The pstack-claude e
 - `readonly: true` only removes Pi's `edit` and `write` tools. **It does not sandbox `bash`**. Reviewers must be instructed not to mutate files, and high-assurance isolation must come from Docker, filesystem permissions, or a separate read-only workspace.
 - Writing agents should use `isolation: "worktree"` when editing in parallel. Each retained worktree needs human or supervisor review. A read-only reviewer should inspect the requested working tree if the diff is uncommitted.
 - `defaultProjectTrust: "never"` keeps Pi project packages outside the automatic trust boundary. The Docker Sandbox supplies process and filesystem isolation; it does not make a third-party extension intrinsically safe.
-- Credentials belong in Pi's user-managed login store, not in the image. Authentication does not establish subscription-included billing. Pi's Anthropic access can be charged per token, including every reviewer invocation. Do not fall back to a different provider without an explicit decision.
+- Credentials belong in Pi's user-managed login store, not in the image. Authentication does not establish subscription-included billing. Anthropic OAuth in a third-party Pi client may be blocked with HTTP 400 until separately funded extra usage is enabled. The default image deliberately avoids this dependency. Do not fall back to a different provider without an explicit decision.
+
+## Optional cross-provider review
+
+Only enable Anthropic when its account explicitly permits and funds third-party requests. In a local `~/.pi/agent/pstack-models.md` override, change `sonnet` and `haiku` to approved Anthropic `<provider>/<model-id>` values and confirm each model with a small live request before a multi-agent run. This is a deliberate deviation from the default OpenAI-only template policy; the static verifier will reject it. Keep billing credentials out of Git and Docker image layers. Do not treat a Claude subscription login as proof that extra usage is available.
 
 ## Performance and operational limits
 
