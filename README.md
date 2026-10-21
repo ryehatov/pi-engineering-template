@@ -21,4 +21,4 @@ node --test scripts/verify-template.test.mjs
 docker build -t pi-engineering-template:pstack .
 ```
 
-At session startup inspect `/pstack status` and activate `/poteto-mode`. Codemode is enabled additively; native tools remain available. See `docs/operations.md` for live validation, `docs/model-policy.md` for routing, and `docs/dependency-upgrade-2026-10-21.md` for the audited release matrix. No generic global `AGENTS.md` is installed.
+At session startup inspect `/pstack status` and activate `/poteto-mode`. Codemode is enabled additively; native tools remain available. See `docs/operations.md` for live validation and `docs/model-policy.md` for routing. No generic global `AGENTS.md` is installed.

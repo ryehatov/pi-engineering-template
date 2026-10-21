@@ -14,7 +14,12 @@ const pins = new Map([["PI_VERSION","1.3.0"],["BUN_VERSION","1.4.3"],["PI_ACCOUN
 const docker = text("Dockerfile");
 for (const [key,value] of pins) ok(new RegExp("^ARG "+key+"="+value.replaceAll(".", "\\.")+"$", "m").test(docker), "Dockerfile pin drift: "+key);
 ok(/^ARG BASE_IMAGE=.*@sha256:[0-9a-f]{64}$/m.test(docker), "Docker base image digest pin missing");
-ok(docker.includes("ARG SOL_PI_COMMIT=219568034fa54ed121ede80961655e33dfb9d0e3"), "SoL-Pi commit drift");
+ok(docker.includes("ARG SOL_PI_VERSION=0.1.1") &&
+   docker.includes("ARG SOL_PI_REF=219568034fa54ed121ede80961655e33dfb9d0e3"), "SoL-Pi manifest version or official Git ref drift");
+ok(docker.includes('pi install "git:github.com/NVlabs/SoL-Pi@${SOL_PI_REF}"') &&
+   docker.includes('test "$(node -p \'require("/home/agent/.pi/agent/git/github.com/NVlabs/SoL-Pi/package.json").version\')" = "${SOL_PI_VERSION}"') &&
+   !docker.includes("SOL_PI_COMMIT") &&
+   !docker.includes("npm:@herbertgao/sol-pi"), "SoL-Pi official Git install or version assertion mismatch");
 for (const x of ["npm:pi-subagents@\u0024{PI_SUBAGENTS_VERSION}","npm:@zenspc/pi-pstack@\u0024{PI_PSTACK_VERSION}","npm:@narumitw/pi-accounts@\u0024{PI_ACCOUNTS_VERSION}","node /tmp/patch-pstack.mjs","COPY --chown=agent:agent settings.json","COPY --chown=agent:agent pstack-models.json","COPY --chown=agent:agent subagent-config.json","COPY --chown=agent:agent pi-context-view.json","COPY --chown=agent:agent skills/"]) ok(docker.includes(x), "Docker runtime wiring missing: "+x);
 // Inspect complete COPY/ADD source tokens, not "pstack-models.json" suffixes.
 const dockerInstructions = docker.replace(/\\\r?\n\s*/g, " ").split(/\r?\n/);

@@ -63,7 +63,7 @@ This document defines repository and harness invariants. It does not define a se
 1. Action Fusion and ObservationPack MUST be enabled in the committed profile.
 2. Evidence-Preserving Reducer and Online Context Compact MUST be disabled in the committed profile.
 3. `cacheWriteReadRatio` MUST remain `12.5`.
-4. SoL-Pi MUST be installed from an explicit 40-hex Git commit pin.
+4. SoL-Pi MUST be installed from the official NVlabs Git package source at a pinned 40-hex commit ref. The Dockerfile MUST state the expected manifest version and fail if the installed package version differs.
 5. `sol-pi.json` MUST be copied to Pi's user-wide agent directory so the template behavior does not depend on downstream project trust.
 6. SoL-Pi MUST use Pi's public extension/model/session interfaces; the template MUST NOT patch or vendor Pi to support it.
 
@@ -91,7 +91,7 @@ The static verifier MUST check at least:
 - current pi-subagents configuration semantics, including the explicit no-automatic-fallback policy and absence of retired exclusion settings;
 - preservation of package-owned role tools and intentional implementation-role ambient tools;
 - pinned pi-pstack package-version/schema compatibility, exact role coverage, and model/thinking selector validity;
-- SoL-Pi mechanism flags, cache ratio, commit pin, and Docker wiring;
+- SoL-Pi mechanism flags, cache ratio, official Git commit ref, manifest version assertion, and Docker wiring;
 - source-read-only role capability boundaries;
 - delegation, concurrency, mission, schedule, and authority bounds;
 - pinned base image plus the audited Pi and extension version matrix;

@@ -49,6 +49,35 @@ for (const role of ["worker", "poteto-agent"]) {
     assert.match(result.output, /pstack delegated model scope mismatch/);
   });
 }
+test("SoL-Pi manifest version pin cannot drift", t => {
+  const root = fixture(t), file = path.join(root, "Dockerfile");
+  const docker = readFileSync(file, "utf8");
+  assert.ok(docker.includes("ARG SOL_PI_VERSION=0.1.1"));
+  writeFileSync(file, docker.replace("ARG SOL_PI_VERSION=0.1.1", "ARG SOL_PI_VERSION=0.1.0"));
+  const result = verify(root);
+  assert.equal(result.code, 1);
+  assert.match(result.output, /SoL-Pi manifest version or official Git ref drift/);
+});
+test("SoL-Pi must not install a moving Git branch", t => {
+  const root = fixture(t), file = path.join(root, "Dockerfile");
+  const docker = readFileSync(file, "utf8");
+  const changed = docker.replace("git:github.com/NVlabs/SoL-Pi@${SOL_PI_REF}", "git:github.com/NVlabs/SoL-Pi@main");
+  assert.notEqual(changed, docker);
+  writeFileSync(file, changed);
+  const result = verify(root);
+  assert.equal(result.code, 1);
+  assert.match(result.output, /SoL-Pi official Git install or version assertion mismatch/);
+});
+test("SoL-Pi build must check the installed package version", t => {
+  const root = fixture(t), file = path.join(root, "Dockerfile");
+  const docker = readFileSync(file, "utf8");
+  const changed = docker.replace(/ && test "\$\(node -p '[^\n]+/, "");
+  assert.notEqual(changed, docker);
+  writeFileSync(file, changed);
+  const result = verify(root);
+  assert.equal(result.code, 1);
+  assert.match(result.output, /SoL-Pi official Git install or version assertion mismatch/);
+});
 test("Codemode must retain native tools", t => {
   const root = fixture(t);
   mutate(root, "settings.json", s => { s.codemode.mode = "only"; });

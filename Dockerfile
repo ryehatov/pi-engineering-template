@@ -74,7 +74,8 @@ ARG PI_POWERLINE_FOOTER_VERSION=0.20.2
 ARG PI_REWIND_HOOK_VERSION=1.8.7
 ARG PI_BTW_VERSION=0.62.0
 ARG PI_GOAL_VERSION=0.54.13
-ARG SOL_PI_COMMIT=219568034fa54ed121ede80961655e33dfb9d0e3
+ARG SOL_PI_VERSION=0.1.1
+ARG SOL_PI_REF=219568034fa54ed121ede80961655e33dfb9d0e3
 
 RUN pi install "npm:@narumitw/pi-accounts@${PI_ACCOUNTS_VERSION}" \
  && pi install "npm:pi-subagents@${PI_SUBAGENTS_VERSION}" \
@@ -88,7 +89,8 @@ RUN pi install "npm:@narumitw/pi-accounts@${PI_ACCOUNTS_VERSION}" \
  && pi install "npm:pi-rewind-hook@${PI_REWIND_HOOK_VERSION}" \
  && pi install "npm:@narumitw/pi-btw@${PI_BTW_VERSION}" \
  && pi install "npm:@narumitw/pi-goal@${PI_GOAL_VERSION}" \
- && pi install "git:github.com/NVlabs/SoL-Pi@${SOL_PI_COMMIT}"
+ && pi install "git:github.com/NVlabs/SoL-Pi@${SOL_PI_REF}" \
+ && test "$(node -p 'require("/home/agent/.pi/agent/git/github.com/NVlabs/SoL-Pi/package.json").version')" = "${SOL_PI_VERSION}"
 
 COPY --chown=agent:agent scripts/patch-pstack.mjs /tmp/patch-pstack.mjs
 RUN node /tmp/patch-pstack.mjs /home/agent/.pi/agent/npm/node_modules/@zenspc/pi-pstack \

@@ -106,7 +106,7 @@ Pi 1.3 Codemode is additive, not exclusive, so native reviewers and Web tools re
 
 Verification is layered by failure class:
 
-1. `scripts/verify-template.mjs` checks static configuration structure and consistency, including the audited package matrix, explicit subagent tool contracts, SoL-Pi flags, cache ratio, commit pin, and Docker wiring.
+1. `scripts/verify-template.mjs` checks static configuration structure and consistency, including the audited package matrix, explicit subagent tool contracts, SoL-Pi flags, cache ratio, official Git ref, manifest version assertion, and Docker wiring.
 2. Docker build checks that pinned packages install together and files land at the intended paths.
 3. Live Pi smoke checks authentication, registry resolution, thinking translation, extension loading, SoL-Pi mechanisms, and provider availability.
 4. A nested pstack smoke checks that Poteto/delegation behavior still composes with the parent optimization layer.
