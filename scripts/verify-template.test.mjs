@@ -132,3 +132,31 @@ test("SoL-Pi must not reintroduce a manifest-version assertion", t => rejection(
 test("SoL-Pi configuration schema version remains required", t => rejection(t, root => {
   editJson(root, "sol-pi.json", config => { delete config.version; });
 }, /SoL-Pi context optimization mismatch/));
+
+test("installing packages after copying settings invalidates the Docker cache", t => rejection(t, root => {
+  editFile(root, "Dockerfile", source => source.replace(
+    "COPY --chown=agent:agent settings.json /tmp/pi-template-settings.json",
+    "COPY --chown=agent:agent settings.json /home/agent/.pi/agent/settings.json"));
+}, /Docker (?:COPY missing|package caching or settings registration order mismatch)/));
+
+test("package installation must precede the runtime preferences", t => rejection(t, root => {
+  editFile(root, "Dockerfile", source => source.replace(
+    'RUN pi install "npm:@narumitw/pi-accounts',
+    'COPY --chown=agent:agent settings.json /tmp/pi-template-settings.json\nRUN pi install "npm:@narumitw/pi-accounts'));
+}, /Docker package caching or settings registration order mismatch/));
+
+test("Docker cannot install an unregistered package", t => rejection(t, root => {
+  editFile(root, "Dockerfile", source => source.replace(
+    'RUN pi install "npm:@narumitw/pi-accounts',
+    'RUN pi install "npm:unexpected@1.0.0" && pi install "npm:@narumitw/pi-accounts'));
+}, /Docker package set does not match the registered package policy/));
+
+test("the Pi package registry merge command is required", t => rejection(t, root => {
+  editFile(root, "Dockerfile", source => source.replace(
+    "RUN node /tmp/merge-pi-settings.mjs",
+    "RUN true # node /tmp/merge-pi-settings.mjs"));
+}, /Docker package caching or settings registration order mismatch/));
+
+test("context files must not suppress the package merge source", t => rejection(t, root => {
+  editFile(root, ".dockerignore", source => source + "scripts/merge-pi-settings.mjs\n");
+}, /Docker context filtering missing or excludes the merge script/));

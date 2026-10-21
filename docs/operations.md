@@ -6,11 +6,19 @@ The Dockerfile installs `michael-denyer/pstack-claude` and `NVlabs/SoL-Pi` from 
 
 ~~~sh
 node scripts/verify-template.mjs
-node --test scripts/verify-template.test.mjs
+node --test scripts/*.test.mjs
 docker build --pull=false -t pi-engineering-template:pstack-claude .
 ~~~
 
-Static verification checks the Git SHA pins, npm version pins, install wiring, pstack sheet roles and model aliases, absence of retired dependencies, and relevant Pi/SoL-Pi settings. A passing static check does **not** prove Docker build, extension loading, model access, or live behavior.
+Static verification checks Git SHA pins, npm version pins, install wiring, pstack model routing, absence of retired dependencies, and relevant Pi/SoL-Pi settings. The settings-merge tests verify package preservation and rejection of unexpected or unpinned packages. A passing static check does **not** prove Docker build, extension loading, model access, or live behavior.
+
+## Docker layer caching and package registration
+
+Pi records every `pi install` in `~/.pi/agent/settings.json` (see the Pi 1.3 packages specification). The Dockerfile installs pinned dependencies before copying application settings and skills. It then runs `scripts/merge-pi-settings.mjs` to keep only the 11 expected pinned package declarations from Pi's generated settings and apply the audited preferences from `settings.json`. Unrecognized or unpinned packages fail the build; inherited image preferences are discarded.
+
+As a result, editing `pstack-models.md`, `settings.json`, `sol-pi.json`, or local skills does not invalidate the dependency-install layer. Changing a Docker `ARG` for a package does invalidate that layer. Keep the package list in the merge script aligned with the `pi install` commands. The Node test suite verifies the names; package versions remain authoritative only in the Dockerfile.
+
+After building, run `pi list` inside the image. It must report the expected packages; a green configuration test alone does not establish installation success.
 
 ## First authenticated session
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import fs from "node:fs";
 import path from "node:path";
+import { PACKAGE_PREFIXES } from "./merge-pi-settings.mjs";
 
 const root = path.resolve(process.argv[2] ?? path.join(import.meta.dirname, ".."));
 const errors = [];
@@ -21,7 +22,8 @@ const required = [
   "pi-fff.json", "docs/model-policy.md", "docs/operations.md",
   "skills/LICENSE.mattpocock", "skills/domain-modeling/SKILL.md",
   "skills/grilling/SKILL.md", "skills/retro/SKILL.md",
-  "skills/writing-for-agents/SKILL.md"
+  "skills/writing-for-agents/SKILL.md",
+  "scripts/merge-pi-settings.mjs", "scripts/merge-pi-settings.test.mjs", ".dockerignore"
 ];
 for (const file of required) check(exists(file), file + ": missing");
 
@@ -60,7 +62,8 @@ const installs = [
 ];
 for (const item of installs) check(docker.includes(item), "Docker Git install or package entrypoint check missing: " + item);
 const copies = [
-  ["settings.json", "/home/agent/.pi/agent/settings.json"],
+  ["settings.json", "/tmp/pi-template-settings.json"],
+  ["scripts/merge-pi-settings.mjs", "/tmp/merge-pi-settings.mjs"],
   ["pstack-models.md", "/home/agent/.pi/agent/pstack-models.md"],
   ["sol-pi.json", "/home/agent/.pi/agent/sol-pi.json"],
   ["pi-context-view.json", "/home/agent/.pi/agent/extensions/pi-context-view.json"],
@@ -73,6 +76,29 @@ for (const [src, dst] of copies) {
   check(docker.includes("COPY --chown=agent:agent " + src + " " + dst),
     "Docker COPY missing: " + src);
 }
+const installSources = [...docker.matchAll(/pi install "((?:npm:|git:)[^"]+)"/g)]
+  .map(match => match[1].replace(/[$][{][A-Z0-9_]+[}]/g, ""));
+check(installSources.length === PACKAGE_PREFIXES.length &&
+      new Set(installSources).size === PACKAGE_PREFIXES.length &&
+      PACKAGE_PREFIXES.every(prefix => installSources.includes(prefix)),
+  "Docker package set does not match the registered package policy");
+
+const packageInstall = docker.indexOf('RUN pi install "npm:@narumitw/pi-accounts');
+const lastInstall = docker.indexOf('pi install "git:github.com/NVlabs/SoL-Pi@');
+const templateCopy = docker.indexOf("COPY --chown=agent:agent settings.json /tmp/pi-template-settings.json");
+const mergeCommand = docker.indexOf("RUN node /tmp/merge-pi-settings.mjs");
+const skillsCopy = docker.indexOf("COPY --chown=agent:agent skills/");
+check(packageInstall >= 0 && lastInstall > packageInstall &&
+      templateCopy > lastInstall && mergeCommand > templateCopy &&
+      skillsCopy > mergeCommand &&
+      docker.includes("/tmp/pi-template-settings.json \\\n      /home/agent/.pi/agent/settings.json") &&
+      !docker.includes("COPY --chown=agent:agent settings.json /home/agent/.pi/agent/settings.json"),
+  "Docker package caching or settings registration order mismatch");
+
+const dockerignore = read(".dockerignore");
+check(dockerignore.includes(".git") && dockerignore.includes("node_modules") &&
+      !dockerignore.includes("merge-pi-settings.mjs"),
+  "Docker context filtering missing or excludes the merge script");
 for (const forbidden of ["@zenspc/pi-pstack", "npm:pi-subagents", "patch-pstack",
   "subagent-config.json", "pstack-models.json", "@anthropic-ai/claude-code",
   "openai-codex", "COMMAND_CODE_API_KEY", "@narumitw/pi-goal", "PI_GOAL_VERSION",

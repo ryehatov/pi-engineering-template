@@ -21,6 +21,12 @@ Pi selects the parent provider and model in `settings.json`. The pstack-claude e
 - `defaultProjectTrust: "never"` keeps Pi project packages outside the automatic trust boundary. The Docker Sandbox supplies process and filesystem isolation; it does not make a third-party extension intrinsically safe.
 - Credentials belong in Pi's user-managed login store, not in the image. Authentication does not establish subscription-included billing. Pi's Anthropic access can be charged per token, including every reviewer invocation. Do not fall back to a different provider without an explicit decision.
 
+## Performance and operational limits
+
+Pstack's Pi extension starts a separate RPC process for each delegated agent. Its built-in three-layer depth limit is **not** a global concurrency cap. For large swarms and arena runs, choose a bounded number of workers appropriate to the available CPU, memory, and model quota; review results before expanding the fan-out. Do not assume that a role-only or read-only prompt is an enforcement boundary.
+
+The four-model panel and `xhigh` default are deliberate quality-oriented settings, not a measured optimum for latency or cost. Keep model diversity for security reviews; tune individual roles only after measuring representative workloads. The small `pstack-models.md` sheet is injected into agent context, so detailed rationale belongs in this document instead of the runtime sheet.
+
 ## Interaction with other extensions
 
 Keep SoL-Pi's Action Fusion and ObservationPack enabled; EPR and OCC remain disabled. Additive Codemode preserves the native tools used by the pstack extension. pstack's `/loop` and `schedule_wakeup` provide session-scoped continuation, without a separate continuation extension. The static verifier protects this configuration but does not prove extension compatibility.

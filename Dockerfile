@@ -21,17 +21,6 @@ USER agent
 
 RUN mkdir -p /home/agent/.pi/agent/extensions /home/agent/.pi/agent/skills
 
-COPY --chown=agent:agent settings.json /home/agent/.pi/agent/settings.json
-COPY --chown=agent:agent pstack-models.md /home/agent/.pi/agent/pstack-models.md
-COPY --chown=agent:agent sol-pi.json /home/agent/.pi/agent/sol-pi.json
-COPY --chown=agent:agent pi-context-view.json /home/agent/.pi/agent/extensions/pi-context-view.json
-COPY --chown=agent:agent web-search.json /home/agent/.pi/agent/web-search.json
-COPY --chown=agent:agent pi-btw.json /home/agent/.pi/agent/pi-btw.json
-COPY --chown=agent:agent pi-fff.json /home/agent/.pi/agent/pi-fff.json
-
-# Project skill add-ons. pstack-claude's 65 skills load from its own Pi package.
-COPY --chown=agent:agent skills/ /home/agent/.pi/agent/skills/
-
 ARG PI_ACCOUNTS_VERSION=0.53.2
 ARG PONYTAIL_VERSION=5.3.2
 ARG PI_WEB_ACCESS_VERSION=0.44.0
@@ -60,6 +49,25 @@ RUN pi install "npm:@narumitw/pi-accounts@${PI_ACCOUNTS_VERSION}" \
  && pi install "npm:pi-rewind-hook@${PI_REWIND_HOOK_VERSION}" \
  && pi install "npm:@narumitw/pi-btw@${PI_BTW_VERSION}" \
  && pi install "git:github.com/NVlabs/SoL-Pi@${SOL_PI_REF}"
+
+# Installed package declarations belong to Pi. Keep dependency installation
+# before the configurable settings and skills so ordinary edits hit the cache.
+COPY --chown=agent:agent scripts/merge-pi-settings.mjs /tmp/merge-pi-settings.mjs
+COPY --chown=agent:agent settings.json /tmp/pi-template-settings.json
+RUN node /tmp/merge-pi-settings.mjs \
+      /tmp/pi-template-settings.json \
+      /home/agent/.pi/agent/settings.json \
+ && rm /tmp/merge-pi-settings.mjs /tmp/pi-template-settings.json
+
+COPY --chown=agent:agent pstack-models.md /home/agent/.pi/agent/pstack-models.md
+COPY --chown=agent:agent sol-pi.json /home/agent/.pi/agent/sol-pi.json
+COPY --chown=agent:agent pi-context-view.json /home/agent/.pi/agent/extensions/pi-context-view.json
+COPY --chown=agent:agent web-search.json /home/agent/.pi/agent/web-search.json
+COPY --chown=agent:agent pi-btw.json /home/agent/.pi/agent/pi-btw.json
+COPY --chown=agent:agent pi-fff.json /home/agent/.pi/agent/pi-fff.json
+
+# Project skill add-ons. pstack-claude's 65 skills load from its own Pi package.
+COPY --chown=agent:agent skills/ /home/agent/.pi/agent/skills/
 
 ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8

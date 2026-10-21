@@ -21,12 +21,14 @@ These are explicit model IDs, not automatic availability checks. Models must exi
 
 ~~~sh
 node scripts/verify-template.mjs
-node --test scripts/verify-template.test.mjs
+node --test scripts/*.test.mjs
 docker build -t pi-engineering-template:pstack-claude .
 ~~~
 
 Log in interactively with `/login openai` and, for the cross-provider panel, `/login anthropic`. The pstack session hook automatically routes nontrivial tasks to Poteto Mode. You can invoke a skill explicitly using `/skill:poteto-mode`, `/skill:interrogate`, or `/skill:setup-pstack`. Check child execution with `/pstack-agents`.
 
 On a persistent Pi home migrated from an older image, remove any registered `@zenspc/pi-pstack`, `pi-subagents`, and `@narumitw/pi-goal` packages. Remove the obsolete `~/.pi/agent/pi-goal.json` after checking for local changes. A clean image needs no migration command.
+
+The Dockerfile installs pinned packages before copying configurable files. `scripts/merge-pi-settings.mjs` preserves the package registrations written by `pi install` while applying managed settings. Changing models, skills, or other configuration therefore does not invalidate the dependency-install layer.
 
 See [operations](docs/operations.md) for live smoke checks and [model policy](docs/model-policy.md) for security and cost boundaries. Static validation is not evidence that the full Docker image or authenticated models work.
