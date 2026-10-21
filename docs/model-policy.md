@@ -2,7 +2,7 @@
 
 ## Providers and subscriptions
 
-Pi 1.1.0 supports ChatGPT subscription OAuth on its native `openai` provider and Claude Pro/Max subscription OAuth on its native `anthropic` provider. Authenticate with `/login openai` and `/login anthropic` respectively. `openai-codex` is legacy. Do not use API-key credentials unintentionally when the goal is subscription usage. The project installs no Claude Code CLI, external agent bridge or custom provider transport.
+Pi 1.3.0 supports ChatGPT subscription OAuth on its native `openai` provider and native Anthropic OAuth login on its `anthropic` provider. OAuth through third-party harnesses does not guarantee subscription-included usage; confirm the provider's billing terms. Authenticate with `/login openai` and `/login anthropic` respectively. `openai-codex` is legacy. Do not use API-key credentials unintentionally when the goal is subscription usage. The project installs no Claude Code CLI, external agent bridge or custom provider transport.
 
 ## Role assignment
 
@@ -40,4 +40,4 @@ Do not silently reroute failed reviews to another provider or auth account. `cla
 
 ## Qualification note
 
-SoL-Pi upstream tests against Pi 0.85.1, not Pi 1.1.0. A static check does not establish runtime compatibility. Perform Docker, authenticated model and native subagent smoke tests as described in `docs/operations.md`.
+The pinned SoL-Pi revision is upstream-tested against Pi 1.3.0. pi-context-view 0.7.2 requires Pi 1.3.0; pi-subagents 0.80.0 requires Pi >=1.2.0. Static checks and individual upstream support do not prove the assembled runtime. Perform the Docker and authenticated routing smoke tests in `docs/operations.md`.

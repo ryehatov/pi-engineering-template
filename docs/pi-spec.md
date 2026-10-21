@@ -74,6 +74,10 @@ This document defines repository and harness invariants. It does not define a se
 3. Runtime configuration files MUST be copied into their expected Pi locations.
 4. The Docker image MUST NOT copy a template-level `AGENTS.md`.
 5. Package pins MUST be qualified as a compatible set. A newer release MUST NOT replace a qualified pin when a known upstream compatibility regression affects the configured runtime path.
+6. Pi 1.3.0 MUST be pinned with pi-context-view 0.7.2, pi-subagents 0.80.0, and a SoL-Pi revision tested against Pi 1.3.0.
+7. Pi Codemode MUST be additive, so native reviewer and Web research tools remain directly reachable.
+8. Subagent tool declaration pinning and model-aware activation MUST remain enabled; active async runs and cumulative session spawns MUST be finite.
+9. Automatic context-view probing MUST remain disabled to avoid extension handlers running for synthetic requests.
 
 ## 9. Verification
 

@@ -80,7 +80,7 @@ This allows a future model rebalance to change configuration and rationale witho
 
 ## Provider boundary
 
-Pi's native `openai` provider uses Sign in with ChatGPT, and its native `anthropic` provider supports Claude Pro/Max subscription OAuth. No external Claude CLI adapter is required.
+Pi's native `openai` provider uses Sign in with ChatGPT, and its native `anthropic` provider supports Anthropic OAuth. Authentication and subscription-billing entitlement are separate. No external Claude CLI adapter is required.
 
 Provider policy therefore stays in executable configuration instead of a behavioral request to the model.
 
@@ -94,11 +94,14 @@ SoL-Pi installation does not weaken this boundary. Whether an individual child s
 
 ## Delegated tool surface
 
-Pi-subagents 0.77.0's built-in role definitions own their tool sets. The `scout` keeps shell inspection and artifact writing, `researcher` keeps Web evidence tools, `reviewer` keeps `watchdog_diff` plus read-only search, and `oracle` keeps shell inspection. The pstack `comment-sicko` and local `how-analyst` likewise keep role-specific profiles. Do not shadow these definitions with stale static lists.
+Pi-subagents 0.80.0's built-in role definitions own their tool sets. The `scout` keeps shell inspection and artifact writing, `researcher` keeps Web evidence tools, `reviewer` keeps `watchdog_diff` plus read-only search, and `oracle` keeps shell inspection. The pstack `comment-sicko` and local `how-analyst` likewise keep role-specific profiles. Do not shadow these definitions with stale static lists.
 
 Only implementation roles `worker` and `poteto-agent` use `tools: "inherit"`, to access *currently registered* mutation, FFF, Pi-Lens and other extension tools. This is a deliberate exception, not blanket parity with the parent. Built-in `grep`/`find` survive when optional FFF indexing is unavailable; conditional `multi_grep` and Pi-Lens activation tools are never startup prerequisites.
 
 Pstack's independent Anthropic reviewers run as ordinary Pi `reviewer` children with package-defined source-inspection tools. Failed independent reviews remain visible rather than silently falling back to a different model.
+
+Pi 1.3 Codemode is additive, not exclusive, so native reviewers and Web tools remain reachable. Subagents use model-aware tool activation and preserve tool declarations on resume. Async launches and session spawns have explicit bounds. Context-view's synthetic silent probe is disabled to avoid invoking other extension hooks before a real request.
+
 ## Verification strategy
 
 Verification is layered by failure class:

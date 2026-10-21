@@ -1,4 +1,6 @@
 {
+  "toolActivation": "auto",
+  "pinToolDeclarations": true,
   "toolDescriptionMode": "compact",
   "artifactDir": "session",
   "defaultSubagentContext": "fresh",
@@ -20,5 +22,7 @@
     "discardWorktree": "auto",
     "destructiveCleanup": "auto",
     "scheduleCreate": "forbid"
-  }
+  },
+  "maxSubagentSpawnsPerSession": 128,
+  "maxActiveAsyncRunsPerSession": 4
 }

@@ -49,6 +49,34 @@ for (const role of ["worker", "poteto-agent"]) {
     assert.match(result.output, /pstack delegated model scope mismatch/);
   });
 }
+test("Codemode must retain native tools", t => {
+  const root = fixture(t);
+  mutate(root, "settings.json", s => { s.codemode.mode = "only"; });
+  const result = verify(root);
+  assert.equal(result.code, 1);
+  assert.match(result.output, /Pi 1.3 settings schema or additive Codemode mismatch/);
+});
+test("subagent tool declarations stay cache-stable", t => {
+  const root = fixture(t);
+  mutate(root, "subagent-config.json", c => { c.pinToolDeclarations = false; });
+  const result = verify(root);
+  assert.equal(result.code, 1);
+  assert.match(result.output, /Subagent activation, cache stability, or session bounds mismatch/);
+});
+test("asynchronous task capacity stays bounded", t => {
+  const root = fixture(t);
+  mutate(root, "subagent-config.json", c => { c.maxActiveAsyncRunsPerSession = 0; });
+  const result = verify(root);
+  assert.equal(result.code, 1);
+  assert.match(result.output, /Subagent activation, cache stability, or session bounds mismatch/);
+});
+test("context viewer does not trigger synthetic hooks", t => {
+  const root = fixture(t);
+  mutate(root, "pi-context-view.json", c => { c.autoProbing = true; });
+  const result = verify(root);
+  assert.equal(result.code, 1);
+  assert.match(result.output, /pi-context-view must not run silent probe/);
+});
 test("invalid reviewer allowlist fails with clear diagnostic", t => {
   const root = fixture(t);
   mutate(root, "settings.json", s => {

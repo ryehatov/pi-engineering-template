@@ -9,7 +9,7 @@ RUN apt-get update \
       tzdata \
  && rm -rf /var/lib/apt/lists/*
 
-ARG PI_VERSION=1.1.0
+ARG PI_VERSION=1.3.0
 ARG BUN_VERSION=1.4.3
 
 RUN npm install -g --ignore-scripts \
@@ -37,6 +37,9 @@ COPY --chown=agent:agent pstack-models.json \
 
 RUN chmod 600 /home/agent/.pi/agent/pstack/models.json
 
+COPY --chown=agent:agent pi-context-view.json \
+    /home/agent/.pi/agent/extensions/pi-context-view.json
+
 COPY --chown=agent:agent web-search.json \
     /home/agent/.pi/agent/web-search.json
 
@@ -59,19 +62,19 @@ COPY --chown=agent:agent skills/ \
 COPY --chown=agent:agent agents/ \
     /home/agent/.pi/agent/agents/
 
-ARG PI_ACCOUNTS_VERSION=0.53.1
-ARG PI_SUBAGENTS_VERSION=0.77.0
+ARG PI_ACCOUNTS_VERSION=0.53.2
+ARG PI_SUBAGENTS_VERSION=0.80.0
 ARG PI_PSTACK_VERSION=0.6.0
-ARG PONYTAIL_VERSION=5.1.0
-ARG PI_WEB_ACCESS_VERSION=0.38.0
-ARG PI_LENS_VERSION=4.4.2
+ARG PONYTAIL_VERSION=5.3.2
+ARG PI_WEB_ACCESS_VERSION=0.44.0
+ARG PI_LENS_VERSION=4.4.4
 ARG PI_FFF_VERSION=0.11.0
-ARG PI_CONTEXT_VIEW_VERSION=0.6.0
-ARG PI_POWERLINE_FOOTER_VERSION=0.20.0
+ARG PI_CONTEXT_VIEW_VERSION=0.7.2
+ARG PI_POWERLINE_FOOTER_VERSION=0.20.2
 ARG PI_REWIND_HOOK_VERSION=1.8.7
-ARG PI_BTW_VERSION=0.61.1
-ARG PI_GOAL_VERSION=0.54.8
-ARG SOL_PI_COMMIT=03529c710269d3e3336a033cead49a95189987f1
+ARG PI_BTW_VERSION=0.62.0
+ARG PI_GOAL_VERSION=0.54.13
+ARG SOL_PI_COMMIT=219568034fa54ed121ede80961655e33dfb9d0e3
 
 RUN pi install "npm:@narumitw/pi-accounts@${PI_ACCOUNTS_VERSION}" \
  && pi install "npm:pi-subagents@${PI_SUBAGENTS_VERSION}" \

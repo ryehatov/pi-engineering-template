@@ -1,4 +1,6 @@
 {
+  "toolActivation": "auto",
+  "toolExposure": "direct",
   "workflow": "none",
   "searchRouting": {
     "providers": [
