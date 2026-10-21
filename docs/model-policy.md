@@ -21,6 +21,8 @@ Pi selects the parent provider and model in `settings.json`. The pstack-claude e
 - `defaultProjectTrust: "never"` keeps Pi project packages outside the automatic trust boundary. The Docker Sandbox supplies process and filesystem isolation; it does not make a third-party extension intrinsically safe.
 - Credentials belong in Pi's user-managed login store, not in the image. Authentication does not establish subscription-included billing. Pi's Anthropic access can be charged per token, including every reviewer invocation. Do not fall back to a different provider without an explicit decision.
 
+- Treat `Third-party apps now draw from your extra usage` as a **provider-side authorization/usage-classification incident**. Do not fix it by substituting an unrelated provider. Anthropic's October 2026 guidance allows subscription-limited use for certain third-party clients while reserving discretion to bill usage credits. Account eligibility must be verified through a direct request. If using `pi-accounts` named credentials, establish the intended account for new child sessions rather than assuming a session-local switch is inherited. See [operations](operations.md#anthropic-oauth-http-400-in-child-agents).
+
 ## Performance and operational limits
 
 Pstack's Pi extension starts a separate RPC process for each delegated agent. Its built-in three-layer depth limit is **not** a global concurrency cap. For large swarms and arena runs, choose a bounded number of workers appropriate to the available CPU, memory, and model quota; review results before expanding the fan-out. Do not assume that a role-only or read-only prompt is an enforcement boundary.

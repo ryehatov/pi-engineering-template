@@ -17,6 +17,8 @@ The old `@zenspc/pi-pstack`, `pi-subagents`, and post-install patch are delibera
 
 These are explicit model IDs, not automatic availability checks. Models must exist in the installed Pi catalog and be accessible with the configured credentials. Unavailable reviewers fail visibly; there is no silent provider substitution. **Anthropic use through Pi may incur separately billed token usage**, including when a Claude subscription is connected.
 
+If a Claude child returns HTTP 400 with `Third-party apps now draw from your extra usage`, keep the model mapping unchanged. First verify the child's effective Anthropic account and entitlement with the [incident diagnostic procedure](docs/operations.md#anthropic-oauth-http-400-in-child-agents). Automatic model substitution and automatic extra-usage purchases are not supported.
+
 ## Build and use
 
 ~~~sh

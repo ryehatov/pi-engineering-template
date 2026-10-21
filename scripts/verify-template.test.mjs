@@ -74,6 +74,11 @@ test("unavailable or changed alias mappings are detected", t => rejection(t, roo
     "sonnet=anthropic/claude-opus-5-5", "sonnet=anthropic/does-not-exist"));
 }, /pstack Pi aliases must resolve/));
 
+test("Claude reviewers are not silently replaced by another provider", t => rejection(t, root => {
+  editFile(root, "pstack-models.md", s => s.replace(
+    "sonnet=anthropic/claude-opus-5-5", "sonnet=openai/gpt-6-sol"));
+}, /pstack Pi aliases must resolve/));
+
 test("Claude panel members must use high effort", t => rejection(t, root => {
   editFile(root, "pstack-models.md", s => s.replace(
     "architect runners: opus, fable, sonnet @high, haiku @high",

@@ -41,6 +41,29 @@ Confirm `pi --version` is 1.3.0; `pi list` shows the Git-installed pstack-claude
 
 If a provider or a required panel entry is missing, fix login or the model sheet and repeat the affected check. Do not report a cross-provider review as completed when a child did not run.
 
+## Anthropic OAuth HTTP 400 in child agents
+
+**Failure signature.** An Anthropic child may return `400 invalid_request_error` with `Third-party apps now draw from your extra usage, not your plan limits`. This is a **provider-side usage authorization or billing-classification refusal**, not evidence that the requested Claude model is invalid. Successful OAuth login does not itself establish authorization for a particular usage pool. Do not rewrite Claude role mappings to OpenAI models and do not silently enable paid usage.
+
+The pstack extension launches each child with a new Pi RPC session (`--session-id` and `--model`). Pi can exit with code 0 after a model-level error. Pstack correctly reports `status: failed` based on the assistant response, so `exit code: 0` is not a successful inference. Preserve the failure and its `request_id` for diagnosis; do not retry this non-transient refusal in a loop.
+
+**Reproduce with the requested Claude model, not with a substitute.** Inside the same image, under the same user and environment as the failing pstack process:
+
+~~~sh
+pi auth check --provider anthropic --json
+pi --print --no-session --no-tools --no-skills --no-context-files \\
+  --model anthropic/claude-opus-5-5 "Reply exactly: OK"
+pi --print --no-session --no-tools --no-skills --no-context-files \\
+  --model anthropic/claude-sonnet-5-5 "Reply exactly: OK"
+~~~
+
+`pi auth check` reports credential readiness, **not** remaining plan allowance or provider billing approval. Do not add `--credentials`, call `print-bearer-token`, or publish `auth.json`; they can expose secrets. The two short requests are real model calls and can consume plan usage or incur authorized costs. If the direct Claude request is rejected with the same 400, pstack fan-out is not the cause. Check the correct Anthropic account and [usage settings](https://claude.ai/settings/usage); if access appears entitled, contact Anthropic support with the error's `request_id`, timestamp, model, and product identity (Pi). Do not assume purchasing credits is necessarily required: the [October 7, 2026 Anthropic update](https://support.claude.com/en/articles/15036540-use-the-claude-agent-sdk-with-your-claude-plan) says third-party usage can still draw from subscription limits, while the [login policy](https://support.claude.com/en/articles/13189465-log-in-to-your-claude-account) reserves discretion to meter third-party use against credits.
+
+**If direct Pi succeeds but the pstack child fails**, compare the effective account, not just the model ID. `@narumitw/pi-accounts` distinguishes Pi's built-in `/login anthropic` from a named account chosen using `/accounts`. A session-only named-account switch is **not automatically inherited** by pstack's separately launched child session. For a named account, use `/accounts` → **Set default account** → **Anthropic** → the intended account, so new child sessions select it; or deliberately set `PI_ACCOUNT=<saved-name>` in the launching process (this override applies to every managed provider and must not silently fall back). Check `PI_CODING_AGENT_DIR` and the image's persistent Pi home as well. With built-in `/login anthropic`, Pi saves credentials in the agent directory for child processes to load. Do not copy tokens into project settings or shell transcripts.
+
+Run a new child after changing the account or model configuration. A finished child's identity includes its original model; `send_message` resumes that model, not a newly edited mapping. If the model call succeeds, re-run the affected review and require every reviewer to complete before claiming a cross-provider verdict.
+
+
 ## Migration of an existing Pi home
 
 The Dockerfile builds a clean home. For persistent homes that still register the old packages:
