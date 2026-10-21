@@ -18,7 +18,7 @@ function json(name) {
 const required = [
   "Dockerfile", "README.md", "settings.json", "pstack-models.md",
   "sol-pi.json", "pi-context-view.json", "web-search.json", "pi-btw.json",
-  "pi-fff.json", "pi-goal.json", "docs/model-policy.md", "docs/operations.md",
+  "pi-fff.json", "docs/model-policy.md", "docs/operations.md",
   "skills/LICENSE.mattpocock", "skills/domain-modeling/SKILL.md",
   "skills/grilling/SKILL.md", "skills/retro/SKILL.md",
   "skills/writing-for-agents/SKILL.md"
@@ -28,7 +28,7 @@ for (const file of required) check(exists(file), file + ": missing");
 const retired = [
   "pstack-models.json", "subagent-config.json", "scripts/patch-pstack.mjs",
   "agents/how-analyst.md", "docs/pi-design.md", "docs/pi-spec.md",
-  "models.json", "AGENTS.md"
+  "models.json", "AGENTS.md", "pi-goal.json"
 ];
 for (const file of retired) check(!exists(file), "Retired file remains: " + file);
 
@@ -45,10 +45,7 @@ const pins = {
   PI_POWERLINE_FOOTER_VERSION: "0.20.2",
   PI_REWIND_HOOK_VERSION: "1.8.7",
   PI_BTW_VERSION: "0.62.0",
-  PI_GOAL_VERSION: "0.54.13",
-  PSTACK_CLAUDE_VERSION: "0.9.97",
   PSTACK_CLAUDE_REF: "a369e70b8afac1ec3dbad14bc7491d40baf27cce",
-  SOL_PI_VERSION: "0.1.1",
   SOL_PI_REF: "219568034fa54ed121ede80961655e33dfb9d0e3"
 };
 for (const [key, value] of Object.entries(pins)) {
@@ -58,14 +55,10 @@ check(/^ARG BASE_IMAGE=[^\r\n]+@sha256:[a-f0-9]{64}$/m.test(docker), "Docker bas
 
 const installs = [
   'pi install "git:github.com/michael-denyer/pstack-claude@${PSTACK_CLAUDE_REF}"',
-  'require("/home/agent/.pi/agent/git/github.com/michael-denyer/pstack-claude/package.json").version',
-  '" = "${PSTACK_CLAUDE_VERSION}"',
-  'plugins/pstack/pi/index.ts',
-  'pi install "git:github.com/NVlabs/SoL-Pi@${SOL_PI_REF}"',
-  'require("/home/agent/.pi/agent/git/github.com/NVlabs/SoL-Pi/package.json").version',
-  '" = "${SOL_PI_VERSION}"'
+  'test -f /home/agent/.pi/agent/git/github.com/michael-denyer/pstack-claude/plugins/pstack/pi/index.ts',
+  'pi install "git:github.com/NVlabs/SoL-Pi@${SOL_PI_REF}"'
 ];
-for (const item of installs) check(docker.includes(item), "Docker package install/manifest check missing: " + item);
+for (const item of installs) check(docker.includes(item), "Docker Git install or package entrypoint check missing: " + item);
 const copies = [
   ["settings.json", "/home/agent/.pi/agent/settings.json"],
   ["pstack-models.md", "/home/agent/.pi/agent/pstack-models.md"],
@@ -74,7 +67,6 @@ const copies = [
   ["web-search.json", "/home/agent/.pi/agent/web-search.json"],
   ["pi-btw.json", "/home/agent/.pi/agent/pi-btw.json"],
   ["pi-fff.json", "/home/agent/.pi/agent/pi-fff.json"],
-  ["pi-goal.json", "/home/agent/.pi/agent/pi-goal.json"],
   ["skills/", "/home/agent/.pi/agent/skills/"]
 ];
 for (const [src, dst] of copies) {
@@ -83,7 +75,9 @@ for (const [src, dst] of copies) {
 }
 for (const forbidden of ["@zenspc/pi-pstack", "npm:pi-subagents", "patch-pstack",
   "subagent-config.json", "pstack-models.json", "@anthropic-ai/claude-code",
-  "openai-codex", "COMMAND_CODE_API_KEY"]) {
+  "openai-codex", "COMMAND_CODE_API_KEY", "@narumitw/pi-goal", "PI_GOAL_VERSION",
+  "PSTACK_CLAUDE_VERSION", "SOL_PI_VERSION",
+  "/pstack-claude/package.json", "/SoL-Pi/package.json"]) {
   check(!docker.includes(forbidden), "Retired runtime reference: " + forbidden);
 }
 check(/^ENV TZ=Asia\/Tokyo$/m.test(docker), "Timezone is not Asia/Tokyo");
@@ -179,10 +173,6 @@ check(json("pi-fff.json").mode === "override", "FFF mode mismatch");
 const btw = json("pi-btw.json");
 check(btw.model === "openai/gpt-6-astra" && btw.thinkingLevel === "high",
   "Side-question model mismatch");
-const goal = json("pi-goal.json");
-check(goal.continuationLimits?.automaticTurns === 64 &&
-      goal.continuationLimits?.noProgressTurns === 3 &&
-      goal.rpc?.enabled === false, "Bounded Goal configuration mismatch");
 
 if (errors.length) {
   for (const error of errors) console.error("FAIL " + error);

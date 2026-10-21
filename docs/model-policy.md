@@ -23,4 +23,4 @@ Pi selects the parent provider and model in `settings.json`. The pstack-claude e
 
 ## Interaction with other extensions
 
-Keep SoL-Pi's Action Fusion and ObservationPack enabled; EPR and OCC remain disabled. Additive Codemode preserves the native tools used by the pstack extension. `pi-goal` provides bounded autonomous continuation, while pstack's `/loop` provides repeated wakeups. Use one continuation controller for a task; do not run `/goal` and `/loop` concurrently on the same objective. The static verifier protects this configuration but does not prove extension compatibility.
+Keep SoL-Pi's Action Fusion and ObservationPack enabled; EPR and OCC remain disabled. Additive Codemode preserves the native tools used by the pstack extension. pstack's `/loop` and `schedule_wakeup` provide session-scoped continuation, without a separate continuation extension. The static verifier protects this configuration but does not prove extension compatibility.

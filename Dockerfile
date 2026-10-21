@@ -28,7 +28,6 @@ COPY --chown=agent:agent pi-context-view.json /home/agent/.pi/agent/extensions/p
 COPY --chown=agent:agent web-search.json /home/agent/.pi/agent/web-search.json
 COPY --chown=agent:agent pi-btw.json /home/agent/.pi/agent/pi-btw.json
 COPY --chown=agent:agent pi-fff.json /home/agent/.pi/agent/pi-fff.json
-COPY --chown=agent:agent pi-goal.json /home/agent/.pi/agent/pi-goal.json
 
 # Project skill add-ons. pstack-claude's 65 skills load from its own Pi package.
 COPY --chown=agent:agent skills/ /home/agent/.pi/agent/skills/
@@ -42,19 +41,15 @@ ARG PI_CONTEXT_VIEW_VERSION=0.7.2
 ARG PI_POWERLINE_FOOTER_VERSION=0.20.2
 ARG PI_REWIND_HOOK_VERSION=1.8.7
 ARG PI_BTW_VERSION=0.62.0
-ARG PI_GOAL_VERSION=0.54.13
 
-# Official pstack-claude v0.9.97; the commit is immutable, unlike a movable tag.
-ARG PSTACK_CLAUDE_VERSION=0.9.97
+# Official pstack-claude pinned by an immutable Git commit.
 ARG PSTACK_CLAUDE_REF=a369e70b8afac1ec3dbad14bc7491d40baf27cce
 
-# SoL-Pi v0.1.1 from its official repository; the manifest version is checked.
-ARG SOL_PI_VERSION=0.1.1
+# Official SoL-Pi pinned by an immutable Git commit.
 ARG SOL_PI_REF=219568034fa54ed121ede80961655e33dfb9d0e3
 
 RUN pi install "npm:@narumitw/pi-accounts@${PI_ACCOUNTS_VERSION}" \
  && pi install "git:github.com/michael-denyer/pstack-claude@${PSTACK_CLAUDE_REF}" \
- && test "$(node -p 'require("/home/agent/.pi/agent/git/github.com/michael-denyer/pstack-claude/package.json").version')" = "${PSTACK_CLAUDE_VERSION}" \
  && test -f /home/agent/.pi/agent/git/github.com/michael-denyer/pstack-claude/plugins/pstack/pi/index.ts \
  && pi install "npm:@dietrichgebert/ponytail@${PONYTAIL_VERSION}" \
  && pi install "npm:pi-web-access@${PI_WEB_ACCESS_VERSION}" \
@@ -64,9 +59,7 @@ RUN pi install "npm:@narumitw/pi-accounts@${PI_ACCOUNTS_VERSION}" \
  && pi install "npm:pi-powerline-footer@${PI_POWERLINE_FOOTER_VERSION}" \
  && pi install "npm:pi-rewind-hook@${PI_REWIND_HOOK_VERSION}" \
  && pi install "npm:@narumitw/pi-btw@${PI_BTW_VERSION}" \
- && pi install "npm:@narumitw/pi-goal@${PI_GOAL_VERSION}" \
- && pi install "git:github.com/NVlabs/SoL-Pi@${SOL_PI_REF}" \
- && test "$(node -p 'require("/home/agent/.pi/agent/git/github.com/NVlabs/SoL-Pi/package.json").version')" = "${SOL_PI_VERSION}"
+ && pi install "git:github.com/NVlabs/SoL-Pi@${SOL_PI_REF}"
 
 ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8

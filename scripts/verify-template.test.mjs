@@ -100,3 +100,35 @@ test("SoL-Pi pinned revision is not changed without qualification", t => rejecti
     "SOL_PI_REF=219568034fa54ed121ede80961655e33dfb9d0e3",
     "SOL_PI_REF=main"));
 }, /Docker pin mismatch: SOL_PI_REF/));
+
+test("removed Goal settings file cannot be restored", t => rejection(t, root => {
+  writeFileSync(path.join(root, "pi-goal.json"), '{"rpc":{"enabled":false}}\n');
+}, /Retired file remains: pi-goal[.]json/));
+
+test("Goal package cannot be reinstalled", t => rejection(t, root => {
+  editFile(root, "Dockerfile", s => s.replace(
+    'ARG PI_BTW_VERSION=0.62.0',
+    'ARG PI_BTW_VERSION=0.62.0\nRUN pi install "npm:@narumitw/pi-goal@0.54.13"'));
+}, /Retired runtime reference: @narumitw[/]pi-goal/));
+
+test("pstack-claude Git commit must not have a redundant version argument", t => rejection(t, root => {
+  editFile(root, "Dockerfile", s => s.replace(
+    "ARG PSTACK_CLAUDE_REF=",
+    "ARG PSTACK_CLAUDE_VERSION=0.9.97\nARG PSTACK_CLAUDE_REF="));
+}, /Retired runtime reference: PSTACK_CLAUDE_VERSION/));
+
+test("SoL-Pi Git commit must not have a redundant version argument", t => rejection(t, root => {
+  editFile(root, "Dockerfile", s => s.replace(
+    "ARG SOL_PI_REF=",
+    "ARG SOL_PI_VERSION=0.1.1\nARG SOL_PI_REF="));
+}, /Retired runtime reference: SOL_PI_VERSION/));
+
+test("SoL-Pi must not reintroduce a manifest-version assertion", t => rejection(t, root => {
+  editFile(root, "Dockerfile", s => s.replace(
+    'pi install "git:github.com/NVlabs/SoL-Pi@${SOL_PI_REF}"',
+    'pi install "git:github.com/NVlabs/SoL-Pi@${SOL_PI_REF}" && node -p \`require("/tmp/SoL-Pi/package.json").version\`'));
+}, /Retired runtime reference: [/].*SoL-Pi[/]package[.]json/));
+
+test("SoL-Pi configuration schema version remains required", t => rejection(t, root => {
+  editJson(root, "sol-pi.json", config => { delete config.version; });
+}, /SoL-Pi context optimization mismatch/));

@@ -5,9 +5,9 @@ A Docker Sandbox image with Pi, the official [pstack-claude](https://github.com/
 ## Architecture
 
 - **Pi 1.3.0** owns sessions, native model providers, authentication, and tool execution.
-- **pstack-claude 0.9.97** owns Poteto Mode, 65 shared skills, automatic task routing, and the native Pi `agent` tools. Its extension runs child Pi RPC processes, provides background completion notices, optional worktree isolation, agent messaging, questions, and `/loop`.
+- **pstack-claude** (pinned Git commit) owns Poteto Mode, 65 shared skills, automatic task routing, and the native Pi `agent` tools. Its extension runs child Pi RPC processes, provides background completion notices, optional worktree isolation, agent messaging, questions, and `/loop`.
 - **SoL-Pi** optimizes tool observations and parent context. It is not an agent scheduler.
-- **Other extensions** provide search, inspection, UI, and optional bounded `/goal` continuation.
+- **Other extensions** provide search, inspection, and UI.
 
 The old `@zenspc/pi-pstack`, `pi-subagents`, and post-install patch are deliberately removed. There is one owner for child-agent orchestration. No Claude Code CLI or template-wide `AGENTS.md` is installed.
 
@@ -27,6 +27,6 @@ docker build -t pi-engineering-template:pstack-claude .
 
 Log in interactively with `/login openai` and, for the cross-provider panel, `/login anthropic`. The pstack session hook automatically routes nontrivial tasks to Poteto Mode. You can invoke a skill explicitly using `/skill:poteto-mode`, `/skill:interrogate`, or `/skill:setup-pstack`. Check child execution with `/pstack-agents`.
 
-On a persistent Pi home migrated from the old image, remove the old packages (`pi remove npm:@zenspc/pi-pstack` and `pi remove npm:pi-subagents`) to prevent duplicate registrations. A clean image needs no migration command.
+On a persistent Pi home migrated from an older image, remove any registered `@zenspc/pi-pstack`, `pi-subagents`, and `@narumitw/pi-goal` packages. Remove the obsolete `~/.pi/agent/pi-goal.json` after checking for local changes. A clean image needs no migration command.
 
 See [operations](docs/operations.md) for live smoke checks and [model policy](docs/model-policy.md) for security and cost boundaries. Static validation is not evidence that the full Docker image or authenticated models work.
