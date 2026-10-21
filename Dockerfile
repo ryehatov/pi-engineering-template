@@ -19,52 +19,21 @@ RUN npm install -g --ignore-scripts \
 
 USER agent
 
-RUN mkdir -p \
-    /home/agent/.pi/agent/extensions/subagent \
-    /home/agent/.pi/agent/agents \
-    /home/agent/.pi/agent/pstack \
-    /home/agent/.pi/agent/skills \
-    /home/agent/.pi
+RUN mkdir -p /home/agent/.pi/agent/extensions /home/agent/.pi/agent/skills
 
-COPY --chown=agent:agent settings.json \
-    /home/agent/.pi/agent/settings.json
+COPY --chown=agent:agent settings.json /home/agent/.pi/agent/settings.json
+COPY --chown=agent:agent pstack-models.md /home/agent/.pi/agent/pstack-models.md
+COPY --chown=agent:agent sol-pi.json /home/agent/.pi/agent/sol-pi.json
+COPY --chown=agent:agent pi-context-view.json /home/agent/.pi/agent/extensions/pi-context-view.json
+COPY --chown=agent:agent web-search.json /home/agent/.pi/agent/web-search.json
+COPY --chown=agent:agent pi-btw.json /home/agent/.pi/agent/pi-btw.json
+COPY --chown=agent:agent pi-fff.json /home/agent/.pi/agent/pi-fff.json
+COPY --chown=agent:agent pi-goal.json /home/agent/.pi/agent/pi-goal.json
 
-COPY --chown=agent:agent subagent-config.json \
-    /home/agent/.pi/agent/extensions/subagent/config.json
-
-COPY --chown=agent:agent pstack-models.json \
-    /home/agent/.pi/agent/pstack/models.json
-
-RUN chmod 600 /home/agent/.pi/agent/pstack/models.json
-
-COPY --chown=agent:agent pi-context-view.json \
-    /home/agent/.pi/agent/extensions/pi-context-view.json
-
-COPY --chown=agent:agent web-search.json \
-    /home/agent/.pi/agent/web-search.json
-
-COPY --chown=agent:agent pi-btw.json \
-    /home/agent/.pi/agent/pi-btw.json
-
-COPY --chown=agent:agent pi-fff.json \
-    /home/agent/.pi/agent/pi-fff.json
-
-COPY --chown=agent:agent pi-goal.json \
-    /home/agent/.pi/agent/pi-goal.json
-
-COPY --chown=agent:agent sol-pi.json \
-    /home/agent/.pi/agent/sol-pi.json
-
-# mattpocock/skills@c55ee46073ed923f86ce59a5eb3b6d895095d1b7; two Pi skill-loader adapters.
-COPY --chown=agent:agent skills/ \
-    /home/agent/.pi/agent/skills/
-
-COPY --chown=agent:agent agents/ \
-    /home/agent/.pi/agent/agents/
+# Project skill add-ons. pstack-claude's 65 skills load from its own Pi package.
+COPY --chown=agent:agent skills/ /home/agent/.pi/agent/skills/
 
 ARG PI_ACCOUNTS_VERSION=0.53.2
-ARG PI_SUBAGENTS_VERSION=0.80.0
-ARG PI_PSTACK_VERSION=0.6.0
 ARG PONYTAIL_VERSION=5.3.2
 ARG PI_WEB_ACCESS_VERSION=0.44.0
 ARG PI_LENS_VERSION=4.4.4
@@ -74,12 +43,19 @@ ARG PI_POWERLINE_FOOTER_VERSION=0.20.2
 ARG PI_REWIND_HOOK_VERSION=1.8.7
 ARG PI_BTW_VERSION=0.62.0
 ARG PI_GOAL_VERSION=0.54.13
+
+# Official pstack-claude v0.9.97; the commit is immutable, unlike a movable tag.
+ARG PSTACK_CLAUDE_VERSION=0.9.97
+ARG PSTACK_CLAUDE_REF=a369e70b8afac1ec3dbad14bc7491d40baf27cce
+
+# SoL-Pi v0.1.1 from its official repository; the manifest version is checked.
 ARG SOL_PI_VERSION=0.1.1
 ARG SOL_PI_REF=219568034fa54ed121ede80961655e33dfb9d0e3
 
 RUN pi install "npm:@narumitw/pi-accounts@${PI_ACCOUNTS_VERSION}" \
- && pi install "npm:pi-subagents@${PI_SUBAGENTS_VERSION}" \
- && pi install "npm:@zenspc/pi-pstack@${PI_PSTACK_VERSION}" \
+ && pi install "git:github.com/michael-denyer/pstack-claude@${PSTACK_CLAUDE_REF}" \
+ && test "$(node -p 'require("/home/agent/.pi/agent/git/github.com/michael-denyer/pstack-claude/package.json").version')" = "${PSTACK_CLAUDE_VERSION}" \
+ && test -f /home/agent/.pi/agent/git/github.com/michael-denyer/pstack-claude/plugins/pstack/pi/index.ts \
  && pi install "npm:@dietrichgebert/ponytail@${PONYTAIL_VERSION}" \
  && pi install "npm:pi-web-access@${PI_WEB_ACCESS_VERSION}" \
  && pi install "npm:pi-lens@${PI_LENS_VERSION}" \
@@ -92,12 +68,7 @@ RUN pi install "npm:@narumitw/pi-accounts@${PI_ACCOUNTS_VERSION}" \
  && pi install "git:github.com/NVlabs/SoL-Pi@${SOL_PI_REF}" \
  && test "$(node -p 'require("/home/agent/.pi/agent/git/github.com/NVlabs/SoL-Pi/package.json").version')" = "${SOL_PI_VERSION}"
 
-COPY --chown=agent:agent scripts/patch-pstack.mjs /tmp/patch-pstack.mjs
-RUN node /tmp/patch-pstack.mjs /home/agent/.pi/agent/npm/node_modules/@zenspc/pi-pstack \
- && rm /tmp/patch-pstack.mjs
-
 ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8
 ENV TZ=Asia/Tokyo
 ENV POWERLINE_NERD_FONTS=1
-ENV PI_SUBAGENT_TASK_DELIVERY=file

@@ -4,118 +4,6 @@
   "defaultModel": "gpt-6.1-sol",
   "defaultThinkingLevel": "xhigh",
   "defaultProjectTrust": "never",
-  "subagents": {
-    "defaultModel": "openai/gpt-6.1-sol",
-    "defaultThinking": "xhigh",
-    "maxThinking": "max",
-    "modelScope": {
-      "enforce": true,
-      "strict": true,
-      "allow": [
-        "openai/gpt-6.1-sol",
-        "openai/gpt-6-astra",
-        "anthropic/claude-opus-5-5",
-        "anthropic/claude-sonnet-5-5",
-        "anthropic/claude-haiku-5-5"
-      ],
-      "agents": {
-        "worker": {
-          "allow": [
-            "openai/gpt-6.1-sol",
-            "openai/gpt-6-astra"
-          ]
-        },
-        "poteto-agent": {
-          "allow": [
-            "openai/gpt-6.1-sol",
-            "openai/gpt-6-astra"
-          ]
-        },
-        "how-analyst": {
-          "allow": [
-            "openai/gpt-6.1-sol",
-            "openai/gpt-6-astra"
-          ]
-        },
-        "reviewer": {
-          "allow": [
-            "anthropic/claude-opus-5-5",
-            "anthropic/claude-sonnet-5-5",
-            "anthropic/claude-haiku-5-5"
-          ]
-        },
-        "oracle": {
-          "allow": [
-            "openai/gpt-6-astra"
-          ]
-        },
-        "scout": {
-          "allow": [
-            "openai/gpt-6.1-sol"
-          ]
-        },
-        "researcher": {
-          "allow": [
-            "openai/gpt-6.1-sol"
-          ]
-        },
-        "comment-sicko": {
-          "allow": [
-            "openai/gpt-6.1-sol"
-          ]
-        }
-      }
-    },
-    "agentOverrides": {
-      "scout": {
-        "model": "openai/gpt-6.1-sol",
-        "thinking": "high"
-      },
-      "researcher": {
-        "model": "openai/gpt-6.1-sol",
-        "thinking": "xhigh"
-      },
-      "how-analyst": {
-        "model": "openai/gpt-6-astra",
-        "thinking": "xhigh"
-      },
-      "worker": {
-        "model": "openai/gpt-6.1-sol",
-        "thinking": "xhigh",
-        "tools": "inherit"
-      },
-      "reviewer": {
-        "model": "anthropic/claude-opus-5-5",
-        "thinking": "high"
-      },
-      "oracle": {
-        "model": "openai/gpt-6-astra",
-        "thinking": "xhigh"
-      },
-      "poteto-agent": {
-        "model": "openai/gpt-6.1-sol",
-        "thinking": "xhigh",
-        "tools": "inherit",
-        "allowNestedSubagents": true
-      },
-      "comment-sicko": {
-        "model": "openai/gpt-6.1-sol",
-        "thinking": "high"
-      },
-      "claude-code": {
-        "disabled": true
-      },
-      "claude-code-writer": {
-        "disabled": true
-      },
-      "delegate": {
-        "disabled": true
-      },
-      "gpt-pro": {
-        "disabled": true
-      }
-    }
-  },
   "showLastPrompt": true,
   "powerline": {
     "preset": "default",
@@ -123,21 +11,9 @@
     "welcome": false,
     "separator": "powerline-thin",
     "layout": {
-      "left": [
-        "model",
-        "thinking",
-        "path",
-        "git",
-        "queue",
-        "subagents"
-      ],
-      "right": [
-        "context_pct",
-        "cache_read"
-      ],
-      "secondary": [
-        "extension_statuses"
-      ]
+      "left": ["model", "thinking", "path", "git", "queue"],
+      "right": ["context_pct", "cache_read"],
+      "secondary": ["extension_statuses"]
     },
     "model": {
       "display": "qualified",
@@ -155,17 +31,9 @@
       "polling": "branch",
       "hostIcon": true
     },
-    "context": {
-      "format": "percent"
-    },
-    "cache_read": {
-      "format": "both"
-    }
+    "context": { "format": "percent" },
+    "cache_read": { "format": "both" }
   },
-  "defaultTools": [
-    "+codemode"
-  ],
-  "codemode": {
-    "mode": "on"
-  }
+  "defaultTools": ["+codemode"],
+  "codemode": { "mode": "on" }
 }

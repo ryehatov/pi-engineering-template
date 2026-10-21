@@ -1,37 +1,48 @@
-# Operations
+# Operations and qualification
 
-## Native subscription authentication
+## Installation
 
-Start Pi and use `/login openai` -> **Sign in with ChatGPT** for the OpenAI subscription. Run `/login anthropic` for the native Anthropic OAuth flow. Both credentials are managed by Pi in `~/.pi/agent/auth.json`; no external Claude Code CLI is required. OAuth through a third-party client is not proof of subscription-included billing: confirm Anthropic's current entitlement and billing rules.
+The Dockerfile installs `michael-denyer/pstack-claude` at the commit for release `v0.9.97` and verifies `package.json` reports `0.9.97`. Its root `package.json` declares the Pi extension and shared skill directory; no skill checkout or patch is needed. SoL-Pi is also pinned to an official commit and its manifest version is checked.
 
-Do not accidentally supply an `ANTHROPIC_API_KEY` as an API-billing credential when intending subscription OAuth. Credential resolution should be confirmed with the selected provider and `/model` (Pi prefers stored OAuth credentials to environment API keys). `@narumitw/pi-accounts` manages named Pi accounts; it does not need a special Claude Code bridge.
-
-## Static and Docker checks
-
-```sh
+~~~sh
 node scripts/verify-template.mjs
 node --test scripts/verify-template.test.mjs
-docker build -t pi-engineering-template:pstack .
-```
+docker build --pull=false -t pi-engineering-template:pstack-claude .
+~~~
 
-Static checks enforce immutable pins, Pi 1.3 schema, additive Codemode, bounded async capacity, role IDs, native provider scopes, direct research Web tools and absence of retired external runners. They cannot establish login success, Docker build compatibility or tool availability.
+Static verification checks pins, install wiring, pstack sheet roles and model aliases, retired dependencies, and relevant Pi/SoL-Pi settings. A passing static check does **not** prove Docker build, extension loading, model access, or live behavior.
 
-## Live smoke after login
+## First authenticated session
 
-```sh
-pi --version  # expect 1.3.0
-pi --list-models | grep -E 'openai/gpt-6\\.1-sol|openai/gpt-6-astra|anthropic/claude-(opus|sonnet|haiku)-5-5'
-pi -p --no-tools --model 'openai/gpt-6.1-sol:xhigh' 'Reply exactly SOL_OK'
-pi -p --no-tools --model 'openai/gpt-6-astra:xhigh' 'Reply exactly ASTRA_OK'
-pi -p --no-tools --model 'anthropic/claude-opus-5-5:high' 'Reply exactly OPUS_OK'
-pi -p --no-tools --model 'anthropic/claude-sonnet-5-5:high' 'Reply exactly SONNET_OK'
-pi -p --no-tools --model 'anthropic/claude-haiku-5-5:medium' 'Reply exactly HAIKU_OK'
-```
+Start in the built image, with a persistent user home if desired. Use `/login openai`; use `/login anthropic` only after confirming access and billing conditions. Never bake credentials into image layers.
 
-Inspect `/subagents-models` and the resolved `reviewer`, `worker`, `researcher` and `oracle` mappings. Launch `subagent({agent:"reviewer",model:"anthropic/claude-opus-5-5:high",task:"Review this diff and inspect relevant files"})` and confirm native `read/grep` and `watchdog_diff` work. Interrogate/Arena should use Opus and Sonnet as native reviewers, without CLI processes. Confirm workers can edit, test and access registered FFF/Pi-Lens tools. Check researcher Web tools and scout exploration without conditionally registered startup names. Exercise pstack `why`, `reflect`, and `arena` with Astra-selected workers to verify strict model-scope routing.
+~~~sh
+pi --version
+pi list
+pi --list-models
+~~~
 
-## SoL-Pi and Pi 1.3 qualification
+Confirm `pi --version` is 1.3.0; `pi list` shows the Git-installed pstack-claude and SoL-Pi, not either retired package; `pi --list-models` lists every configured ID. Next, inside an interactive Pi session:
 
-SoL-Pi installs from the official NVlabs Git repository at a pinned commit, not a third-party npm fork. Since upstream publishes no version tag, Docker also verifies that the installed package manifest reports version 0.1.1. The pinned revision includes upstream Pi 1.3.0 tests for all four mechanisms and Codemode. This does not prove compatibility of the complete Docker extension portfolio. In the actual sandbox confirm `pi list --approve`, offline startup, no extension-load errors, and that Codemode leaves native tools available. Exercise Action Fusion (including failing `then_run`), ObservationPack + `obs_recall`, nested Poteto workers, direct `researcher` Web tools, native Claude review, and resumed subagent tool activation. `pi-context-view` should not issue a silent synthetic probe before a real request.
+1. Run `/skill:poteto-mode` for an end-to-end plan and verify that the session hook routes a new multi-file task automatically.
+2. Run `/skill:how` on a small module. Verify that the `agent` tool launches children and `/pstack-agents` reports their state. Check transcripts under `~/.pi/agent/pstack/<parent-session-id>/agents/`.
+3. Run `/skill:interrogate` on a test diff. Verify that Sol, Astra, Claude Opus, and Claude Sonnet launch through Pi's native providers. Each entry must report findings; no external Claude Code CLI should be invoked.
+4. Run a parallel writing task with `isolation: "worktree"` and inspect the retained worktrees and branch diffs. Verify the supervisor reports any unmerged result.
+5. Verify SoL-Pi Action Fusion, ObservationPack, and exact `obs_recall` recovery; verify Pi-FFF, Pi-Lens, and direct Web tools still load without an extension error.
+6. Exercise `/loop` and `/loop stop` in an interactive session. Test `/goal` on a separate task, not at the same time. Verify the session terminates within the configured Goal bounds.
 
-At startup inspect `/pstack status`, activate `/poteto-mode` and optionally use `/goal <objective>`. Subagent context is fresh; active parent async runs are capped at 4, cumulative session spawns at 128, global child concurrency at 8, and spawns per run at 32. Missions/schedules remain disabled and no automatic provider fallback is configured.
+If a provider or a required panel entry is missing, fix login or the model sheet and repeat the affected check. Do not report a cross-provider review as completed when a child did not run.
+
+## Migration of an existing Pi home
+
+The Dockerfile builds a clean home. For persistent homes that still register the old packages:
+
+~~~sh
+pi remove npm:@zenspc/pi-pstack
+pi remove npm:pi-subagents
+pi install git:github.com/michael-denyer/pstack-claude@a369e70b8afac1ec3dbad14bc7491d40baf27cce
+~~~
+
+Replace the old model JSON with the new `~/.pi/agent/pstack-models.md`. Remove obsolete `subagents` settings and old subagent agent-definition folders only after reviewing custom content. The pstack extension owns its own `pstack:` agent types. Existing Pi sessions and credentials do not need to be deleted.
+
+The upstream [Pi mapping](https://github.com/michael-denyer/pstack-claude/blob/v0.9.97/plugins/pstack/skills/poteto-mode/references/pi-tools.md) and [equivalence table](https://github.com/michael-denyer/pstack-claude/blob/v0.9.97/docs/pi-equivalence.md) document supported behavior and differences from Claude Code.

@@ -1,24 +1,32 @@
-# pi-engineering-template
+# Pi engineering template — pstack-claude
 
-Docker Sandbox template for Pi, pstack / Poteto Mode and native cross-provider review.
+A Docker Sandbox image with Pi, the official [pstack-claude](https://github.com/michael-denyer/pstack-claude) Pi package, SoL-Pi, and focused engineering utilities.
 
-## Runtime ownership
+## Architecture
 
-- **Pi** owns the native `openai` and `anthropic` providers, authenticated through Pi-managed OAuth logins.
-- **pi-subagents** owns child routing, role-specific tool contracts, isolation, model scope and concurrency. The package-defined review tools work with Claude as a normal Pi model; implementation roles inherit registered extension tools.
-- **pstack** owns Poteto Mode, workflow playbooks and role hints. The pinned patch routes Interrogate and Arena reviews to native `reviewer` agents instead of external CLI processes.
-- **SoL-Pi** supplies parent context efficiency, and **pi-goal** supplies bounded continuation. Pi-FFF, Pi-Lens and other extensions provide search, diagnostics and UI.
+- **Pi 1.3.0** owns sessions, native model providers, authentication, and tool execution.
+- **pstack-claude 0.9.97** owns Poteto Mode, 65 shared skills, automatic task routing, and the native Pi `agent` tools. Its extension runs child Pi RPC processes, provides background completion notices, optional worktree isolation, agent messaging, questions, and `/loop`.
+- **SoL-Pi** optimizes tool observations and parent context. It is not an agent scheduler.
+- **Other extensions** provide search, inspection, UI, and optional bounded `/goal` continuation.
 
-## Authentication
+The old `@zenspc/pi-pstack`, `pi-subagents`, and post-install patch are deliberately removed. There is one owner for child-agent orchestration. No Claude Code CLI or template-wide `AGENTS.md` is installed.
 
-Run `/login openai` and select **Sign in with ChatGPT**. Run `/login anthropic` for native Anthropic OAuth. This does not guarantee subscription-included billing from third-party harnesses; verify current provider policy. Never put credentials in image layers. No Claude Code CLI is installed.
+## Model routing
 
-## Build / startup
+`settings.json` selects `openai/gpt-6.1-sol` with `xhigh` reasoning for the parent. `pstack-models.md` is copied to `~/.pi/agent/pstack-models.md`. The pstack extension reads it directly, including after compaction. The committed panel is `opus` (Sol), `fable` (Astra), `sonnet` (Claude Opus), and `haiku` (Claude Sonnet). Anthropic panel entries use `high` effort.
 
-```sh
+These are explicit model IDs, not automatic availability checks. Models must exist in the installed Pi catalog and be accessible with the configured credentials. Unavailable reviewers fail visibly; there is no silent provider substitution. **Anthropic use through Pi may incur separately billed token usage**, including when a Claude subscription is connected.
+
+## Build and use
+
+~~~sh
 node scripts/verify-template.mjs
 node --test scripts/verify-template.test.mjs
-docker build -t pi-engineering-template:pstack .
-```
+docker build -t pi-engineering-template:pstack-claude .
+~~~
 
-At session startup inspect `/pstack status` and activate `/poteto-mode`. Codemode is enabled additively; native tools remain available. See `docs/operations.md` for live validation and `docs/model-policy.md` for routing. No generic global `AGENTS.md` is installed.
+Log in interactively with `/login openai` and, for the cross-provider panel, `/login anthropic`. The pstack session hook automatically routes nontrivial tasks to Poteto Mode. You can invoke a skill explicitly using `/skill:poteto-mode`, `/skill:interrogate`, or `/skill:setup-pstack`. Check child execution with `/pstack-agents`.
+
+On a persistent Pi home migrated from the old image, remove the old packages (`pi remove npm:@zenspc/pi-pstack` and `pi remove npm:pi-subagents`) to prevent duplicate registrations. A clean image needs no migration command.
+
+See [operations](docs/operations.md) for live smoke checks and [model policy](docs/model-policy.md) for security and cost boundaries. Static validation is not evidence that the full Docker image or authenticated models work.

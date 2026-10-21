@@ -1,43 +1,26 @@
-# Model Policy
+# Model and delegation policy
 
-## Providers and subscriptions
+## Model ownership
 
-Pi 1.3.0 supports ChatGPT subscription OAuth on its native `openai` provider and native Anthropic OAuth login on its `anthropic` provider. OAuth through third-party harnesses does not guarantee subscription-included usage; confirm the provider's billing terms. Authenticate with `/login openai` and `/login anthropic` respectively. `openai-codex` is legacy. Do not use API-key credentials unintentionally when the goal is subscription usage. The project installs no Claude Code CLI, external agent bridge or custom provider transport.
+Pi selects the parent provider and model in `settings.json`. The pstack-claude extension reads `~/.pi/agent/pstack-models.md`, injects the role policy into the system prompt, and maps the four aliases to Pi model IDs before launching a child. The override sheet is the only pstack model configuration. Do not write the old `pstack-models.json` or patch installed package skills.
 
-## Role assignment
-
-| Role | Model | Thinking | Purpose |
+| Alias | Pi model | Effort | Primary use |
 | --- | --- | --- | --- |
-| Parent/orchestrator | `openai/gpt-6.1-sol` | `xhigh` | Preferred subscription, implementation planning and coordination |
-| Worker / Poteto | `openai/gpt-6.1-sol` | `xhigh` | High-quality implementation and validation |
-| Scout / comment-sicko | `openai/gpt-6.1-sol` | `high` | Scoped reconnaissance |
-| Researcher | `openai/gpt-6.1-sol` | `xhigh` | Evidence verification |
-| Oracle / How explainer | `openai/gpt-6-astra` | `xhigh` | Hard architecture and design questions |
-| Native independent reviewer | `anthropic/claude-opus-5-5` | `high` | Independent adversarial audit using Pi's review tools |
-| Second opinion (Interrogate/Arena) | `anthropic/claude-sonnet-5-5` | `high` | Additional Claude-family reviewer |
-| Optional targeted triage | `anthropic/claude-haiku-5-5` | `medium` | Short tasks; not the release sign-off |
+| `opus` | `openai/gpt-6.1-sol` | xhigh | Implementation, investigation, swarm workers |
+| `fable` | `openai/gpt-6-astra` | xhigh | Architecture, synthesis, hard judgments |
+| `sonnet` | `anthropic/claude-opus-5-5` | high | Independent adversarial review |
+| `haiku` | `anthropic/claude-sonnet-5-5` | high | Additional cross-provider review |
 
-OpenAI `xhigh` is the requested quality/cost baseline. Claude review defaults to `high`; lower effort may be chosen for narrow triage. Model-family independence from OpenAI reduces shared failure modes; two Claude models are not independent model families from each other.
+`arena`, `architect`, and `interrogate` use all four slots. The cross-judge pool is also diverse. All four IDs are distinct, but there are only **two providers**; two Claude models do not supply independent vendor evidence. The default parent remains Sol at `xhigh`.
 
-## Subagent tools and authority
+## Execution and trust boundaries
 
-Retain the audited pi-subagents role capabilities instead of hardcoding extension tool names:
+- The pstack Pi extension implements `agent`, `send_message`, `list_agents`, `stop_agent`, `ask_user_question`, `schedule_wakeup`, and `/loop`. A child runs in its own Pi RPC process. The extension limits nested agent depth to three layers; it does not enforce the old `pi-subagents` allowlists or concurrency policy.
+- `readonly: true` only removes Pi's `edit` and `write` tools. **It does not sandbox `bash`**. Reviewers must be instructed not to mutate files, and high-assurance isolation must come from Docker, filesystem permissions, or a separate read-only workspace.
+- Writing agents should use `isolation: "worktree"` when editing in parallel. Each retained worktree needs human or supervisor review. A read-only reviewer should inspect the requested working tree if the diff is uncommitted.
+- `defaultProjectTrust: "never"` keeps Pi project packages outside the automatic trust boundary. The Docker Sandbox supplies process and filesystem isolation; it does not make a third-party extension intrinsically safe.
+- Credentials belong in Pi's user-managed login store, not in the image. Authentication does not establish subscription-included billing. Pi's Anthropic access can be charged per token, including every reviewer invocation. Do not fall back to a different provider without an explicit decision.
 
-- `scout`: package-defined `read, grep, find, ls, bash, write, contact_supervisor`.
-- `researcher`: package-defined `read, write, web_search, fetch_content, get_search_content, source_check`.
-- `reviewer`: package-defined `read, grep, find, ls, watchdog_diff, contact_supervisor`. **This native Pi agent now runs Opus 5.5** and can read the codebase directly.
-- `oracle`: package-defined `read, grep, find, ls, bash`.
-- `comment-sicko`: package-defined inspection tools. `how-analyst`: local read-only profile.
-- `worker` and `poteto-agent`: `tools: "inherit"` intentionally to permit ambient Pi-FFF, Pi-Lens, mutation and test tools. This exception does not apply to other roles.
+## Interaction with other extensions
 
-Pi-FFF's `multi_grep` is conditionally registered, and Pi-Lens activates some tools lazily. Avoid putting conditional names into explicit subagent allowlists. Keep native `grep` and `find` available. A reviewer is read-only by its own tool contract, not because it lacks the Claude Code CLI.
-
-## Independent review routing
-
-Pstack Interrogate/Arena selectors use **real Pi model IDs** (`anthropic/claude-opus-5-5:high` and `anthropic/claude-sonnet-5-5:high`). The pinned pstack patch invokes `subagent()` with `agent: "reviewer"` and the selected native model. This preserves source inspection, runtime evidence and the package's review tool policy. The three Claude models are allowed only for that review role; writers default to Sol but permit explicit Astra selection for pstack synthesis/design workflows. The oracle is Astra.
-
-Do not silently reroute failed reviews to another provider or auth account. `claude-code` and `claude-code-writer` built-in external CLI profiles are disabled.
-
-## Qualification note
-
-The pinned SoL-Pi revision is upstream-tested against Pi 1.3.0. pi-context-view 0.7.2 requires Pi 1.3.0; pi-subagents 0.80.0 requires Pi >=1.2.0. Static checks and individual upstream support do not prove the assembled runtime. Perform the Docker and authenticated routing smoke tests in `docs/operations.md`.
+Keep SoL-Pi's Action Fusion and ObservationPack enabled; EPR and OCC remain disabled. Additive Codemode preserves the native tools used by the pstack extension. `pi-goal` provides bounded autonomous continuation, while pstack's `/loop` provides repeated wakeups. Use one continuation controller for a task; do not run `/goal` and `/loop` concurrently on the same objective. The static verifier protects this configuration but does not prove extension compatibility.
