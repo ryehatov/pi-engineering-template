@@ -22,7 +22,7 @@ After building, run `pi list` inside the image. It must report the expected pack
 
 ## First authenticated session
 
-Start in the built image, with a persistent user home if desired. Use `/login openai`. The default four-model panel uses OpenAI only. Use `/login anthropic` only after explicitly enabling and funding third-party Anthropic usage, if you choose to change the local sheet. Never bake credentials into image layers.
+Start in the built image, with a persistent user home if desired. Use `/login openai`; use `/login anthropic` only after confirming access and billing conditions. Never bake credentials into image layers.
 
 ~~~sh
 pi --version
@@ -34,18 +34,12 @@ Confirm `pi --version` is 1.3.0; `pi list` shows the Git-installed pstack-claude
 
 1. Run `/skill:poteto-mode` for an end-to-end plan and verify that the session hook routes a new multi-file task automatically.
 2. Run `/skill:how` on a small module. Verify that the `agent` tool launches children and `/pstack-agents` reports their state. Check transcripts under `~/.pi/agent/pstack/<parent-session-id>/agents/`.
-3. Run `/skill:interrogate` on a test diff. Verify that GPT-6.1 Sol, GPT-6 Astra, GPT-6 Sol, and GPT-6 Luna launch through Pi's OpenAI provider. Each entry must report findings; no external Claude Code CLI should be invoked.
+3. Run `/skill:interrogate` on a test diff. Verify that Sol, Astra, Claude Opus, and Claude Sonnet launch through Pi's native providers. Each entry must report findings; no external Claude Code CLI should be invoked.
 4. Run a parallel writing task with `isolation: "worktree"` and inspect the retained worktrees and branch diffs. Verify the supervisor reports any unmerged result.
 5. Verify SoL-Pi Action Fusion, ObservationPack, and exact `obs_recall` recovery; verify Pi-FFF, Pi-Lens, and direct Web tools still load without an extension error.
 6. Exercise `/loop` and `/loop stop` in an interactive session. Verify that stopping the loop cancels its pending wakeup and that no new iteration starts.
 
-If a provider or a required panel entry is missing, fix login or the model sheet and repeat the affected check. Do not report a four-model review as completed when a child did not run.
-
-### Anthropic HTTP 400: third-party extra usage
-
-The error `Third-party apps now draw from your extra usage, not your plan limits` is an Anthropic billing/authorization refusal, **not** a Pi spawning failure. Do not retry it automatically: the credit or account setting must change first. The upstream pstack child runner reads the Pi RPC stream and marks a model error as `status: failed` even when the process exits with `exit code: 0`; the process exit code alone is not evidence of successful inference. The default sheet removes Anthropic requests from all four panel slots. Confirm that the runtime sheet is the updated one (`cat ~/.pi/agent/pstack-models.md`) and that `pi --list-models` contains all four OpenAI IDs. Model listing proves catalog presence, not live entitlement: make a small authenticated agent call for every model before relying on the full panel.
-
-If `~/.pi/agent` is on a persistent volume, an image rebuild might not replace its prior sheet. Copy the new `pstack-models.md` from this repository into that directory and restart Pi. A failed agent's recorded model is immutable on resume: `send_message` to the old ID will reuse the old Anthropic model. Spawn a new agent after the sheet changes. For deliberate cross-provider review, see [model policy](model-policy.md#optional-cross-provider-review).
+If a provider or a required panel entry is missing, fix login or the model sheet and repeat the affected check. Do not report a cross-provider review as completed when a child did not run.
 
 ## Migration of an existing Pi home
 

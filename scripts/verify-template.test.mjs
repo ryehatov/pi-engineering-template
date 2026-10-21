@@ -71,19 +71,14 @@ test("panel diversity cannot collapse to duplicate model aliases", t => rejectio
 
 test("unavailable or changed alias mappings are detected", t => rejection(t, root => {
   editFile(root, "pstack-models.md", s => s.replace(
-    "sonnet=openai/gpt-6-sol", "sonnet=openai/does-not-exist"));
-}, /qualified four-model OpenAI portfolio/));
+    "sonnet=anthropic/claude-opus-5-5", "sonnet=anthropic/does-not-exist"));
+}, /pstack Pi aliases must resolve/));
 
-test("Secondary review panel members must use high effort", t => rejection(t, root => {
+test("Claude panel members must use high effort", t => rejection(t, root => {
   editFile(root, "pstack-models.md", s => s.replace(
     "architect runners: opus, fable, sonnet @high, haiku @high",
     "architect runners: opus, fable, sonnet @xhigh, haiku @high"));
-}, /Secondary reviewer effort must be high/));
-
-test("Anthropic cannot return as an unapproved default panel provider", t => rejection(t, root => {
-  editFile(root, "pstack-models.md", s => s.replace(
-    "sonnet=openai/gpt-6-sol", "sonnet=anthropic/claude-opus-5-5"));
-}, /Anthropic requires explicit extra-usage opt-in/));
+}, /Anthropic review effort must be high/));
 
 test("retired model role names cannot return", t => rejection(t, root => {
   editFile(root, "pstack-models.md", s => s.replace(

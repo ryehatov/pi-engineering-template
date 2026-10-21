@@ -1,7 +1,6 @@
 # pstack model configuration — Pi
-# All default subagents use OpenAI; Anthropic needs separately authorized extra usage.
 
-pi models: opus=openai/gpt-6.1-sol, fable=openai/gpt-6-astra, sonnet=openai/gpt-6-sol, haiku=openai/gpt-6-luna
+pi models: opus=openai/gpt-6.1-sol, fable=openai/gpt-6-astra, sonnet=anthropic/claude-opus-5-5, haiku=anthropic/claude-sonnet-5-5
 
 feature, refactoring: opus
 bug-fix: opus

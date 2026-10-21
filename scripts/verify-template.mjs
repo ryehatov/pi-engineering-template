@@ -122,8 +122,8 @@ check(!settings.powerline?.layout?.left?.includes("subagents"),
 const expectedModels = new Map([
   ["opus", "openai/gpt-6.1-sol"],
   ["fable", "openai/gpt-6-astra"],
-  ["sonnet", "openai/gpt-6-sol"],
-  ["haiku", "openai/gpt-6-luna"]
+  ["sonnet", "anthropic/claude-opus-5-5"],
+  ["haiku", "anthropic/claude-sonnet-5-5"]
 ]);
 const singleRoles = new Map([
   ["feature, refactoring", "opus"], ["bug-fix", "opus"],
@@ -162,9 +162,7 @@ for (const pair of mapping.split(",")) {
 }
 check(actualModels.size === expectedModels.size && new Set(actualModels.values()).size === 4 &&
       [...expectedModels].every(([alias, id]) => actualModels.get(alias) === id),
-  "pstack Pi aliases must resolve to the qualified four-model OpenAI portfolio");
-check(![...actualModels.values()].some(id => id.startsWith("anthropic/")),
-  "Anthropic requires explicit extra-usage opt-in, not default routing");
+  "pstack Pi aliases must resolve to the qualified four-model portfolio");
 
 for (const [role, expected] of singleRoles) {
   check(sheet.get(role) === expected, "pstack role model mismatch: " + role);
@@ -178,7 +176,7 @@ for (const role of panels) {
     const [, alias, effort] = match;
     seen.add(alias);
     if (alias === "sonnet" || alias === "haiku")
-      check(effort === "high", "Secondary reviewer effort must be high: " + role);
+      check(effort === "high", "Anthropic review effort must be high: " + role);
     else
       check(effort === undefined || effort === "xhigh",
         "OpenAI panel effort must be xhigh: " + role);
