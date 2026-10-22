@@ -1,6 +1,6 @@
 # pstack model configuration — Pi
 
-pi models: opus=openai/gpt-6.1-sol, fable=openai/gpt-6-astra, sonnet=anthropic/claude-opus-5-5, haiku=anthropic/claude-sonnet-5-5
+pi models: opus=openai/gpt-6.1-sol, fable=openai/gpt-6-astra, sonnet=claude-code/claude-opus-5-5, haiku=claude-code/claude-sonnet-5-5
 
 feature, refactoring: opus
 bug-fix: opus

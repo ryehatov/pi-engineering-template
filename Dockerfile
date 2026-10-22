@@ -11,11 +11,17 @@ RUN apt-get update \
 
 ARG PI_VERSION=1.3.0
 ARG BUN_VERSION=1.4.3
+ARG CLAUDE_CODE_VERSION=2.1.305
+
+# pi-claude-code requires Node >=22.19.0. Fail early on an older base image.
+RUN node -e 'const [major,minor]=process.versions.node.split(".").map(Number); if(major<22 || (major===22 && minor<19)) throw new Error("pi-claude-code requires Node >=22.19.0")'
 
 RUN npm install -g --ignore-scripts \
     "@earendil-works/pi-coding-agent@${PI_VERSION}" \
  && npm install -g "bun@${BUN_VERSION}" \
- && bun --version
+ && bun --version \
+ && npm install -g "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}" \
+ && claude --version
 
 USER agent
 
@@ -34,12 +40,17 @@ ARG PI_BTW_VERSION=0.62.0
 # Official pstack-claude pinned by an immutable Git commit.
 ARG PSTACK_CLAUDE_REF=a369e70b8afac1ec3dbad14bc7491d40baf27cce
 
+# Pi provider bridge through the official Claude Code CLI.
+ARG PI_CLAUDE_CODE_REF=70abb65186592ca788b29b3db22c3160d629c41f
+
 # Official SoL-Pi pinned by an immutable Git commit.
 ARG SOL_PI_REF=219568034fa54ed121ede80961655e33dfb9d0e3
 
 RUN pi install "npm:@narumitw/pi-accounts@${PI_ACCOUNTS_VERSION}" \
  && pi install "git:github.com/michael-denyer/pstack-claude@${PSTACK_CLAUDE_REF}" \
  && test -f /home/agent/.pi/agent/git/github.com/michael-denyer/pstack-claude/plugins/pstack/pi/index.ts \
+ && pi install "git:github.com/earendil-works/pi-claude-code@${PI_CLAUDE_CODE_REF}" \
+ && test -f /home/agent/.pi/agent/git/github.com/earendil-works/pi-claude-code/src/index.ts \
  && pi install "npm:@dietrichgebert/ponytail@${PONYTAIL_VERSION}" \
  && pi install "npm:pi-web-access@${PI_WEB_ACCESS_VERSION}" \
  && pi install "npm:pi-lens@${PI_LENS_VERSION}" \

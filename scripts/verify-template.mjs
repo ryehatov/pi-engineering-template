@@ -38,6 +38,7 @@ const docker = read("Dockerfile");
 const pins = {
   PI_VERSION: "1.3.0",
   BUN_VERSION: "1.4.3",
+  CLAUDE_CODE_VERSION: "2.1.305",
   PI_ACCOUNTS_VERSION: "0.53.2",
   PONYTAIL_VERSION: "5.3.2",
   PI_WEB_ACCESS_VERSION: "0.44.0",
@@ -48,6 +49,7 @@ const pins = {
   PI_REWIND_HOOK_VERSION: "1.8.7",
   PI_BTW_VERSION: "0.62.0",
   PSTACK_CLAUDE_REF: "a369e70b8afac1ec3dbad14bc7491d40baf27cce",
+  PI_CLAUDE_CODE_REF: "70abb65186592ca788b29b3db22c3160d629c41f",
   SOL_PI_REF: "219568034fa54ed121ede80961655e33dfb9d0e3"
 };
 for (const [key, value] of Object.entries(pins)) {
@@ -58,9 +60,20 @@ check(/^ARG BASE_IMAGE=[^\r\n]+@sha256:[a-f0-9]{64}$/m.test(docker), "Docker bas
 const installs = [
   'pi install "git:github.com/michael-denyer/pstack-claude@${PSTACK_CLAUDE_REF}"',
   'test -f /home/agent/.pi/agent/git/github.com/michael-denyer/pstack-claude/plugins/pstack/pi/index.ts',
+  'pi install "git:github.com/earendil-works/pi-claude-code@${PI_CLAUDE_CODE_REF}"',
+  'test -f /home/agent/.pi/agent/git/github.com/earendil-works/pi-claude-code/src/index.ts',
   'pi install "git:github.com/NVlabs/SoL-Pi@${SOL_PI_REF}"'
 ];
 for (const item of installs) check(docker.includes(item), "Docker Git install or package entrypoint check missing: " + item);
+const cliInstall = 'npm install -g "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}"';
+check(docker.includes(cliInstall) && docker.includes("&& claude --version") &&
+      docker.indexOf(cliInstall) < docker.indexOf("USER agent") &&
+      !docker.includes('npm install -g --ignore-scripts "@anthropic-ai/claude-code'),
+  "Claude Code CLI install/verification must be pinned in the root image layer");
+check(docker.includes("pi-claude-code requires Node >=22.19.0"),
+  "pi-claude-code Node >=22.19.0 preflight must remain in the Docker image");
+check(!/^(?:ARG|ENV) PI_CLAUDE_CODE_ALLOW_USAGE_CREDITS=/m.test(docker),
+  "Claude usage credits must not be automatically enabled in the image");
 const copies = [
   ["settings.json", "/tmp/pi-template-settings.json"],
   ["scripts/merge-pi-settings.mjs", "/tmp/merge-pi-settings.mjs"],
@@ -100,7 +113,7 @@ check(dockerignore.includes(".git") && dockerignore.includes("node_modules") &&
       !dockerignore.includes("merge-pi-settings.mjs"),
   "Docker context filtering missing or excludes the merge script");
 for (const forbidden of ["@zenspc/pi-pstack", "npm:pi-subagents", "patch-pstack",
-  "subagent-config.json", "pstack-models.json", "@anthropic-ai/claude-code",
+  "subagent-config.json", "pstack-models.json", "@gotgenes/pi-anthropic-auth",
   "openai-codex", "COMMAND_CODE_API_KEY", "@narumitw/pi-goal", "PI_GOAL_VERSION",
   "PSTACK_CLAUDE_VERSION", "SOL_PI_VERSION",
   "/pstack-claude/package.json", "/SoL-Pi/package.json"]) {
@@ -122,8 +135,8 @@ check(!settings.powerline?.layout?.left?.includes("subagents"),
 const expectedModels = new Map([
   ["opus", "openai/gpt-6.1-sol"],
   ["fable", "openai/gpt-6-astra"],
-  ["sonnet", "anthropic/claude-opus-5-5"],
-  ["haiku", "anthropic/claude-sonnet-5-5"]
+  ["sonnet", "claude-code/claude-opus-5-5"],
+  ["haiku", "claude-code/claude-sonnet-5-5"]
 ]);
 const singleRoles = new Map([
   ["feature, refactoring", "opus"], ["bug-fix", "opus"],
@@ -176,7 +189,7 @@ for (const role of panels) {
     const [, alias, effort] = match;
     seen.add(alias);
     if (alias === "sonnet" || alias === "haiku")
-      check(effort === "high", "Anthropic review effort must be high: " + role);
+      check(effort === "high", "Claude Code reviewer effort must be high: " + role);
     else
       check(effort === undefined || effort === "xhigh",
         "OpenAI panel effort must be xhigh: " + role);

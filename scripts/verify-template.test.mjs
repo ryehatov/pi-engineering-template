@@ -55,6 +55,42 @@ test("pstack-claude commit pin cannot drift to a branch", t => rejection(t, root
     "PSTACK_CLAUDE_REF=main"));
 }, /Docker pin mismatch: PSTACK_CLAUDE_REF/));
 
+test("Claude CLI pin must remain immutable", t => rejection(t, root => {
+  editFile(root, "Dockerfile", s => s.replace("ARG CLAUDE_CODE_VERSION=2.1.305", "ARG CLAUDE_CODE_VERSION=latest"));
+}, /Docker pin mismatch: CLAUDE_CODE_VERSION/));
+
+test("Claude CLI must be installed", t => rejection(t, root => {
+  editFile(root, "Dockerfile", s => s.replace('npm install -g "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}"', "true"));
+}, /Claude Code CLI install\/verification/));
+
+test("Claude CLI executable must be checked at build time", t => rejection(t, root => {
+  editFile(root, "Dockerfile", s => s.replace("&& claude --version", "&& true"));
+}, /Claude Code CLI install\/verification/));
+
+test("Claude CLI lifecycle scripts must remain enabled", t => rejection(t, root => {
+  editFile(root, "Dockerfile", s => s.replace('npm install -g "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}"',
+    'npm install -g --ignore-scripts "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}"'));
+}, /Claude Code CLI install\/verification/));
+
+test("Claude CLI provider pin cannot drift", t => rejection(t, root => {
+  editFile(root, "Dockerfile", s => s.replace("PI_CLAUDE_CODE_REF=70abb65186592ca788b29b3db22c3160d629c41f", "PI_CLAUDE_CODE_REF=main"));
+}, /Docker pin mismatch: PI_CLAUDE_CODE_REF/));
+
+test("Claude CLI provider entrypoint must be installed", t => rejection(t, root => {
+  editFile(root, "Dockerfile", s => s.replace("test -f /home/agent/.pi/agent/git/github.com/earendil-works/pi-claude-code/src/index.ts", "test -f /tmp/absent.ts"));
+}, /Docker Git install or package entrypoint check missing/));
+
+test("Node engine check for provider bridge must remain", t => rejection(t, root => {
+  editFile(root, "Dockerfile", s => s.replace("pi-claude-code requires Node >=22.19.0", "Node too old accepted"));
+}, /pi-claude-code Node >=22[.]19[.]0 preflight/));
+
+test("overage consent must not be enabled in Docker", t => rejection(t, root => {
+  editFile(root, "Dockerfile", s => s.replace("ENV TZ=Asia/Tokyo", "ENV PI_CLAUDE_CODE_ALLOW_USAGE_CREDITS=1\nENV TZ=Asia/Tokyo"));
+}, /Claude usage credits must not be automatically enabled/));
+
+test("Claude reviewers cannot return to direct Anthropic OAuth", t => rejection(t, root => {
+  editFile(root, "pstack-models.md", s => s.replace("sonnet=claude-code/claude-opus-5-5", "sonnet=anthropic/claude-opus-5-5"));
+}, /pstack Pi aliases must resolve/));
 test("old pi-subagents settings cannot be reintroduced", t => rejection(t, root => {
   editJson(root, "settings.json", s => { s.subagents = { maxSubagentDepth: 2 }; });
 }, /Obsolete pi-subagents settings remain/));
@@ -71,19 +107,19 @@ test("panel diversity cannot collapse to duplicate model aliases", t => rejectio
 
 test("unavailable or changed alias mappings are detected", t => rejection(t, root => {
   editFile(root, "pstack-models.md", s => s.replace(
-    "sonnet=anthropic/claude-opus-5-5", "sonnet=anthropic/does-not-exist"));
+    "sonnet=claude-code/claude-opus-5-5", "sonnet=claude-code/does-not-exist"));
 }, /pstack Pi aliases must resolve/));
 
 test("Claude reviewers are not silently replaced by another provider", t => rejection(t, root => {
   editFile(root, "pstack-models.md", s => s.replace(
-    "sonnet=anthropic/claude-opus-5-5", "sonnet=openai/gpt-6-sol"));
+    "sonnet=claude-code/claude-opus-5-5", "sonnet=openai/gpt-6-sol"));
 }, /pstack Pi aliases must resolve/));
 
 test("Claude panel members must use high effort", t => rejection(t, root => {
   editFile(root, "pstack-models.md", s => s.replace(
     "architect runners: opus, fable, sonnet @high, haiku @high",
     "architect runners: opus, fable, sonnet @xhigh, haiku @high"));
-}, /Anthropic review effort must be high/));
+}, /Claude Code reviewer effort must be high/));
 
 test("retired model role names cannot return", t => rejection(t, root => {
   editFile(root, "pstack-models.md", s => s.replace(

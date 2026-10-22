@@ -8,6 +8,7 @@ import { pathToFileURL } from "node:url";
 export const PACKAGE_PREFIXES = Object.freeze([
   "npm:@narumitw/pi-accounts@",
   "git:github.com/michael-denyer/pstack-claude@",
+  "git:github.com/earendil-works/pi-claude-code@",
   "npm:@dietrichgebert/ponytail@",
   "npm:pi-web-access@",
   "npm:pi-lens@",

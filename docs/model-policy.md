@@ -8,10 +8,10 @@ Pi selects the parent provider and model in `settings.json`. The pstack-claude e
 | --- | --- | --- | --- |
 | `opus` | `openai/gpt-6.1-sol` | xhigh | Implementation, investigation, swarm workers |
 | `fable` | `openai/gpt-6-astra` | xhigh | Architecture, synthesis, hard judgments |
-| `sonnet` | `anthropic/claude-opus-5-5` | high | Independent adversarial review |
-| `haiku` | `anthropic/claude-sonnet-5-5` | high | Additional cross-provider review |
+| `sonnet` | `claude-code/claude-opus-5-5` | high | Independent adversarial review through Claude Code CLI |
+| `haiku` | `claude-code/claude-sonnet-5-5` | high | Additional Claude review through Claude Code CLI |
 
-`arena`, `architect`, and `interrogate` use all four slots. The cross-judge pool is also diverse. All four IDs are distinct, but there are only **two providers**; two Claude models do not supply independent vendor evidence. The default parent remains Sol at `xhigh`.
+`arena`, `architect`, and `interrogate` use all four slots. The cross-judge pool is also diverse. All four IDs are distinct, but there are only **two Pi providers** (`openai` and `claude-code`) and **two model vendors**. Two Claude models do not supply independent vendor evidence. The default parent remains Sol at `xhigh`.
 
 ## Execution and trust boundaries
 
@@ -19,9 +19,9 @@ Pi selects the parent provider and model in `settings.json`. The pstack-claude e
 - `readonly: true` only removes Pi's `edit` and `write` tools. **It does not sandbox `bash`**. Reviewers must be instructed not to mutate files, and high-assurance isolation must come from Docker, filesystem permissions, or a separate read-only workspace.
 - Writing agents should use `isolation: "worktree"` when editing in parallel. Each retained worktree needs human or supervisor review. A read-only reviewer should inspect the requested working tree if the diff is uncommitted.
 - `defaultProjectTrust: "never"` keeps Pi project packages outside the automatic trust boundary. The Docker Sandbox supplies process and filesystem isolation; it does not make a third-party extension intrinsically safe.
-- Credentials belong in Pi's user-managed login store, not in the image. Authentication does not establish subscription-included billing. Pi's Anthropic access can be charged per token, including every reviewer invocation. Do not fall back to a different provider without an explicit decision.
-
-- Treat `Third-party apps now draw from your extra usage` as a **provider-side entitlement or billing-classification refusal**. It is confirmed even without the pstack agent tool. Preserve Claude model selections; do not substitute a provider, spoof a first-party client, or silently activate paid usage. Anthropic's October 2026 subscription guidance and its discretionary third-party billing policy do not guarantee that direct Pi OAuth calls will be accepted. For compliant choices (support escalation, explicit extra usage, or Max/Team Console API credits with API-key credentials), see [operations](operations.md#anthropic-oauth-http-400-in-direct-and-child-calls).
+- The `claude-code` provider uses the installed official Claude Code CLI and its own subscription credentials, not Pi's built-in `/login anthropic`. Keep Claude Code user configuration and credentials in the runtime home, not in image layers. Confirm the account with `claude auth status`. Do not enable usage-credit charging without explicit consent.
+- The experimental bridge checks Claude Code rate-limit events and fails the current call when extra usage is detected unless `PI_CLAUDE_CODE_ALLOW_USAGE_CREDITS=1`; **the triggering request may already be billed**. Keep the flag unset and disable extra usage in Claude settings when plan-only usage is required. No runtime can guarantee provider-side classification. See [operations](operations.md#claude-code-subscription-transport).
+- The bridge forwards authenticated requests through a loopback relay. The bridge may simplify complex tool schemas, and known open issues affect tree summaries, cross-provider history replay, and dropped-stream retry semantics. Test a fresh Claude child before any full review. Do not use request-header spoofing or ad-hoc OAuth workarounds.
 
 ## Performance and operational limits
 
