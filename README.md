@@ -4,7 +4,7 @@ A Docker Sandbox image with Pi, the official [pstack-claude](https://github.com/
 
 ## Architecture
 
-- **Pi 1.3.0** owns sessions, native model providers, authentication, and tool execution.
+- **Pi 1.4.0** owns sessions, native model providers, authentication, and tool execution.
 - **pstack-claude** (pinned Git commit) owns Poteto Mode, 65 shared skills, automatic task routing, and the native Pi `agent` tools. Its extension runs child Pi RPC processes, provides background completion notices, optional worktree isolation, agent messaging, questions, and `/loop`.
 - **SoL-Pi** optimizes tool observations and parent context. It is not an agent scheduler.
 - **pi-claude-code** routes Claude model traffic through the official Claude Code CLI. Pi retains tool execution and agent orchestration; Claude Code owns its own subscription login.

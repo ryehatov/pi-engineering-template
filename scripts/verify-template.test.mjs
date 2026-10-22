@@ -49,14 +49,18 @@ test("valid migrated configuration passes", t => {
   assert.equal(result.status, 0, result.output);
 });
 
+test("Pi 1.4.0 host version cannot regress", t => rejection(t, root => {
+  editFile(root, "Dockerfile", s => s.replace("ARG PI_VERSION=1.4.0", "ARG PI_VERSION=1.3.0"));
+}, /Docker pin mismatch: PI_VERSION/));
+
 test("pstack-claude commit pin cannot drift to a branch", t => rejection(t, root => {
   editFile(root, "Dockerfile", s => s.replace(
-    "PSTACK_CLAUDE_REF=a369e70b8afac1ec3dbad14bc7491d40baf27cce",
+    "PSTACK_CLAUDE_REF=903e7385382389806c59d6989b6274e24165082b",
     "PSTACK_CLAUDE_REF=main"));
 }, /Docker pin mismatch: PSTACK_CLAUDE_REF/));
 
 test("Claude CLI pin must remain immutable", t => rejection(t, root => {
-  editFile(root, "Dockerfile", s => s.replace("ARG CLAUDE_CODE_VERSION=2.1.305", "ARG CLAUDE_CODE_VERSION=latest"));
+  editFile(root, "Dockerfile", s => s.replace("ARG CLAUDE_CODE_VERSION=2.1.308", "ARG CLAUDE_CODE_VERSION=latest"));
 }, /Docker pin mismatch: CLAUDE_CODE_VERSION/));
 
 test("Claude CLI must be installed", t => rejection(t, root => {

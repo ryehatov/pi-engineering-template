@@ -9,11 +9,11 @@ RUN apt-get update \
       tzdata \
  && rm -rf /var/lib/apt/lists/*
 
-ARG PI_VERSION=1.3.0
+ARG PI_VERSION=1.4.0
 ARG BUN_VERSION=1.4.3
-ARG CLAUDE_CODE_VERSION=2.1.305
+ARG CLAUDE_CODE_VERSION=2.1.308
 
-# pi-claude-code requires Node >=22.19.0. Fail early on an older base image.
+# Pi 1.4.0 and pi-claude-code require Node >=22.19.0. Fail on older base images.
 RUN node -e 'const [major,minor]=process.versions.node.split(".").map(Number); if(major<22 || (major===22 && minor<19)) throw new Error("pi-claude-code requires Node >=22.19.0")'
 
 RUN npm install -g --ignore-scripts \
@@ -38,7 +38,7 @@ ARG PI_REWIND_HOOK_VERSION=1.8.7
 ARG PI_BTW_VERSION=0.62.0
 
 # Official pstack-claude pinned by an immutable Git commit.
-ARG PSTACK_CLAUDE_REF=a369e70b8afac1ec3dbad14bc7491d40baf27cce
+ARG PSTACK_CLAUDE_REF=903e7385382389806c59d6989b6274e24165082b
 
 # Pi provider bridge through the official Claude Code CLI.
 ARG PI_CLAUDE_CODE_REF=70abb65186592ca788b29b3db22c3160d629c41f

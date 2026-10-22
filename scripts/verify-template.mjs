@@ -36,9 +36,9 @@ for (const file of retired) check(!exists(file), "Retired file remains: " + file
 
 const docker = read("Dockerfile");
 const pins = {
-  PI_VERSION: "1.3.0",
+  PI_VERSION: "1.4.0",
   BUN_VERSION: "1.4.3",
-  CLAUDE_CODE_VERSION: "2.1.305",
+  CLAUDE_CODE_VERSION: "2.1.308",
   PI_ACCOUNTS_VERSION: "0.53.2",
   PONYTAIL_VERSION: "5.3.2",
   PI_WEB_ACCESS_VERSION: "0.44.0",
@@ -48,7 +48,7 @@ const pins = {
   PI_POWERLINE_FOOTER_VERSION: "0.20.2",
   PI_REWIND_HOOK_VERSION: "1.8.7",
   PI_BTW_VERSION: "0.62.0",
-  PSTACK_CLAUDE_REF: "a369e70b8afac1ec3dbad14bc7491d40baf27cce",
+  PSTACK_CLAUDE_REF: "903e7385382389806c59d6989b6274e24165082b",
   PI_CLAUDE_CODE_REF: "70abb65186592ca788b29b3db22c3160d629c41f",
   SOL_PI_REF: "219568034fa54ed121ede80961655e33dfb9d0e3"
 };

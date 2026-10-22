@@ -14,11 +14,13 @@ Static verification checks Git SHA pins, npm version pins, install wiring, pstac
 
 ## Docker layer caching and package registration
 
-Pi records every `pi install` in `~/.pi/agent/settings.json` (see the Pi 1.3 packages specification). The Dockerfile installs pinned dependencies before copying application settings and skills. It then runs `scripts/merge-pi-settings.mjs` to keep only the 12 expected pinned package declarations from Pi's generated settings and apply the audited preferences from `settings.json`. Unrecognized or unpinned packages fail the build; inherited image preferences are discarded.
+Pi records every `pi install` in `~/.pi/agent/settings.json` (see the Pi 1.4 packages specification). The Dockerfile installs pinned dependencies before copying application settings and skills. It then runs `scripts/merge-pi-settings.mjs` to keep only the 12 expected pinned package declarations from Pi's generated settings and apply the audited preferences from `settings.json`. Unrecognized or unpinned packages fail the build; inherited image preferences are discarded.
 
 As a result, editing `pstack-models.md`, `settings.json`, `sol-pi.json`, or local skills does not invalidate the dependency-install layer. Changing a Docker `ARG` for a package does invalidate that layer. Keep the package list in the merge script aligned with the `pi install` commands. The Node test suite verifies the names; package versions remain authoritative only in the Dockerfile.
 
 After building, run `pi list` inside the image. It must report the expected packages; a green configuration test alone does not establish installation success.
+
+Pi 1.4.0 queues Codemode scripts when its worker pool is saturated instead of failing immediately. By default, at most two workers are alive across sessions **within one Pi process**. A script waiting for a worker fails after 60 seconds or its own deadline. Increase `PI_CODEMODE_MAX_WORKERS` only after measuring CPU and memory use; this setting does not bound pstack child processes.
 
 ## First authenticated session
 
@@ -32,7 +34,7 @@ pi list
 pi --list-models claude-code
 ~~~
 
-Confirm Pi 1.3.0, the pinned Claude Code CLI release, and the Git-installed `pstack-claude`, `pi-claude-code`, and SoL-Pi packages; removed packages remain absent. The `claude-code` model list must contain the configured Opus and Sonnet IDs. An available model ID is not proof of an authenticated entitlement. Next, inside an interactive Pi session:
+Confirm Pi 1.4.0, the pinned Claude Code CLI release, and the Git-installed `pstack-claude`, `pi-claude-code`, and SoL-Pi packages; removed packages remain absent. The `claude-code` model list must contain the configured Opus and Sonnet IDs. An available model ID is not proof of an authenticated entitlement. Next, inside an interactive Pi session:
 
 1. Run `/skill:poteto-mode` for an end-to-end plan and verify that the session hook routes a new multi-file task automatically.
 2. Run `/skill:how` on a small module. Verify that the `agent` tool launches children and `/pstack-agents` reports their state. Check transcripts under `~/.pi/agent/pstack/<parent-session-id>/agents/`.
@@ -84,9 +86,9 @@ pi remove npm:@zenspc/pi-pstack
 pi remove npm:pi-subagents
 pi remove npm:@narumitw/pi-goal
 rm -f ~/.pi/agent/pi-goal.json
-pi install git:github.com/michael-denyer/pstack-claude@a369e70b8afac1ec3dbad14bc7491d40baf27cce
+pi install git:github.com/michael-denyer/pstack-claude@903e7385382389806c59d6989b6274e24165082b
 ~~~
 
 Replace the old model JSON with the new `~/.pi/agent/pstack-models.md`. Remove obsolete `subagents` settings and old subagent agent-definition folders only after reviewing custom content. The pstack extension owns its own `pstack:` agent types. Existing Pi sessions and credentials do not need to be deleted.
 
-The upstream [Pi mapping](https://github.com/michael-denyer/pstack-claude/blob/a369e70b8afac1ec3dbad14bc7491d40baf27cce/plugins/pstack/skills/poteto-mode/references/pi-tools.md) and [equivalence table](https://github.com/michael-denyer/pstack-claude/blob/a369e70b8afac1ec3dbad14bc7491d40baf27cce/docs/pi-equivalence.md) document supported behavior and differences from Claude Code.
+The upstream [Pi mapping](https://github.com/michael-denyer/pstack-claude/blob/903e7385382389806c59d6989b6274e24165082b/plugins/pstack/skills/poteto-mode/references/pi-tools.md) and [equivalence table](https://github.com/michael-denyer/pstack-claude/blob/903e7385382389806c59d6989b6274e24165082b/docs/pi-equivalence.md) document supported behavior and differences from Claude Code.
