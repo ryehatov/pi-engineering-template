@@ -23,9 +23,8 @@ RUN npm install -g --ignore-scripts \
  && npm install -g "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}" \
  && claude --version
 
-# The sandbox injects provider placeholders into each exec environment.
-# Wrap both executables: Pi (and its children) need a sanitized environment,
-# and direct Claude Code needs the same isolated subscription configuration.
+# Docker Sandbox may reinject ANTHROPIC_API_KEY for every exec.
+# Clear only that variable when Pi or Claude Code starts.
 COPY --chmod=755 scripts/pstack-auth-launcher.sh /usr/local/libexec/pstack-auth-launcher
 RUN set -eu; \
     for tool in pi claude; do \

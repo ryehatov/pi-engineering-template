@@ -80,15 +80,11 @@ check(docker.includes(launcherCopy) &&
       docker.indexOf("USER agent") > docker.indexOf('ln -s /usr/local/libexec/pstack-auth-launcher "$binary"'),
   "Pi and Claude CLI must be wrapped before runtime");
 const launcher = read("scripts/pstack-auth-launcher.sh");
-check(launcher.includes("= 'proxy-managed' ]; then unset ANTHROPIC_API_KEY; fi") &&
-      launcher.includes("CLAUDE_CONFIG_DIR=$PI_CLAUDE_CODE_CONFIG_DIR") &&
-      launcher.includes("SBX_CRED_ANTHROPIC_MODE") &&
-      launcher.includes("is_pi_claude_relay_url") &&
-      launcher.includes('relay_token=${relay_remainder#*/turn/}') &&
-      launcher.includes('"${#relay_token}" -eq 43') &&
-      launcher.includes('! is_pi_claude_relay_url "$ANTHROPIC_BASE_URL"') &&
-      launcher.includes('exec "$original" "$@"'),
-  "Claude subscription launcher must sanitize placeholders, isolate config, and reject host API-key mode");
+check(launcher.includes("unset ANTHROPIC_API_KEY") &&
+      launcher.includes('exec "$0.pstack-upstream" "$@"') &&
+      launcher.includes('exec "$(command -v "$name").pstack-upstream" "$@"') &&
+      !/ANTHROPIC_(AUTH_TOKEN|BASE_URL|FOUNDRY_API_KEY)|CLAUDE_CONFIG_DIR|SBX_CRED_ANTHROPIC_MODE/.test(launcher),
+  "Pi and Claude launcher must only unset ANTHROPIC_API_KEY");
 check(docker.includes("pi-claude-code requires Node >=22.19.0"),
   "pi-claude-code Node >=22.19.0 preflight must remain in the Docker image");
 check(!/^(?:ARG|ENV) PI_CLAUDE_CODE_ALLOW_USAGE_CREDITS=/m.test(docker),

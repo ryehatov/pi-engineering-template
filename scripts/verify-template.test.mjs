@@ -82,20 +82,15 @@ test("Docker must wrap both Pi and Claude Code with the subscription launcher", 
     "RUN true"));
 }, /Pi and Claude CLI must be wrapped before runtime/));
 
-test("Docker proxy placeholder cleanup must not regress", t => rejection(t, root => {
+test("launcher must unset the Anthropic API key", t => rejection(t, root => {
   editFile(root, "scripts/pstack-auth-launcher.sh", s => s.replace(
     "unset ANTHROPIC_API_KEY", ": # removed"));
-}, /Claude subscription launcher must sanitize placeholders/));
+}, /Pi and Claude launcher must only unset ANTHROPIC_API_KEY/));
 
-test("the CLI wrapper must admit pi-claude-code's own turn relay", t => rejection(t, root => {
+test("launcher must not change Claude configuration or bridge URLs", t => rejection(t, root => {
   editFile(root, "scripts/pstack-auth-launcher.sh", s => s.replace(
-    '! is_pi_claude_relay_url "$ANTHROPIC_BASE_URL"', 'true'));
-}, /Claude subscription launcher must sanitize placeholders/));
-
-test("CLI auth must remain isolated from legacy Claude settings", t => rejection(t, root => {
-  editFile(root, "scripts/pstack-auth-launcher.sh", s => s.replace(
-    "CLAUDE_CONFIG_DIR=$PI_CLAUDE_CODE_CONFIG_DIR", "CLAUDE_CONFIG_DIR=$HOME/.claude"));
-}, /Claude subscription launcher must sanitize placeholders/));
+    "unset ANTHROPIC_API_KEY", "unset ANTHROPIC_API_KEY\nexport CLAUDE_CONFIG_DIR=/forced"));
+}, /Pi and Claude launcher must only unset ANTHROPIC_API_KEY/));
 
 test("Claude CLI provider pin cannot drift", t => rejection(t, root => {
   editFile(root, "Dockerfile", s => s.replace("PI_CLAUDE_CODE_REF=70abb65186592ca788b29b3db22c3160d629c41f", "PI_CLAUDE_CODE_REF=main"));
