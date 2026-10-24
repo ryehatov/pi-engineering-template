@@ -125,6 +125,43 @@ test('Claude refuses Bedrock/Vertex/Foundry overrides but permits explicit false
   }
 }));
 
+test('pinned pi-claude-code turn relay passes unchanged to Claude CLI', () => fixture(f => {
+  const relay = 'http://127.0.0.1:52141/turn/' + 'Abc-0123_xY'.repeat(4).slice(0, 43);
+  const output = result(launch(f, 'claude', {
+    SBX_CRED_ANTHROPIC_MODE: 'none', ANTHROPIC_BASE_URL: relay,
+  }));
+  assert.equal(output.key, null);
+  assert.equal(output.url, relay);
+  assert.equal(output.config, join(f.home, '.config/pstack/claude'));
+  const blocked = launch(f, 'claude', {
+    SBX_CRED_ANTHROPIC_MODE: 'apikey', ANTHROPIC_BASE_URL: relay,
+  });
+  assert.equal(blocked.status, 78);
+  assert.match(blocked.stderr, /credential mode/);
+}));
+
+test('external and malformed relay URLs are rejected before Claude starts', () => fixture(f => {
+  const token = 'A'.repeat(43);
+  for (const url of [
+    'https://api.anthropic.com',
+    'http://127.0.0.1:9000',
+    'http://localhost:9000/turn/' + token,
+    'http://127.0.0.2:9000/turn/' + token,
+    'https://127.0.0.1:9000/turn/' + token,
+    'http://127.0.0.1:0/turn/' + token,
+    'http://127.0.0.1:65536/turn/' + token,
+    'http://127.0.0.1:9000/turn/' + token.slice(1),
+    'http://127.0.0.1:9000/turn/' + token + '/extra',
+    'http://127.0.0.1:9000/turn/' + token + '?trick=1',
+    'http://127.0.0.1:9000/turn/' + token + '#fragment',
+  ]) {
+    const output = launch(f, 'claude', { ANTHROPIC_BASE_URL: url });
+    assert.equal(output.status, 78, 'Must reject ' + url);
+    assert.match(output.stderr, /base-URL overrides/);
+    assert.equal(output.stdout, '');
+  }
+}));
+
 test('relative Claude config is rejected before either tool is executed', () => fixture(f => {
   for (const command of ['pi', 'claude']) {
     const output = launch(f, command, { PI_CLAUDE_CODE_CONFIG_DIR: 'relative-path' });

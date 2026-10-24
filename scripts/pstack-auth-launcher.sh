@@ -29,6 +29,23 @@ export PI_CLAUDE_CODE_CONFIG_DIR
 CLAUDE_CONFIG_DIR=$PI_CLAUDE_CODE_CONFIG_DIR
 export CLAUDE_CONFIG_DIR
 
+# The pinned pi-claude-code bridge validates inherited overrides before it
+# creates its per-turn local HTTP relay. Do not block that internal relay.
+is_pi_claude_relay_url() {
+  case "$1" in
+    http://127.0.0.1:*/turn/*) ;;
+    *) return 1 ;;
+  esac
+  relay_remainder=${1#http://127.0.0.1:}
+  relay_port=${relay_remainder%%/*}
+  relay_token=${relay_remainder#*/turn/}
+  case "$relay_port" in ''|*[!0-9]*) return 1 ;; esac
+  [ "${#relay_port}" -le 5 ] && [ "$relay_port" -ge 1 ] && [ "$relay_port" -le 65535 ] || return 1
+  case "$relay_token" in ''|*[!A-Za-z0-9_-]*) return 1 ;; esac
+  # The bridge creates a 32-byte random token (43 base64url characters).
+  [ "${#relay_token}" -eq 43 ]
+}
+
 if [ "$name" = 'claude' ]; then
   # The host proxy can substitute an Anthropic API key even after the
   # placeholder is removed. Fail closed on API-key/unknown billing modes.
@@ -37,8 +54,12 @@ if [ "$name" = 'claude' ]; then
     *) printf 'pstack: Docker Sandbox Anthropic credential mode "%s" is not safe for Claude subscription use (expected none or oauth). Remove the host Anthropic API key or use a subscription-only sandbox.\n' "${SBX_CRED_ANTHROPIC_MODE}" >&2; exit 78 ;;
   esac
   if [ -n "${ANTHROPIC_API_KEY-}" ] || [ -n "${ANTHROPIC_AUTH_TOKEN-}" ] || \
-     [ -n "${ANTHROPIC_BASE_URL-}" ] || [ -n "${ANTHROPIC_FOUNDRY_API_KEY-}" ]; then
-    printf 'pstack: Claude subscription use requires no Anthropic API-key, auth-token, or base-URL overrides\n' >&2
+     [ -n "${ANTHROPIC_FOUNDRY_API_KEY-}" ]; then
+    printf 'pstack: Claude subscription use requires no Anthropic API-key or auth-token overrides\n' >&2
+    exit 78
+  fi
+  if [ -n "${ANTHROPIC_BASE_URL-}" ] && ! is_pi_claude_relay_url "$ANTHROPIC_BASE_URL"; then
+    printf 'pstack: Claude subscription use rejects external base-URL overrides; only the pi-claude-code loopback relay is permitted\n' >&2
     exit 78
   fi
   for flag in "${CLAUDE_CODE_USE_BEDROCK-}" "${CLAUDE_CODE_USE_VERTEX-}" "${CLAUDE_CODE_USE_FOUNDRY-}"; do
