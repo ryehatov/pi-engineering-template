@@ -76,6 +76,22 @@ test("Claude CLI lifecycle scripts must remain enabled", t => rejection(t, root 
     'npm install -g --ignore-scripts "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}"'));
 }, /Claude Code CLI install\/verification/));
 
+test("Docker must wrap both Pi and Claude Code with the subscription launcher", t => rejection(t, root => {
+  editFile(root, "Dockerfile", s => s.replace(
+    "COPY --chmod=755 scripts/pstack-auth-launcher.sh /usr/local/libexec/pstack-auth-launcher",
+    "RUN true"));
+}, /Pi and Claude CLI must be wrapped before runtime/));
+
+test("Docker proxy placeholder cleanup must not regress", t => rejection(t, root => {
+  editFile(root, "scripts/pstack-auth-launcher.sh", s => s.replace(
+    "unset ANTHROPIC_API_KEY", ": # removed"));
+}, /Claude subscription launcher must sanitize placeholders/));
+
+test("CLI auth must remain isolated from legacy Claude settings", t => rejection(t, root => {
+  editFile(root, "scripts/pstack-auth-launcher.sh", s => s.replace(
+    "CLAUDE_CONFIG_DIR=$PI_CLAUDE_CODE_CONFIG_DIR", "CLAUDE_CONFIG_DIR=$HOME/.claude"));
+}, /Claude subscription launcher must sanitize placeholders/));
+
 test("Claude CLI provider pin cannot drift", t => rejection(t, root => {
   editFile(root, "Dockerfile", s => s.replace("PI_CLAUDE_CODE_REF=70abb65186592ca788b29b3db22c3160d629c41f", "PI_CLAUDE_CODE_REF=main"));
 }, /Docker pin mismatch: PI_CLAUDE_CODE_REF/));

@@ -18,6 +18,12 @@ The old `@zenspc/pi-pstack`, `pi-subagents`, and post-install patch are delibera
 
 These are explicit model IDs, not automatic availability checks. The Claude Code models are discovered from the installed CLI; both model IDs must be listed under provider `claude-code` and pass an authenticated smoke test. There is no silent provider substitution. Direct `anthropic/*` OAuth requests previously failed with an extra-usage HTTP 400; this profile routes Claude reviewers through the separate CLI-backed provider instead. The bridge is experimental. Its usage-credit guard stops automatic continuation after detecting overage, but **cannot reverse an already charged request or block every future independent call**. See [operations](docs/operations.md#claude-code-subscription-transport).
 
+## Docker Sandbox and Claude login
+
+Docker Sandbox can insert `ANTHROPIC_API_KEY=proxy-managed` into every exec session, even without a configured Anthropic secret. This breaks OAuth with Claude Code and triggers the `pi-claude-code` bridge's environment guard. The image wraps the installed `pi` and `claude` executables. The wrapper removes **only** the known `proxy-managed` Anthropic placeholders, leaves other providers untouched, and shares a separate Claude Code config directory (`~/.config/pstack/claude`) between both commands. It does not modify `~/.claude/settings.json`, which might contain a conflicting `apiKeyHelper`.
+
+The first run after adopting this change requires `claude auth login` as user `agent` because credentials from the old `~/.claude` directory are not used. The new directory must persist with the sandbox. Override it with the absolute path `PI_CLAUDE_CODE_CONFIG_DIR` if needed; `CLAUDE_CONFIG_DIR` is derived from that setting. If the host reports `SBX_CRED_ANTHROPIC_MODE=apikey`, the Claude wrapper refuses model requests rather than risking API-key billing. Remove the host Anthropic API-key binding or use a subscription-only sandbox before continuing. See [operations](docs/operations.md#docker-sandbox-credential-isolation).
+
 ## Build and use
 
 ~~~sh

@@ -49,6 +49,31 @@ If a provider or a required panel entry is missing, fix login or the model sheet
 
 The original native `anthropic/*` OAuth path returned HTTP 400: `Third-party apps now draw from your extra usage, not your plan limits`. That happened on direct Pi calls as well as on pstack children. The new configuration uses the independent `claude-code/*` Pi provider via the official Claude Code executable. **This bridge is experimental; verify actual subscription billing with a live request.**
 
+### Docker Sandbox credential isolation
+
+The `shell-docker` sandbox may inject `ANTHROPIC_API_KEY=proxy-managed` (or other `proxy-managed` placeholders) into **every** exec session. It may also leave `apiKeyHelper: "echo proxy-managed"` in `~/.claude/settings.json`. Either setting can shadow Claude Code's OAuth login. An image-wide `ENV` or a one-time `unset` in an interactive shell does not fix future `sbx exec` commands.
+
+The Docker image replaces the global npm shims for both `pi` and `claude` with `scripts/pstack-auth-launcher.sh`, saving the original executables next to them as `pi.pstack-upstream` and `claude.pstack-upstream`. On every launch the wrapper:
+
+1. Removes **only** Anthropic environment values exactly equal to `proxy-managed`. Real keys are kept so the bridge can reject them, rather than silently change billing.
+2. Sets `PI_CLAUDE_CODE_CONFIG_DIR` and `CLAUDE_CONFIG_DIR` to the same absolute directory, by default `$HOME/.config/pstack/claude`. It does not read or mutate the default `~/.claude/settings.json` helper. A custom absolute `PI_CLAUDE_CODE_CONFIG_DIR` overrides the default; `CLAUDE_CONFIG_DIR` alone is ignored.
+3. Refuses direct Claude Code calls with explicit API credentials, backend overrides, or Docker Sandbox `SBX_CRED_ANTHROPIC_MODE` other than `none` or `oauth`. The Pi process can still run OpenAI models when Claude authentication is blocked.
+
+The wrapper does not suppress host-side proxy injection. In `apikey` mode, even an empty in-container API-key variable cannot prove the request uses subscription billing. The explicit refusal is intentional. Inspect the host using `sbx secret ls`; remove its relevant Anthropic secret with `sbx secret rm anthropic` (and any sandbox-scoped binding) only if you intend to stop using it. Recheck the effective mode in the sandbox after any change. Do not bypass the launcher using `*.pstack-upstream`.
+
+After rebuilding and creating a sandbox with this image, run **inside** it as `agent`:
+
+~~~sh
+command -v pi
+command -v claude
+printf 'sandbox Anthropic mode: %s\n' "${SBX_CRED_ANTHROPIC_MODE:-unset}"
+claude auth login
+claude auth status
+pi --list-models claude-code
+~~~
+
+The launcher uses a separate Claude Code home. Existing `~/.claude` credentials are neither deleted nor migrated; you must log in again once in the new home. Do not put OAuth tokens into the Dockerfile or Git. If the sandbox is recreated, persist `~/.config/pstack/claude` securely if you need the login to survive. `claude auth status` is a configuration check, not proof of subscription-only billing. Use the live smoke tests below and verify usage in the Claude account.
+
 ### Qualify credentials and models
 
 Run inside the sandbox as the same Unix user as Pi (normally `agent`). Do not bake credentials into the image.
@@ -65,7 +90,7 @@ pi --print --no-session --no-tools --model claude-code/claude-sonnet-5-5 "Reply 
 
 These commands make real model requests and may consume quota or incur charges. The provider discovers available models through the CLI. If either configured model is missing, diagnose the account and model catalog; never substitute a model silently. The `claude-code` provider uses the Claude Code CLI login, **not** Pi's `/login anthropic`. In Pi's interactive mode, use `/claude-code-status` to check installation and login.
 
-The bridge refuses conflicting backend/auth environment variables, including `ANTHROPIC_API_KEY`, `ANTHROPIC_AUTH_TOKEN`, `ANTHROPIC_BASE_URL`, and Bedrock/Vertex/Foundry switches. Its optional `PI_CLAUDE_CODE_CONFIG_DIR` selects the CLI configuration directory. Ensure this directory and credentials are accessible to child Pi processes. Persist CLI configuration under the `agent` user, but do not include tokens in Docker layers. An existing volume over `~/.pi/agent` may mask newly installed Pi packages and the pstack model sheet; verify `pi list` and the runtime sheet.
+The bridge refuses conflicting backend/auth environment variables, including `ANTHROPIC_API_KEY`, `ANTHROPIC_AUTH_TOKEN`, `ANTHROPIC_BASE_URL`, and Bedrock/Vertex/Foundry switches. The image launcher strips only sandbox placeholder values before either `pi` or `claude` starts, and uses `PI_CLAUDE_CODE_CONFIG_DIR` as the single explicit location for CLI subscription credentials. Ensure this directory and credentials are accessible to child Pi processes. Persist CLI configuration under the `agent` user, but do not include tokens in Docker layers. An existing volume over `~/.pi/agent` may mask newly installed Pi packages and the pstack model sheet; verify `pi list` and the runtime sheet.
 
 ### Billing and child-agent qualification
 

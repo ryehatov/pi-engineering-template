@@ -23,7 +23,8 @@ const required = [
   "skills/LICENSE.mattpocock", "skills/domain-modeling/SKILL.md",
   "skills/grilling/SKILL.md", "skills/retro/SKILL.md",
   "skills/writing-for-agents/SKILL.md",
-  "scripts/merge-pi-settings.mjs", "scripts/merge-pi-settings.test.mjs", ".dockerignore"
+  "scripts/merge-pi-settings.mjs", "scripts/merge-pi-settings.test.mjs",
+  "scripts/pstack-auth-launcher.sh", "scripts/pstack-auth-launcher.test.mjs", ".dockerignore"
 ];
 for (const file of required) check(exists(file), file + ": missing");
 
@@ -70,6 +71,20 @@ check(docker.includes(cliInstall) && docker.includes("&& claude --version") &&
       docker.indexOf(cliInstall) < docker.indexOf("USER agent") &&
       !docker.includes('npm install -g --ignore-scripts "@anthropic-ai/claude-code'),
   "Claude Code CLI install/verification must be pinned in the root image layer");
+const launcherCopy = "COPY --chmod=755 scripts/pstack-auth-launcher.sh /usr/local/libexec/pstack-auth-launcher";
+check(docker.includes(launcherCopy) &&
+      docker.includes("for tool in pi claude; do") &&
+      docker.includes('mv "$binary" "$binary.pstack-upstream"') &&
+      docker.includes('ln -s /usr/local/libexec/pstack-auth-launcher "$binary"') &&
+      docker.indexOf(launcherCopy) > docker.indexOf(cliInstall) &&
+      docker.indexOf("USER agent") > docker.indexOf('ln -s /usr/local/libexec/pstack-auth-launcher "$binary"'),
+  "Pi and Claude CLI must be wrapped before runtime");
+const launcher = read("scripts/pstack-auth-launcher.sh");
+check(launcher.includes("= 'proxy-managed' ]; then unset ANTHROPIC_API_KEY; fi") &&
+      launcher.includes("CLAUDE_CONFIG_DIR=$PI_CLAUDE_CODE_CONFIG_DIR") &&
+      launcher.includes("SBX_CRED_ANTHROPIC_MODE") &&
+      launcher.includes('exec "$original" "$@"'),
+  "Claude subscription launcher must sanitize placeholders, isolate config, and reject host API-key mode");
 check(docker.includes("pi-claude-code requires Node >=22.19.0"),
   "pi-claude-code Node >=22.19.0 preflight must remain in the Docker image");
 check(!/^(?:ARG|ENV) PI_CLAUDE_CODE_ALLOW_USAGE_CREDITS=/m.test(docker),

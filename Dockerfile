@@ -23,6 +23,19 @@ RUN npm install -g --ignore-scripts \
  && npm install -g "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}" \
  && claude --version
 
+# The sandbox injects provider placeholders into each exec environment.
+# Wrap both executables: Pi (and its children) need a sanitized environment,
+# and direct Claude Code needs the same isolated subscription configuration.
+COPY --chmod=755 scripts/pstack-auth-launcher.sh /usr/local/libexec/pstack-auth-launcher
+RUN set -eu; \
+    for tool in pi claude; do \
+      binary="$(command -v "$tool")"; \
+      test -x "$binary"; \
+      test ! -e "$binary.pstack-upstream"; \
+      mv "$binary" "$binary.pstack-upstream"; \
+      ln -s /usr/local/libexec/pstack-auth-launcher "$binary"; \
+    done
+
 USER agent
 
 RUN mkdir -p /home/agent/.pi/agent/extensions /home/agent/.pi/agent/skills
